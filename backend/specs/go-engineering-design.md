@@ -433,10 +433,11 @@ import (
 )
 
 // CaseNumber 用例编号值对象
-// 格式: PRJ-MOD-YYYYMMDD-NNN
+// 格式: {项目前缀}-{模块缩写}-{日期}-{序号}
+// 示例: ECO-USR-20260402-001
 type CaseNumber string
 
-var caseNumberRegex = regexp.MustCompile(`^[A-Z]{3}-[A-Z]{3}-\d{8}-\d{3}$`)
+var caseNumberRegex = regexp.MustCompile(`^[A-Z]{2,4}-[A-Z]{2,4}-\d{8}-\d{3}$`)
 
 // ParseCaseNumber 解析用例编号
 func ParseCaseNumber(s string) (CaseNumber, error) {
@@ -447,10 +448,10 @@ func ParseCaseNumber(s string) (CaseNumber, error) {
 }
 
 // GenerateCaseNumber 生成用例编号
-func GenerateCaseNumber(projectPrefix, modulePrefix string, seq int) CaseNumber {
+func GenerateCaseNumber(projectPrefix, moduleAbbreviation string, seq int) CaseNumber {
     date := time.Now().Format("20060102")
     return CaseNumber(fmt.Sprintf("%s-%s-%s-%03d",
-        projectPrefix, modulePrefix, date, seq))
+        projectPrefix, moduleAbbreviation, date, seq))
 }
 
 // String 转换为字符串
@@ -480,7 +481,7 @@ type TestCase struct {
     preconditions Preconditions
     steps         Steps
     expected      ExpectedResult
-    aiMetadata    AiMetadata
+    aiMetadata    *AiMetadata // AI 生成的用例才会有此字段，手动创建为 nil
     caseType      CaseType
     priority      Priority
     status        CaseStatus
@@ -497,11 +498,30 @@ type Steps []string
 // ExpectedResult 预期结果值对象
 type ExpectedResult map[string]any
 
+// Confidence AI 置信度值对象
+type Confidence string
+
+const (
+    ConfidenceHigh   Confidence = "high"
+    ConfidenceMedium Confidence = "medium"
+    ConfidenceLow    Confidence = "low"
+)
+
+// ReferencedChunk 引用的文档块
+type ReferencedChunk struct {
+    ChunkID         uuid.UUID `json:"chunk_id"`
+    DocumentID      uuid.UUID `json:"document_id"`
+    DocumentTitle   string    `json:"document_title"`
+    SimilarityScore float64   `json:"similarity_score"`
+}
+
 // AiMetadata AI 元数据值对象
 type AiMetadata struct {
-    ReferencedChunks []uuid.UUID `json:"referenced_chunks"`
-    TaskID           uuid.UUID   `json:"task_id"`
-    Confidence       float64     `json:"confidence"`
+    GenerationTaskID  uuid.UUID         `json:"generation_task_id"`
+    Confidence        Confidence        `json:"confidence"`
+    ReferencedChunks  []ReferencedChunk `json:"referenced_chunks"`
+    ModelVersion      string            `json:"model_version"`
+    GeneratedAt       time.Time         `json:"generated_at"`
 }
 
 // NewTestCase 创建测试用例
@@ -558,7 +578,7 @@ type TestCaseRow struct {
     Preconditions json.RawMessage `db:"preconditions"`
     Steps         json.RawMessage `db:"steps"`
     Expected      json.RawMessage `db:"expected"`
-    AiMetadata    json.RawMessage `db:"ai_metadata"`
+    AiMetadata    json.RawMessage `db:"ai_metadata"` // JSON 字段，可为空
     CaseType      string          `db:"case_type"`
     Priority      string          `db:"priority"`
     Status        string          `db:"status"`
@@ -580,9 +600,15 @@ func (tc *TestCase) ToRow() (*TestCaseRow, error) {
     if err != nil {
         return nil, err
     }
-    aiMetadataJSON, err := json.Marshal(tc.aiMetadata)
-    if err != nil {
-        return nil, err
+
+    // AI 元数据可能为空
+    var aiMetadataJSON json.RawMessage
+    if tc.aiMetadata != nil {
+        data, err := json.Marshal(tc.aiMetadata)
+        if err != nil {
+            return nil, err
+        }
+        aiMetadataJSON = data
     }
 
     return &TestCaseRow{
@@ -620,9 +646,14 @@ func FromRow(row *TestCaseRow) (*TestCase, error) {
         return nil, err
     }
 
-    var aiMetadata AiMetadata
-    if err := json.Unmarshal(row.AiMetadata, &aiMetadata); err != nil {
-        return nil, err
+    // AI 元数据可能为空（手动创建的用例）
+    var aiMetadata *AiMetadata
+    if len(row.AiMetadata) > 0 {
+        var meta AiMetadata
+        if err := json.Unmarshal(row.AiMetadata, &meta); err != nil {
+            return nil, err
+        }
+        aiMetadata = &meta
     }
 
     number, err := ParseCaseNumber(row.Number)
@@ -1685,6 +1716,10 @@ type Config struct {
     Server   ServerConfig   `mapstructure:"server"`
     Database DatabaseConfig `mapstructure:"database"`
     Redis    RedisConfig    `mapstructure:"redis"`
+    LLM      LLMConfig      `mapstructure:"llm"`
+    Milvus   MilvusConfig   `mapstructure:"milvus"`
+    Storage  StorageConfig  `mapstructure:"storage"`
+    RabbitMQ RabbitMQConfig `mapstructure:"rabbitmq"`
     JWT      JWTConfig      `mapstructure:"jwt"`
     Log      LogConfig      `mapstructure:"log"`
 }
@@ -1712,6 +1747,38 @@ type RedisConfig struct {
     Port     int    `mapstructure:"port"`
     Password string `mapstructure:"password"`
     DB       int    `mapstructure:"db"`
+}
+
+type LLMConfig struct {
+    Provider         string        `mapstructure:"provider"`          // deepseek, openai, azure
+    APIKey           string        `mapstructure:"api_key"`
+    BaseURL          string        `mapstructure:"base_url"`
+    Model            string        `mapstructure:"model"`             // deepseek-chat
+    EmbeddingModel   string        `mapstructure:"embedding_model"`   // deepseek-embedding
+    Timeout          time.Duration `mapstructure:"timeout"`
+    MaxRetries       int           `mapstructure:"max_retries"`
+}
+
+type MilvusConfig struct {
+    Host       string `mapstructure:"host"`
+    Port       int    `mapstructure:"port"`
+    Database   string `mapstructure:"database"`
+    Collection string `mapstructure:"collection"`
+}
+
+type StorageConfig struct {
+    Provider string `mapstructure:"provider"` // minio, s3
+    Endpoint string `mapstructure:"endpoint"`
+    Region   string `mapstructure:"region"`
+    Bucket   string `mapstructure:"bucket"`
+    AccessKey string `mapstructure:"access_key"`
+    SecretKey string `mapstructure:"secret_key"`
+    UseSSL   bool   `mapstructure:"use_ssl"`
+}
+
+type RabbitMQConfig struct {
+    URL      string `mapstructure:"url"`
+    Exchange string `mapstructure:"exchange"`
 }
 
 type JWTConfig struct {
@@ -1769,8 +1836,36 @@ redis:
   password: ""
   db: 0
 
+llm:
+  provider: "deepseek"
+  api_key: "${DEEPSEEK_API_KEY}"  # 从环境变量读取
+  base_url: "https://api.deepseek.com"
+  model: "deepseek-chat"
+  embedding_model: "deepseek-embedding"
+  timeout: 60s
+  max_retries: 3
+
+milvus:
+  host: "localhost"
+  port: 19530
+  database: "aitestos"
+  collection: "document_chunks"
+
+storage:
+  provider: "minio"
+  endpoint: "localhost:9000"
+  region: "us-east-1"
+  bucket: "aitestos"
+  access_key: "${MINIO_ACCESS_KEY}"
+  secret_key: "${MINIO_SECRET_KEY}"
+  use_ssl: false
+
+rabbitmq:
+  url: "amqp://guest:guest@localhost:5672/"
+  exchange: "aitestos.events"
+
 jwt:
-  secret: "your-secret-key-change-in-production"
+  secret: "${JWT_SECRET}"  # 从环境变量读取，生产环境必须修改
   expire_time: 2h
 
 log:

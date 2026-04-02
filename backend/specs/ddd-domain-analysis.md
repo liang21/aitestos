@@ -110,19 +110,23 @@ RecordResult → TestResult
 | **职责** | 项目 CRUD、模块管理、项目配置 |
 | **聚合根** | `Project` |
 | **实体** | `Project`, `Module`, `ProjectConfig` |
-| **值对象** | `ProjectId`, `ModuleId`, `ConfigKey` |
-| **领域服务** | `ModuleService`, `ConfigService` |
+| **值对象** | `ProjectId`, `ProjectPrefix`, `ModuleId`, `ModuleAbbreviation`, `ConfigKey` |
+| **领域服务** | `ModuleService`, `ConfigService`, `CaseNumberGenerator` |
 | **边界内表** | `project`, `module`, `project_config` |
 
 **聚合设计**：
 ```
 Project (Aggregate Root)
+├── prefix: ProjectPrefix (值对象，全局唯一)
 ├── Module[] (Entity, 项目内唯一)
+│   └── abbreviation: ModuleAbbreviation (值对象，项目内唯一)
 └── ProjectConfig[] (Entity, KV 配置)
 ```
 
 **不变量**：
+- 项目前缀全局唯一（2-4 位大写字母）
 - 模块名称在项目内唯一
+- 模块缩写在项目内唯一（2-4 位大写字母）
 - 配置键在项目内唯一
 
 ---
@@ -134,7 +138,7 @@ Project (Aggregate Root)
 | **职责** | 文档上传、解析、分块、向量化 |
 | **聚合根** | `Document` |
 | **实体** | `Document`, `DocumentChunk` |
-| **值对象** | `DocumentType`, `ChunkMetadata`, `EmbeddingVector` |
+| **值对象** | `DocumentType`, `DocumentStatus`, `ChunkMetadata`, `EmbeddingVector` |
 | **领域服务** | `DocumentParser`, `ChunkService`, `EmbeddingService` |
 | **边界内表** | `document`, `document_chunk` |
 | **外部依赖** | Milvus（向量存储）, OSS（文件存储） |
@@ -142,12 +146,15 @@ Project (Aggregate Root)
 **聚合设计**：
 ```
 Document (Aggregate Root)
+├── status: DocumentStatus (值对象，状态机)
+│   └── pending → processing → completed/failed
 └── DocumentChunk[] (Entity, 生命周期跟随 Document)
 ```
 
 **不变量**：
 - 删除文档时级联删除所有分块
 - 分块索引在文档内有序
+- 文档状态流转：pending → processing → completed | failed
 
 ---
 
@@ -198,7 +205,7 @@ TestPlan (Aggregate Root)
 | **职责** | 生成任务管理、RAG 检索、用例草稿生成与确认 |
 | **聚合根** | `GenerationTask` |
 | **实体** | `GenerationTask`, `GeneratedCaseDraft` |
-| **值对象** | `TaskStatus`, `DraftStatus`, `Prompt`, `Feedback` |
+| **值对象** | `TaskStatus`, `DraftStatus`, `Prompt`, `Feedback`, `Confidence`, `AiMetadata` |
 | **领域服务** | `RAGService`, `LLMService`, `DraftConfirmationService` |
 | **边界内表** | `generation_task`, `generated_case_draft` |
 | **外部依赖** | LLM API（DeepSeek）, Knowledge Context |
@@ -206,12 +213,20 @@ TestPlan (Aggregate Root)
 **聚合设计**：
 ```
 GenerationTask (Aggregate Root)
+├── status: TaskStatus (值对象，状态机)
+│   └── pending → processing → completed | failed
 └── GeneratedCaseDraft[] (Entity, 草稿列表)
+    └── confidence: Confidence (值对象，high/medium/low)
+    └── aiMetadata: AiMetadata (值对象，引用来源)
 ```
 
 **不变量**：
 - 草稿确认后转为正式用例
 - 草稿拒绝时记录反馈
+- 置信度基于 RAG 检索结果计算：
+  - high: ≥2 个文档块，相似度 > 0.8
+  - medium: 1 个文档块，相似度 0.5-0.8
+  - low: 无匹配文档块
 
 ---
 
@@ -377,6 +392,8 @@ type UserRepository interface {
 type ProjectRepository interface {
     Save(ctx context.Context, project *Project) error
     FindByID(ctx context.Context, id uuid.UUID) (*Project, error)
+    FindByName(ctx context.Context, name string) (*Project, error)
+    FindByPrefix(ctx context.Context, prefix string) (*Project, error) // 新增：前缀查询
     FindAll(ctx context.Context) ([]*Project, error)
     Update(ctx context.Context, project *Project) error
     Delete(ctx context.Context, id uuid.UUID) error
@@ -386,6 +403,7 @@ type ModuleRepository interface {
     Save(ctx context.Context, module *Module) error
     FindByID(ctx context.Context, id uuid.UUID) (*Module, error)
     FindByProjectID(ctx context.Context, projectID uuid.UUID) ([]*Module, error)
+    FindByAbbreviation(ctx context.Context, projectID uuid.UUID, abbreviation string) (*Module, error) // 新增：缩写查询
     Delete(ctx context.Context, id uuid.UUID) error
 }
 
@@ -406,13 +424,16 @@ type DocumentRepository interface {
     FindByID(ctx context.Context, id uuid.UUID) (*Document, error)
     FindByProjectID(ctx context.Context, projectID uuid.UUID, opts QueryOptions) ([]*Document, error)
     Update(ctx context.Context, doc *Document) error
+    UpdateStatus(ctx context.Context, id uuid.UUID, status DocumentStatus) error // 新增：状态更新
     Delete(ctx context.Context, id uuid.UUID) error
+    CountByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error) // 新增：文档数量统计
 }
 
 type DocumentChunkRepository interface {
     SaveBatch(ctx context.Context, chunks []*DocumentChunk) error
     FindByDocumentID(ctx context.Context, documentID uuid.UUID) ([]*DocumentChunk, error)
     DeleteByDocumentID(ctx context.Context, documentID uuid.UUID) error
+    CountByDocumentID(ctx context.Context, documentID uuid.UUID) (int64, error) // 新增：分块数量
 }
 
 // 向量检索接口（可由 Milvus 实现）
@@ -420,6 +441,7 @@ type VectorRepository interface {
     Upsert(ctx context.Context, chunks []*DocumentChunk) error
     Search(ctx context.Context, queryVector []float32, topK int, filter map[string]any) ([]*DocumentChunk, error)
     DeleteByDocumentID(ctx context.Context, documentID uuid.UUID) error
+    CountByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error) // 新增：向量数量统计
 }
 ```
 
@@ -432,16 +454,19 @@ type TestCaseRepository interface {
     FindByID(ctx context.Context, id uuid.UUID) (*TestCase, error)
     FindByNumber(ctx context.Context, number string) (*TestCase, error)
     FindByModuleID(ctx context.Context, moduleID uuid.UUID, opts QueryOptions) ([]*TestCase, error)
+    FindByProjectID(ctx context.Context, projectID uuid.UUID, opts QueryOptions) ([]*TestCase, error) // 新增
     FindByStatus(ctx context.Context, status CaseStatus, opts QueryOptions) ([]*TestCase, error)
     Update(ctx context.Context, tc *TestCase) error
     Delete(ctx context.Context, id uuid.UUID) error
     CountByModuleID(ctx context.Context, moduleID uuid.UUID) (int64, error)
+    CountByDate(ctx context.Context, moduleID uuid.UUID, date time.Time) (int64, error) // 新增：用于编号序号生成
 }
 
 type QueryOptions struct {
-    Offset int
-    Limit  int
-    OrderBy string
+    Offset   int
+    Limit    int
+    OrderBy  string
+    Keywords string // 新增：关键词搜索
 }
 ```
 
@@ -679,12 +704,16 @@ const (
     CodePermissionDenied  = 10006
 
     // ============ Project Context (2xxxx) ============
-    CodeProjectNotFound      = 20001
-    CodeProjectNameDuplicate = 20002
-    CodeModuleNotFound       = 20003
-    CodeModuleNameDuplicate  = 20004
-    CodeConfigNotFound       = 20005
-    CodeConfigKeyDuplicate   = 20006
+    CodeProjectNotFound       = 20001
+    CodeProjectNameDuplicate  = 20002
+    CodeModuleNotFound        = 20003
+    CodeModuleNameDuplicate   = 20004
+    CodeConfigNotFound        = 20005
+    CodeConfigKeyDuplicate    = 20006
+    CodeProjectPrefixDuplicate = 20007 // 新增：项目前缀重复
+    CodeInvalidProjectPrefix  = 20008 // 新增：项目前缀格式无效
+    CodeModuleAbbrevDuplicate = 20009 // 新增：模块缩写重复
+    CodeInvalidModuleAbbrev   = 20010 // 新增：模块缩写格式无效
 
     // ============ Knowledge Context (3xxxx) ============
     CodeDocumentNotFound        = 30001
@@ -693,40 +722,44 @@ const (
     CodeEmptyChunks             = 30004
     CodeEmbeddingFailed         = 30005
     CodeVectorSearchFailed      = 30006
+    CodeKnowledgeBaseEmpty      = 30007 // 新增：知识库为空
+    CodeDocumentProcessing      = 30008 // 新增：文档处理中
 
     // ============ TestCase Context (4xxxx) ============
-    CodeCaseNotFound       = 40001
+    CodeCaseNotFound        = 40001
     CodeCaseNumberDuplicate = 40002
-    CodeInvalidCaseNumber  = 40003
-    CodeEmptySteps         = 40004
-    CodeInvalidPriority    = 40005
-    CodeInvalidCaseType    = 40006
+    CodeInvalidCaseNumber   = 40003
+    CodeEmptySteps          = 40004
+    CodeInvalidPriority     = 40005
+    CodeInvalidCaseType     = 40006
 
     // ============ TestPlan Context (5xxxx) ============
-    CodePlanNotFound        = 50001
-    CodePlanNameDuplicate   = 50002
-    CodePlanArchived        = 50003
-    CodeResultNotFound      = 50004
-    CodeCaseNotInPlan       = 50005
-    CodeDuplicateExecution  = 50006
+    CodePlanNotFound       = 50001
+    CodePlanNameDuplicate  = 50002
+    CodePlanArchived       = 50003
+    CodeResultNotFound     = 50004
+    CodeCaseNotInPlan      = 50005
+    CodeDuplicateExecution = 50006
 
     // ============ Generation Context (6xxxx) ============
-    CodeTaskNotFound          = 60001
-    CodeTaskAlreadyProcessed  = 60002
-    CodeDraftNotFound         = 60003
-    CodeDraftAlreadyConfirmed = 60004
-    CodeDraftAlreadyRejected  = 60005
-    CodeInvalidDraftStatus    = 60006
-    CodeLLMCallFailed         = 60007
-    CodeRAGNoResult           = 60008
+    CodeTaskNotFound           = 60001
+    CodeTaskAlreadyProcessed   = 60002
+    CodeDraftNotFound          = 60003
+    CodeDraftAlreadyConfirmed  = 60004
+    CodeDraftAlreadyRejected   = 60005
+    CodeInvalidDraftStatus     = 60006
+    CodeLLMCallFailed          = 60007
+    CodeRAGNoResult            = 60008
     CodeConcurrentModification = 60009
+    CodeLLMTimeout             = 60010 // 新增：LLM 调用超时
+    CodeGenerationQueueFull    = 60011 // 新增：生成队列已满
 
     // ============ System Errors (9xxxx) ============
-    CodeInternalError    = 90001
-    CodeDatabaseError    = 90002
-    CodeValidationError  = 90003
-    CodeUnauthorized     = 90004
-    CodeRateLimited      = 90005
+    CodeInternalError   = 90001
+    CodeDatabaseError   = 90002
+    CodeValidationError = 90003
+    CodeUnauthorized    = 90004
+    CodeRateLimited     = 90005
 )
 ```
 
@@ -774,10 +807,18 @@ func MapError(err error) int {
         return CodeProjectNotFound
     case errors.Is(err, project.ErrProjectNameDuplicate):
         return CodeProjectNameDuplicate
+    case errors.Is(err, project.ErrProjectPrefixDuplicate):
+        return CodeProjectPrefixDuplicate
+    case errors.Is(err, project.ErrInvalidProjectPrefix):
+        return CodeInvalidProjectPrefix
     case errors.Is(err, project.ErrModuleNotFound):
         return CodeModuleNotFound
     case errors.Is(err, project.ErrModuleNameDuplicate):
         return CodeModuleNameDuplicate
+    case errors.Is(err, project.ErrModuleAbbrevDuplicate):
+        return CodeModuleAbbrevDuplicate
+    case errors.Is(err, project.ErrInvalidModuleAbbrev):
+        return CodeInvalidModuleAbbrev
     case errors.Is(err, project.ErrConfigNotFound):
         return CodeConfigNotFound
     case errors.Is(err, project.ErrConfigKeyDuplicate):
@@ -798,6 +839,10 @@ func MapError(err error) int {
         return CodeEmbeddingFailed
     case errors.Is(err, knowledge.ErrVectorSearchFailed):
         return CodeVectorSearchFailed
+    case errors.Is(err, knowledge.ErrKnowledgeBaseEmpty):
+        return CodeKnowledgeBaseEmpty
+    case errors.Is(err, knowledge.ErrDocumentProcessing):
+        return CodeDocumentProcessing
     }
 
     // TestCase Context
@@ -852,6 +897,10 @@ func MapError(err error) int {
         return CodeRAGNoResult
     case errors.Is(err, generation.ErrConcurrentModification):
         return CodeConcurrentModification
+    case errors.Is(err, generation.ErrLLMTimeout):
+        return CodeLLMTimeout
+    case errors.Is(err, generation.ErrGenerationQueueFull):
+        return CodeGenerationQueueFull
     }
 
     // 未知错误
@@ -901,12 +950,16 @@ func CodeToMessage(code int) string {
         CodePermissionDenied:  "权限不足",
 
         // Project
-        CodeProjectNotFound:      "项目不存在",
-        CodeProjectNameDuplicate: "项目名称已存在",
-        CodeModuleNotFound:       "模块不存在",
-        CodeModuleNameDuplicate:  "模块名称重复",
-        CodeConfigNotFound:       "配置项不存在",
-        CodeConfigKeyDuplicate:   "配置键重复",
+        CodeProjectNotFound:       "项目不存在",
+        CodeProjectNameDuplicate:  "项目名称已存在",
+        CodeProjectPrefixDuplicate: "项目前缀已存在",
+        CodeInvalidProjectPrefix:  "项目前缀格式无效，需2-4位大写字母",
+        CodeModuleNotFound:        "模块不存在",
+        CodeModuleNameDuplicate:   "模块名称重复",
+        CodeModuleAbbrevDuplicate: "模块缩写重复",
+        CodeInvalidModuleAbbrev:   "模块缩写格式无效，需2-4位大写字母",
+        CodeConfigNotFound:        "配置项不存在",
+        CodeConfigKeyDuplicate:    "配置键重复",
 
         // Knowledge
         CodeDocumentNotFound:        "文档不存在",
@@ -915,6 +968,8 @@ func CodeToMessage(code int) string {
         CodeEmptyChunks:             "文档分块为空",
         CodeEmbeddingFailed:         "向量化失败",
         CodeVectorSearchFailed:      "向量检索失败",
+        CodeKnowledgeBaseEmpty:      "知识库为空，请先上传文档",
+        CodeDocumentProcessing:      "文档处理中，请稍后",
 
         // TestCase
         CodeCaseNotFound:       "测试用例不存在",
@@ -942,6 +997,8 @@ func CodeToMessage(code int) string {
         CodeLLMCallFailed:          "LLM 调用失败",
         CodeRAGNoResult:            "RAG 检索无结果",
         CodeConcurrentModification: "并发修改冲突",
+        CodeLLMTimeout:             "LLM 调用超时，请重试",
+        CodeGenerationQueueFull:    "生成任务队列已满，请稍后重试",
 
         // System
         CodeInternalError:   "系统内部错误",

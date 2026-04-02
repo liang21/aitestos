@@ -30,11 +30,14 @@ CREATE TYPE document_type_enum AS ENUM ('prd', 'figma', 'api_spec');
 CREATE TABLE project (
     id          uuid                        DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
     name        varchar(255)                                            NOT NULL UNIQUE,
+    prefix      varchar(4)                                             NOT NULL UNIQUE,
     description text,
     config      jsonb                       DEFAULT '{}'::jsonb,
     created_at  timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at  timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP
 );
+
+COMMENT ON COLUMN project.prefix IS '项目前缀，用于用例编号生成，2-4位大写字母';
 
 -- -----------------------------------------------------------
 -- project_config 项目配置表 (新增)
@@ -54,12 +57,16 @@ CREATE TABLE project_config (
 -- module 模块表
 -- -----------------------------------------------------------
 CREATE TABLE module (
-    id          uuid DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
-    project_id  uuid                            NOT NULL REFERENCES project ON DELETE CASCADE,
-    name        varchar(255)                    NOT NULL,
-    description text,
-    UNIQUE(project_id, name)
+    id            uuid DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    project_id    uuid                            NOT NULL REFERENCES project ON DELETE CASCADE,
+    name          varchar(255)                    NOT NULL,
+    abbreviation  varchar(4)                      NOT NULL,
+    description   text,
+    UNIQUE(project_id, name),
+    UNIQUE(project_id, abbreviation)
 );
+
+COMMENT ON COLUMN module.abbreviation IS '模块缩写，用于用例编号生成，2-4位大写字母，项目内唯一';
 
 -- -----------------------------------------------------------
 -- users 用户表
@@ -133,12 +140,15 @@ CREATE TABLE document (
     project_id   uuid                                                   NOT NULL REFERENCES project ON DELETE CASCADE,
     name         varchar(255)                                           NOT NULL,
     type         document_type_enum                                     NOT NULL,
+    status       task_status_enum            DEFAULT 'pending'::task_status_enum NOT NULL,
     url          text,
     content_text text,
     metadata     jsonb                       DEFAULT '{}'::jsonb,
     created_at   timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at   timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP
 );
+
+COMMENT ON COLUMN document.status IS '文档处理状态：pending/processing/completed/failed';
 
 -- -----------------------------------------------------------
 -- document_chunk 文档分块表
@@ -223,6 +233,7 @@ CREATE INDEX idx_test_result_executed_at ON test_result(executed_at);
 -- document 索引
 CREATE INDEX idx_document_project_id ON document(project_id);
 CREATE INDEX idx_document_type ON document(type);
+CREATE INDEX idx_document_status ON document(status);
 
 -- document_chunk 索引
 CREATE INDEX idx_document_chunk_document_id ON document_chunk(document_id);
@@ -303,6 +314,12 @@ COMMENT ON TABLE document IS '文档表（PRD/Figma/API Spec）';
 COMMENT ON TABLE document_chunk IS '文档分块表，用于向量检索';
 COMMENT ON TABLE generation_task IS 'AI 用例生成任务表';
 COMMENT ON TABLE generated_case_draft IS '生成的用例草稿表';
+
+COMMENT ON COLUMN project.prefix IS '项目前缀，用于用例编号生成，2-4位大写字母';
+COMMENT ON COLUMN module.abbreviation IS '模块缩写，用于用例编号生成，2-4位大写字母，项目内唯一';
+COMMENT ON COLUMN document.status IS '文档处理状态：pending/processing/completed/failed';
+COMMENT ON COLUMN test_case.ai_metadata IS 'AI 元数据，包含生成任务ID、置信度、引用文档块等信息';
+COMMENT ON COLUMN generated_case_draft.ai_metadata IS 'AI 元数据，包含置信度、引用文档块等信息';
 
 COMMENT ON TYPE task_status_enum IS '任务状态枚举';
 COMMENT ON TYPE draft_status_enum IS '草稿状态枚举';

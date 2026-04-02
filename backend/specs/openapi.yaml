@@ -381,6 +381,81 @@ paths:
         '204':
           description: 删除成功
 
+  /projects/{projectId}/configs/import:
+    post:
+      tags: [ProjectConfig]
+      summary: 导入配置
+      operationId: importProjectConfigs
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/projectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                required: [key, value]
+                properties:
+                  key:
+                    type: string
+                  value:
+                    type: object
+                  description:
+                    type: string
+      responses:
+        '200':
+          description: 导入成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imported:
+                    type: integer
+                  skipped:
+                    type: integer
+
+  /projects/{projectId}/configs/export:
+    get:
+      tags: [ProjectConfig]
+      summary: 导出配置
+      operationId: exportProjectConfigs
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/projectId'
+      responses:
+        '200':
+          description: 导出成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectConfig'
+
+  /projects/{projectId}/stats:
+    get:
+      tags: [Projects]
+      summary: 获取项目统计
+      description: 获取项目仪表盘统计数据
+      operationId: getProjectStats
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/projectId'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectStats'
+
   # ==================== 文档管理 ====================
   /projects/{projectId}/documents:
     post:
@@ -561,6 +636,10 @@ paths:
                 feedback:
                   type: string
                   description: 拒绝原因反馈
+                reason:
+                  type: string
+                  enum: [duplicate, irrelevant, low_quality, other]
+                  description: 拒绝原因类型
       responses:
         '200':
           description: 拒绝成功
@@ -568,6 +647,93 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CaseDraft'
+
+  /generation/drafts/{draftId}:
+    put:
+      tags: [Generation]
+      summary: 保存草稿修改
+      operationId: updateDraft
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/draftId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  maxLength: 255
+                preconditions:
+                  type: array
+                  items:
+                    type: string
+                steps:
+                  type: array
+                  items:
+                    type: string
+                expected:
+                  type: object
+                caseType:
+                  $ref: '#/components/schemas/CaseType'
+                priority:
+                  $ref: '#/components/schemas/Priority'
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseDraft'
+
+  /generation/drafts:
+    get:
+      tags: [Generation]
+      summary: 获取草稿列表
+      operationId: listDrafts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/DraftStatus'
+        - name: confidence
+          in: query
+          schema:
+            $ref: '#/components/schemas/Confidence'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CaseDraft'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
 
   # ==================== 测试用例 ====================
   /cases:
@@ -1061,6 +1227,9 @@ components:
           format: uuid
         name:
           type: string
+        prefix:
+          type: string
+          description: 项目前缀，用于用例编号生成
         description:
           type: string
         createdAt:
@@ -1082,11 +1251,17 @@ components:
 
     CreateProjectRequest:
       type: object
-      required: [name]
+      required: [name, prefix]
       properties:
         name:
           type: string
           maxLength: 255
+        prefix:
+          type: string
+          minLength: 2
+          maxLength: 4
+          pattern: '^[A-Z]+$'
+          description: 项目前缀，2-4位大写字母，用于用例编号生成
         description:
           type: string
 
@@ -1096,6 +1271,12 @@ components:
         name:
           type: string
           maxLength: 255
+        prefix:
+          type: string
+          minLength: 2
+          maxLength: 4
+          pattern: '^[A-Z]+$'
+          description: 项目前缀，2-4位大写字母
         description:
           type: string
 
@@ -1111,16 +1292,25 @@ components:
           format: uuid
         name:
           type: string
+        abbreviation:
+          type: string
+          description: 模块缩写，用于用例编号生成
         description:
           type: string
 
     CreateModuleRequest:
       type: object
-      required: [name]
+      required: [name, abbreviation]
       properties:
         name:
           type: string
           maxLength: 255
+        abbreviation:
+          type: string
+          minLength: 2
+          maxLength: 4
+          pattern: '^[A-Z]+$'
+          description: 模块缩写，2-4位大写字母，项目内唯一
         description:
           type: string
 
@@ -1130,6 +1320,12 @@ components:
         name:
           type: string
           maxLength: 255
+        abbreviation:
+          type: string
+          minLength: 2
+          maxLength: 4
+          pattern: '^[A-Z]+$'
+          description: 模块缩写，2-4位大写字母
         description:
           type: string
 
@@ -1150,6 +1346,52 @@ components:
           description: JSON 值
         description:
           type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProjectStats:
+      type: object
+      description: 项目仪表盘统计数据
+      properties:
+        totalCases:
+          type: integer
+          description: 用例总数
+        passRate:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: 通过率（百分比）
+        coverageRate:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: 需求覆盖率（百分比）
+        aiGeneratedCount:
+          type: integer
+          description: AI 生成用例数
+        recentTasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenerationTask'
+          description: 最近生成任务列表
+        passRateTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              rate:
+                type: number
+                format: double
+          description: 通过率趋势（最近30天）
 
     UpsertProjectConfigRequest:
       type: object
@@ -1178,11 +1420,10 @@ components:
           type: string
         type:
           $ref: '#/components/schemas/DocumentType'
+        status:
+          $ref: '#/components/schemas/DocumentStatus'
         url:
           type: string
-        status:
-          type: string
-          enum: [pending, parsing, completed, failed]
         metadata:
           type: object
         createdAt:
@@ -1191,6 +1432,16 @@ components:
         updatedAt:
           type: string
           format: date-time
+
+    DocumentStatus:
+      type: string
+      enum: [pending, processing, completed, failed]
+      description: |
+        文档处理状态：
+        - pending: 等待处理
+        - processing: 正在解析
+        - completed: 处理完成
+        - failed: 处理失败
 
     DocumentChunk:
       type: object
@@ -1211,20 +1462,47 @@ components:
     # ==================== 生成任务 ====================
     CreateGenerationTaskRequest:
       type: object
+      required: [moduleId, prompt]
       properties:
         moduleId:
           type: string
           format: uuid
-          description: 目标模块（可选）
+          description: 目标模块（必选）
         prompt:
           type: string
-          description: 用户自定义提示词（可选）
+          minLength: 20
+          description: 需求描述（必填，最少20字）
+        documentScope:
+          type: string
+          enum: [all, prd_only, figma_only]
+          default: all
+          description: 文档范围
+        caseCount:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+          description: 期望生成的用例数量
+        sceneTypes:
+          type: array
+          items:
+            type: string
+            enum: [positive, negative, boundary]
+          default: [positive, negative, boundary]
+          description: 场景类型（正向/异常/边界）
+        priorityPreference:
+          $ref: '#/components/schemas/Priority'
+        generationMode:
+          type: string
+          enum: [normal, deep]
+          default: normal
+          description: 生成模式（常规/深度覆盖）
         documentIds:
           type: array
           items:
             type: string
             format: uuid
-          description: 指定参考文档（可选）
+          description: 指定参考文档（可选，默认使用全部）
 
     GenerationTask:
       type: object
@@ -1270,6 +1548,9 @@ components:
         taskId:
           type: string
           format: uuid
+        moduleId:
+          type: string
+          format: uuid
         title:
           type: string
         preconditions:
@@ -1286,10 +1567,27 @@ components:
           $ref: '#/components/schemas/CaseType'
         priority:
           $ref: '#/components/schemas/Priority'
+        confidence:
+          $ref: '#/components/schemas/Confidence'
         status:
           $ref: '#/components/schemas/DraftStatus'
         feedback:
           type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Confidence:
+      type: string
+      enum: [high, medium, low]
+      description: |
+        AI 生成置信度：
+        - high: 检索到 ≥2 个相关文档块，语义相似度 > 0.8
+        - medium: 检索到 1 个相关文档块，语义相似度 0.5-0.8
+        - low: 无匹配文档块，纯 LLM 生成
 
     # ==================== 测试用例 ====================
     TestCase:
@@ -1324,18 +1622,40 @@ components:
           $ref: '#/components/schemas/CaseStatus'
         aiMetadata:
           type: object
+          description: AI 生成元数据，记录用例来源和置信度
           properties:
-            referencedChunks:
-              type: array
-              items:
-                type: string
-                format: uuid
-            taskId:
+            generationTaskId:
               type: string
               format: uuid
+              description: 关联的生成任务 ID
             confidence:
-              type: number
-              format: double
+              $ref: '#/components/schemas/Confidence'
+            referencedChunks:
+              type: array
+              description: 引用的文档块列表
+              items:
+                type: object
+                properties:
+                  chunkId:
+                    type: string
+                    format: uuid
+                  documentId:
+                    type: string
+                    format: uuid
+                  documentTitle:
+                    type: string
+                  similarityScore:
+                    type: number
+                    format: double
+                    minimum: 0
+                    maximum: 1
+            modelVersion:
+              type: string
+              description: 使用的模型版本
+            generatedAt:
+              type: string
+              format: date-time
+              description: 生成时间
         createdAt:
           type: string
           format: date-time
