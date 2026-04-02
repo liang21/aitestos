@@ -2,20 +2,21 @@
 package config
 
 import (
+	"fmt"
 	"time"
 )
 
 // Config is the root configuration structure
 type Config struct {
-	Server    ServerConfig    `mapstructure:"server"`
-	Database  DatabaseConfig  `mapstructure:"database"`
-	Redis     RedisConfig     `mapstructure:"redis"`
-	LLM       LLMConfig       `mapstructure:"llm"`
-	Milvus    MilvusConfig    `mapstructure:"milvus"`
-	Storage   StorageConfig   `mapstructure:"storage"`
-	RabbitMQ  RabbitMQConfig  `mapstructure:"rabbitmq"`
-	JWT       JWTConfig       `mapstructure:"jwt"`
-	Log       LogConfig       `mapstructure:"log"`
+	Server   ServerConfig   `mapstructure:"server"`
+	Database DatabaseConfig `mapstructure:"database"`
+	Redis    RedisConfig    `mapstructure:"redis"`
+	LLM      LLMConfig      `mapstructure:"llm"`
+	Milvus   MilvusConfig   `mapstructure:"milvus"`
+	Storage  StorageConfig  `mapstructure:"storage"`
+	RabbitMQ RabbitMQConfig `mapstructure:"rabbitmq"`
+	JWT      JWTConfig      `mapstructure:"jwt"`
+	Log      LogConfig      `mapstructure:"log"`
 }
 
 // ServerConfig holds HTTP server configuration
@@ -92,4 +93,93 @@ type JWTConfig struct {
 type LogConfig struct {
 	Level string `mapstructure:"level"`
 	JSON  bool   `mapstructure:"json"`
+}
+
+// Validate validates the entire configuration
+func (c *Config) Validate() error {
+	if err := c.Server.Validate(); err != nil {
+		return fmt.Errorf("server config: %w", err)
+	}
+	if err := c.Database.Validate(); err != nil {
+		return fmt.Errorf("database config: %w", err)
+	}
+	if err := c.LLM.Validate(); err != nil {
+		return fmt.Errorf("llm config: %w", err)
+	}
+	if err := c.JWT.Validate(); err != nil {
+		return fmt.Errorf("jwt config: %w", err)
+	}
+	return nil
+}
+
+// Validate validates ServerConfig
+func (c *ServerConfig) Validate() error {
+	if c.Host == "" {
+		return fmt.Errorf("host cannot be empty")
+	}
+	if c.Port <= 0 || c.Port > 65535 {
+		return fmt.Errorf("port must be between 1 and 65535")
+	}
+	if c.ShutdownTimeout <= 0 {
+		return fmt.Errorf("shutdown timeout must be positive")
+	}
+	return nil
+}
+
+// Validate validates DatabaseConfig
+func (c *DatabaseConfig) Validate() error {
+	if c.Host == "" {
+		return fmt.Errorf("host cannot be empty")
+	}
+	if c.Port <= 0 {
+		return fmt.Errorf("port must be positive")
+	}
+	if c.User == "" {
+		return fmt.Errorf("user cannot be empty")
+	}
+	if c.Database == "" {
+		return fmt.Errorf("database name cannot be empty")
+	}
+	return nil
+}
+
+// ConnectionString returns PostgreSQL connection string
+func (c *DatabaseConfig) ConnectionString() string {
+	return fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		c.Host, c.Port, c.User, c.Password, c.Database, c.SSLMode,
+	)
+}
+
+// Validate validates LLMConfig
+func (c *LLMConfig) Validate() error {
+	if c.APIKey == "" {
+		return fmt.Errorf("api_key cannot be empty")
+	}
+	validProviders := map[string]bool{
+		"deepseek": true,
+		"openai":   true,
+		"azure":    true,
+	}
+	if !validProviders[c.Provider] {
+		return fmt.Errorf("invalid provider: %s", c.Provider)
+	}
+	if c.Timeout <= 0 {
+		return fmt.Errorf("timeout must be positive")
+	}
+	return nil
+}
+
+// Validate validates JWTConfig
+func (c *JWTConfig) Validate() error {
+	if c.Secret == "" {
+		return fmt.Errorf("secret cannot be empty")
+	}
+	if len(c.Secret) < 8 {
+		return fmt.Errorf("secret must be at least 8 characters")
+	}
+	if c.ExpireTime < 5*time.Minute {
+		return fmt.Errorf("expire time must be at least 5 minutes")
+	}
+	return nil
 }

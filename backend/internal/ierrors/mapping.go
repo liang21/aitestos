@@ -4,12 +4,12 @@ package ierrors
 import (
 	"errors"
 
-	"github.com/edy/zane/go/aitestos/internal/domain/identity"
-	"github.com/edy/zane/go/aitestos/internal/domain/project"
-	"github.com/edy/zane/go/aitestos/internal/domain/knowledge"
-	"github.com/edy/zane/go/aitestos/internal/domain/testcase"
-	"github.com/edy/zane/go/aitestos/internal/domain/testplan"
-	"github.com/edy/zane/go/aitestos/internal/domain/generation"
+	"github.com/liang21/aitestos/internal/domain/generation"
+	"github.com/liang21/aitestos/internal/domain/identity"
+	"github.com/liang21/aitestos/internal/domain/knowledge"
+	"github.com/liang21/aitestos/internal/domain/project"
+	"github.com/liang21/aitestos/internal/domain/testcase"
+	"github.com/liang21/aitestos/internal/domain/testplan"
 )
 
 // MapError converts domain errors to unified error codes

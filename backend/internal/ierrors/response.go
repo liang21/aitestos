@@ -37,16 +37,16 @@ func CodeToMessage(code int) string {
 		CodePermissionDenied:  "权限不足",
 
 		// Project
-		CodeProjectNotFound:       "项目不存在",
-		CodeProjectNameDuplicate:  "项目名称已存在",
+		CodeProjectNotFound:        "项目不存在",
+		CodeProjectNameDuplicate:   "项目名称已存在",
 		CodeProjectPrefixDuplicate: "项目前缀已存在",
-		CodeInvalidProjectPrefix:  "项目前缀格式无效，需2-4位大写字母",
-		CodeModuleNotFound:        "模块不存在",
-		CodeModuleNameDuplicate:   "模块名称重复",
-		CodeModuleAbbrevDuplicate: "模块缩写重复",
-		CodeInvalidModuleAbbrev:   "模块缩写格式无效，需2-4位大写字母",
-		CodeConfigNotFound:        "配置项不存在",
-		CodeConfigKeyDuplicate:    "配置键重复",
+		CodeInvalidProjectPrefix:   "项目前缀格式无效，需2-4位大写字母",
+		CodeModuleNotFound:         "模块不存在",
+		CodeModuleNameDuplicate:    "模块名称重复",
+		CodeModuleAbbrevDuplicate:  "模块缩写重复",
+		CodeInvalidModuleAbbrev:    "模块缩写格式无效，需2-4位大写字母",
+		CodeConfigNotFound:         "配置项不存在",
+		CodeConfigKeyDuplicate:     "配置键重复",
 
 		// Knowledge
 		CodeDocumentNotFound:        "文档不存在",

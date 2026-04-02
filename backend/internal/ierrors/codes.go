@@ -20,16 +20,16 @@ const (
 	CodePermissionDenied  = 10006
 
 	// ============ Project Context (2xxxx) ============
-	CodeProjectNotFound       = 20001
-	CodeProjectNameDuplicate  = 20002
-	CodeModuleNotFound        = 20003
-	CodeModuleNameDuplicate   = 20004
-	CodeConfigNotFound        = 20005
-	CodeConfigKeyDuplicate    = 20006
+	CodeProjectNotFound        = 20001
+	CodeProjectNameDuplicate   = 20002
+	CodeModuleNotFound         = 20003
+	CodeModuleNameDuplicate    = 20004
+	CodeConfigNotFound         = 20005
+	CodeConfigKeyDuplicate     = 20006
 	CodeProjectPrefixDuplicate = 20007
-	CodeInvalidProjectPrefix  = 20008
-	CodeModuleAbbrevDuplicate = 20009
-	CodeInvalidModuleAbbrev   = 20010
+	CodeInvalidProjectPrefix   = 20008
+	CodeModuleAbbrevDuplicate  = 20009
+	CodeInvalidModuleAbbrev    = 20010
 
 	// ============ Knowledge Context (3xxxx) ============
 	CodeDocumentNotFound        = 30001

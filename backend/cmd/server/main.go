@@ -13,8 +13,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/edy/zane/go/aitestos/internal/app"
-	"github.com/edy/zane/go/aitestos/internal/config"
+	"github.com/liang21/aitestos/internal/app"
+	"github.com/liang21/aitestos/internal/config"
 )
 
 func main() {
