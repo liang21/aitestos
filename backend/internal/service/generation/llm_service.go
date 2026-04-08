@@ -93,10 +93,7 @@ func (s *LLMServiceImpl) GenerateCases(ctx context.Context, req *GenerateCasesRe
 
 	// Validate case count
 	caseCount := req.CaseCount
-	if caseCount <= 0 {
-		caseCount = 1
-	}
-	if caseCount > 20 {
+	if caseCount < 1 || caseCount > 20 {
 		return nil, errors.New("case count must be between 1 and 20")
 	}
 
