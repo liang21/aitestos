@@ -14,6 +14,8 @@ var (
 	ErrEmptyChunks = errors.New("document chunks is empty")
 	// ErrEmbeddingFailed indicates embedding generation failed
 	ErrEmbeddingFailed = errors.New("embedding failed")
+	// ErrChunkNotFound indicates document chunk does not exist
+	ErrChunkNotFound = errors.New("document chunk not found")
 	// ErrVectorSearchFailed indicates vector search failed
 	ErrVectorSearchFailed = errors.New("vector search failed")
 	// ErrKnowledgeBaseEmpty indicates knowledge base is empty

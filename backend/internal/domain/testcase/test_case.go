@@ -208,3 +208,39 @@ func (tc *TestCase) SetAiMetadata(metadata *AiMetadata) {
 	tc.aiMetadata = metadata
 	tc.updatedAt = time.Now()
 }
+
+// ReconstructTestCase reconstructs a TestCase from persistence layer.
+// Used by repository implementations to hydrate domain objects from database rows.
+func ReconstructTestCase(
+	id uuid.UUID,
+	moduleID uuid.UUID,
+	userID uuid.UUID,
+	number CaseNumber,
+	title string,
+	preconditions Preconditions,
+	steps Steps,
+	expected ExpectedResult,
+	aiMetadata *AiMetadata,
+	caseType CaseType,
+	priority Priority,
+	status CaseStatus,
+	createdAt time.Time,
+	updatedAt time.Time,
+) *TestCase {
+	return &TestCase{
+		id:            id,
+		moduleID:      moduleID,
+		userID:        userID,
+		number:        number,
+		title:         title,
+		preconditions: preconditions,
+		steps:         steps,
+		expected:      expected,
+		aiMetadata:    aiMetadata,
+		caseType:      caseType,
+		priority:      priority,
+		status:        status,
+		createdAt:     createdAt,
+		updatedAt:     updatedAt,
+	}
+}

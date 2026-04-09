@@ -94,6 +94,11 @@ func (pc *PostgresContainer) Teardown(ctx context.Context) error {
 
 // RunMigrations 执行数据库迁移
 func RunMigrations(ctx context.Context, db *sqlx.DB) error {
+	// 启用 uuid-ossp 扩展（必须在创建表之前，因为表使用了 uuid_generate_v4()）
+	if _, err := db.ExecContext(ctx, `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`); err != nil {
+		return fmt.Errorf("create uuid extension: %w", err)
+	}
+
 	// 创建 ENUM 类型
 	enumSQL := []string{
 		`CREATE TYPE IF NOT EXISTS case_status_enum AS ENUM ('unexecuted', 'pass', 'block', 'fail');`,
@@ -188,6 +193,7 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 			project_id UUID NOT NULL REFERENCES project(id) ON DELETE CASCADE,
 			user_id UUID NOT NULL REFERENCES users(id),
 			name VARCHAR(255) NOT NULL,
+			description TEXT DEFAULT '',
 			status plan_status_enum NOT NULL DEFAULT 'draft',
 			extra_config JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -208,13 +214,14 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 			case_id UUID NOT NULL REFERENCES test_case(id) ON DELETE CASCADE,
 			plan_id UUID NOT NULL REFERENCES test_plan(id) ON DELETE CASCADE,
 			executor_id UUID NOT NULL REFERENCES users(id),
-			result result_status_enum NOT NULL,
-			result_details JSONB DEFAULT '{}'::jsonb,
-			executed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+			status result_status_enum NOT NULL,
+			note TEXT DEFAULT '',
+			executed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		);`,
 
-		// document 表
-		`CREATE TABLE IF NOT EXISTS document (
+		// documents 表
+		`CREATE TABLE IF NOT EXISTS documents (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			project_id UUID NOT NULL REFERENCES project(id) ON DELETE CASCADE,
 			name VARCHAR(255) NOT NULL,
@@ -223,43 +230,47 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 			content_text TEXT,
 			metadata JSONB DEFAULT '{}'::jsonb,
 			status document_status_enum NOT NULL DEFAULT 'pending',
+			created_by UUID NOT NULL REFERENCES users(id),
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+			deleted_at TIMESTAMP WITH TIME ZONE
 		);`,
 
-		// document_chunk 表
-		`CREATE TABLE IF NOT EXISTS document_chunk (
+		// document_chunks 表
+		`CREATE TABLE IF NOT EXISTS document_chunks (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			document_id UUID NOT NULL REFERENCES document(id) ON DELETE CASCADE,
+			document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
 			chunk_index INTEGER NOT NULL,
 			content TEXT NOT NULL,
+			embedding BYTEA,
 			metadata JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 			UNIQUE(document_id, chunk_index)
 		);`,
 
-		// generation_task 表
-		`CREATE TABLE IF NOT EXISTS generation_task (
+		// generation_tasks 表
+		`CREATE TABLE IF NOT EXISTS generation_tasks (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			project_id UUID NOT NULL REFERENCES project(id) ON DELETE CASCADE,
+			module_id UUID REFERENCES module(id) ON DELETE SET NULL,
 			user_id UUID NOT NULL REFERENCES users(id),
 			status VARCHAR(32) NOT NULL DEFAULT 'pending',
 			prompt TEXT,
 			result_summary JSONB DEFAULT '{}'::jsonb,
-			error_msg TEXT,
+			error_message TEXT,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		);`,
 
-		// generated_case_draft 表
-		`CREATE TABLE IF NOT EXISTS generated_case_draft (
+		// case_drafts 表
+		`CREATE TABLE IF NOT EXISTS case_drafts (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			task_id UUID NOT NULL REFERENCES generation_task(id) ON DELETE CASCADE,
+			task_id UUID NOT NULL REFERENCES generation_tasks(id) ON DELETE CASCADE,
 			module_id UUID REFERENCES module(id) ON DELETE SET NULL,
 			title VARCHAR(255) NOT NULL,
 			preconditions JSONB DEFAULT '[]'::jsonb,
 			steps JSONB DEFAULT '[]'::jsonb NOT NULL,
-			expected JSONB DEFAULT '{}'::jsonb NOT NULL,
+			expected_result JSONB DEFAULT '{}'::jsonb NOT NULL,
 			case_type case_type_enum NOT NULL DEFAULT 'functionality',
 			priority priority_enum NOT NULL DEFAULT 'P2',
 			ai_metadata JSONB DEFAULT '{}'::jsonb,
@@ -276,11 +287,6 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 		}
 	}
 
-	// 启用 uuid-ossp 扩展
-	if _, err := db.ExecContext(ctx, `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`); err != nil {
-		return fmt.Errorf("create uuid extension: %w", err)
-	}
-
 	return nil
 }
 
@@ -288,8 +294,8 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 func TruncateAllTables(ctx context.Context, db *sqlx.DB) error {
 	tables := []string{
 		"test_result", "plan_cases", "test_plan", "test_case", "module",
-		"project_config", "project", "users", "document_chunk", "document",
-		"generated_case_draft", "generation_task",
+		"project_config", "project", "users", "document_chunks", "documents",
+		"case_drafts", "generation_tasks",
 	}
 
 	tx, err := db.BeginTxx(ctx, nil)

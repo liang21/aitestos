@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	domainknowledge "github.com/liang21/aitestos/internal/domain/knowledge"
 	domainproject "github.com/liang21/aitestos/internal/domain/project"
-	"github.com/liang21/aitestos/internal/domain/knowledge"
 	"github.com/liang21/aitestos/internal/repository/knowledge"
+	projectRepo "github.com/liang21/aitestos/internal/repository/project"
 	"github.com/liang21/aitestos/internal/repository/testsetup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,13 +22,13 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 	tc := testsetup.SetupTest(t)
 	defer tc.CleanupTest()
 
-	projectRepo := repository.NewProjectRepository(tc.DB)
-	docRepo := repository.NewDocumentRepository(tc.DB)
-	chunkRepo := repository.NewDocumentChunkRepository(tc.DB)
+	projectRepo := projectRepo.NewProjectRepository(tc.DB)
+	docRepo := knowledge.NewDocumentRepository(tc.DB)
+	chunkRepo := knowledge.NewDocumentChunkRepository(tc.DB)
 	ctx := context.Background()
 
 	// 辅助函数：创建项目和文档
-	createProjectAndDocument := func(t *testing.T) (*domainproject.Project, *knowledge.Document) {
+	createProjectAndDocument := func(t *testing.T) (*domainproject.Project, *domainknowledge.Document) {
 		project, err := testsetup.NewProjectBuilder().Build()
 		require.NoError(t, err, "build project should succeed")
 		require.NoError(t, projectRepo.Save(ctx, project), "save project should succeed")
@@ -61,14 +62,14 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 		_, doc := createProjectAndDocument(t)
 
 		// 批量创建块
-		chunks := make([]*knowledge.DocumentChunk, 5)
+		chunks := make([]*domainknowledge.DocumentChunk, 5)
 		for i := 0; i < 5; i++ {
 			chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), i).Build()
 			require.NoError(t, err, "build chunk should succeed")
 			chunks[i] = chunk
 		}
 
-		err := chunkRepo.BatchSave(ctx, chunks)
+		err := chunkRepo.SaveBatch(ctx, chunks)
 		require.NoError(t, err, "batch save chunks should succeed")
 
 		// 验证所有块都已保存
@@ -115,7 +116,7 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 		// 测试不存在的索引
 		_, err = chunkRepo.FindByChunkIndex(ctx, doc.ID(), 999)
 		require.Error(t, err, "find non-existent chunk index should fail")
-		assert.ErrorIs(t, err, knowledge.ErrChunkNotFound, "error should be ErrChunkNotFound")
+		assert.ErrorIs(t, err, domainknowledge.ErrChunkNotFound, "error should be ErrChunkNotFound")
 	})
 
 	t.Run("FindByID", func(t *testing.T) {
@@ -134,7 +135,7 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 		// 测试不存在的 ID
 		_, err = chunkRepo.FindByID(ctx, uuid.New())
 		require.Error(t, err, "find non-existent chunk should fail")
-		assert.ErrorIs(t, err, knowledge.ErrChunkNotFound, "error should be ErrChunkNotFound")
+		assert.ErrorIs(t, err, domainknowledge.ErrChunkNotFound, "error should be ErrChunkNotFound")
 	})
 
 	t.Run("DeleteByDocumentID", func(t *testing.T) {

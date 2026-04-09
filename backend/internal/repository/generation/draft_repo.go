@@ -4,6 +4,7 @@ package generation
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -172,6 +173,82 @@ func (r *CaseDraftRepository) FindByStatus(ctx context.Context, status domaingen
 	return r.rowsToDrafts(rows)
 }
 
+// FindByTaskIDAndStatus retrieves case drafts by task ID and status
+func (r *CaseDraftRepository) FindByTaskIDAndStatus(ctx context.Context, taskID uuid.UUID, status domaingeneration.DraftStatus) ([]*domaingeneration.GeneratedCaseDraft, error) {
+	query := `
+		SELECT id, task_id, module_id, title, preconditions, steps, expected_result,
+			   case_type, priority, ai_metadata, status, feedback, created_at, updated_at
+		FROM case_drafts
+		WHERE task_id = $1 AND status = $2
+		ORDER BY created_at ASC
+	`
+
+	var rows []struct {
+		ID            uuid.UUID  `db:"id"`
+		TaskID        uuid.UUID  `db:"task_id"`
+		ModuleID      *uuid.UUID `db:"module_id"`
+		Title         string     `db:"title"`
+		Preconditions string     `db:"preconditions"`
+		Steps         string     `db:"steps"`
+		Expected      string     `db:"expected_result"`
+		CaseType      string     `db:"case_type"`
+		Priority      string     `db:"priority"`
+		AiMetadata    []byte     `db:"ai_metadata"`
+		Status        string     `db:"status"`
+		Feedback      string     `db:"feedback"`
+		CreatedAt     string     `db:"created_at"`
+		UpdatedAt     string     `db:"updated_at"`
+	}
+
+	if err := r.db.SelectContext(ctx, &rows, query, taskID, string(status)); err != nil {
+		return nil, fmt.Errorf("find case drafts by task id and status: %w", err)
+	}
+
+	return r.rowsToDrafts(rows)
+}
+
+// BatchUpdateStatus updates the status and module ID for multiple drafts in a transaction
+func (r *CaseDraftRepository) BatchUpdateStatus(ctx context.Context, draftIDs []uuid.UUID, status domaingeneration.DraftStatus, moduleID uuid.UUID) error {
+	if len(draftIDs) == 0 {
+		return nil
+	}
+
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	query := `
+		UPDATE case_drafts
+		SET status = $2, module_id = $3, updated_at = NOW()
+		WHERE id = $1
+	`
+
+	for _, id := range draftIDs {
+		_, err := tx.ExecContext(ctx, query, id, string(status), moduleID)
+		if err != nil {
+			return fmt.Errorf("batch update draft status for %s: %w", id, err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit batch update: %w", err)
+	}
+	return nil
+}
+
+// CountByTaskIDAndStatus counts drafts by task ID and status
+func (r *CaseDraftRepository) CountByTaskIDAndStatus(ctx context.Context, taskID uuid.UUID, status domaingeneration.DraftStatus) (int64, error) {
+	var count int64
+	query := `SELECT COUNT(*) FROM case_drafts WHERE task_id = $1 AND status = $2`
+	err := r.db.GetContext(ctx, &count, query, taskID, string(status))
+	if err != nil {
+		return 0, fmt.Errorf("count case drafts by task id and status: %w", err)
+	}
+	return count, nil
+}
+
 // Update updates an existing case draft
 func (r *CaseDraftRepository) Update(ctx context.Context, draft *domaingeneration.GeneratedCaseDraft) error {
 	query := `
@@ -222,6 +299,16 @@ func (r *CaseDraftRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
+// DeleteByTaskID removes all case drafts for a task
+func (r *CaseDraftRepository) DeleteByTaskID(ctx context.Context, taskID uuid.UUID) error {
+	query := `DELETE FROM case_drafts WHERE task_id = $1`
+	_, err := r.db.ExecContext(ctx, query, taskID)
+	if err != nil {
+		return fmt.Errorf("delete case drafts by task id: %w", err)
+	}
+	return nil
+}
+
 // Helper functions
 func (r *CaseDraftRepository) rowToDraft(row *struct {
 	ID            uuid.UUID  `db:"id"`
@@ -265,6 +352,14 @@ func (r *CaseDraftRepository) rowToDraft(row *struct {
 		}
 	}
 
+	var aiMetadata *testcase.AiMetadata
+	if len(row.AiMetadata) > 0 && string(row.AiMetadata) != "{}" {
+		aiMetadata = &testcase.AiMetadata{}
+		if err := json.Unmarshal(row.AiMetadata, aiMetadata); err != nil {
+			return nil, fmt.Errorf("parse ai metadata: %w", err)
+		}
+	}
+
 	return domaingeneration.ReconstructDraft(
 		row.ID,
 		row.TaskID,
@@ -275,7 +370,7 @@ func (r *CaseDraftRepository) rowToDraft(row *struct {
 		expected,
 		testcase.CaseType(row.CaseType),
 		testcase.Priority(row.Priority),
-		nil, // aiMetadata - would need to parse from row.AiMetadata
+		aiMetadata,
 		status,
 		row.Feedback,
 		parseTime(row.CreatedAt),

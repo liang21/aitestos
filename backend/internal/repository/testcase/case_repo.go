@@ -4,6 +4,7 @@ package testcase
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -22,25 +23,104 @@ func NewTestCaseRepository(db *sqlx.DB) *TestCaseRepository {
 	return &TestCaseRepository{db: db}
 }
 
-// Save persists a new test case
-func (r *TestCaseRepository) Save(ctx context.Context, tc *domaintestcase.TestCase) error {
-	query := `
-		INSERT INTO test_cases (
-			id, module_id, user_id, number, title, preconditions, steps,
-			expected_result, case_type, priority, status, ai_metadata,
-			created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-	`
+// caseRow maps SQL columns for test_case table
+type caseRow struct {
+	ID            uuid.UUID `db:"id"`
+	ModuleID      uuid.UUID `db:"module_id"`
+	UserID        uuid.UUID `db:"user_id"`
+	Number        string    `db:"number"`
+	Title         string    `db:"title"`
+	Preconditions []byte    `db:"preconditions"`
+	Steps         []byte    `db:"steps"`
+	Expected      []byte    `db:"expected"`
+	AiMetadata    []byte    `db:"ai_metadata"`
+	CaseType      string    `db:"case_type"`
+	Priority      string    `db:"priority"`
+	Status        string    `db:"status"`
+	CreatedAt     time.Time `db:"created_at"`
+	UpdatedAt     time.Time `db:"updated_at"`
+}
 
-	preconditionsJSON, _ := toJSON(tc.Preconditions())
-	stepsJSON, _ := toJSON(tc.Steps())
-	expectedJSON, _ := toJSON(tc.ExpectedResult())
-	var aiMetadataJSON []byte
-	if tc.AiMetadata() != nil {
-		aiMetadataJSON, _ = jsonMarshal(tc.AiMetadata())
+// toTestCase converts a database row to domain TestCase
+func (r *TestCaseRepository) toTestCase(row *caseRow) (*domaintestcase.TestCase, error) {
+	number, err := domaintestcase.ParseCaseNumber(row.Number)
+	if err != nil {
+		return nil, fmt.Errorf("parse case number: %w", err)
 	}
 
-	_, err := r.db.ExecContext(ctx, query,
+	var preconditions domaintestcase.Preconditions
+	if err := json.Unmarshal(row.Preconditions, &preconditions); err != nil {
+		return nil, fmt.Errorf("unmarshal preconditions: %w", err)
+	}
+
+	var steps domaintestcase.Steps
+	if err := json.Unmarshal(row.Steps, &steps); err != nil {
+		return nil, fmt.Errorf("unmarshal steps: %w", err)
+	}
+
+	var expected domaintestcase.ExpectedResult
+	if err := json.Unmarshal(row.Expected, &expected); err != nil {
+		return nil, fmt.Errorf("unmarshal expected result: %w", err)
+	}
+
+	var aiMetadata *domaintestcase.AiMetadata
+	if len(row.AiMetadata) > 0 && string(row.AiMetadata) != "{}" {
+		aiMetadata = &domaintestcase.AiMetadata{}
+		if err := json.Unmarshal(row.AiMetadata, aiMetadata); err != nil {
+			return nil, fmt.Errorf("unmarshal ai metadata: %w", err)
+		}
+	}
+
+	return domaintestcase.ReconstructTestCase(
+		row.ID,
+		row.ModuleID,
+		row.UserID,
+		number,
+		row.Title,
+		preconditions,
+		steps,
+		expected,
+		aiMetadata,
+		domaintestcase.CaseType(row.CaseType),
+		domaintestcase.Priority(row.Priority),
+		domaintestcase.CaseStatus(row.Status),
+		row.CreatedAt,
+		row.UpdatedAt,
+	), nil
+}
+
+const caseColumns = `id, module_id, user_id, number, title, preconditions, steps, expected, ai_metadata, case_type, priority, status, created_at, updated_at`
+
+// Save persists a new test case
+func (r *TestCaseRepository) Save(ctx context.Context, tc *domaintestcase.TestCase) error {
+	preconditionsJSON, err := json.Marshal(tc.Preconditions())
+	if err != nil {
+		return fmt.Errorf("marshal preconditions: %w", err)
+	}
+
+	stepsJSON, err := json.Marshal(tc.Steps())
+	if err != nil {
+		return fmt.Errorf("marshal steps: %w", err)
+	}
+
+	expectedJSON, err := json.Marshal(tc.ExpectedResult())
+	if err != nil {
+		return fmt.Errorf("marshal expected result: %w", err)
+	}
+
+	var aiMetadataJSON []byte
+	if tc.AiMetadata() != nil {
+		aiMetadataJSON, err = json.Marshal(tc.AiMetadata())
+		if err != nil {
+			return fmt.Errorf("marshal ai metadata: %w", err)
+		}
+	}
+
+	query := `
+		INSERT INTO test_case (id, module_id, user_id, number, title, preconditions, steps, expected, ai_metadata, case_type, priority, status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+	`
+	_, err = r.db.ExecContext(ctx, query,
 		tc.ID(),
 		tc.ModuleID(),
 		tc.UserID(),
@@ -49,10 +129,10 @@ func (r *TestCaseRepository) Save(ctx context.Context, tc *domaintestcase.TestCa
 		preconditionsJSON,
 		stepsJSON,
 		expectedJSON,
+		aiMetadataJSON,
 		string(tc.CaseType()),
 		string(tc.Priority()),
 		string(tc.Status()),
-		aiMetadataJSON,
 		tc.CreatedAt(),
 		tc.UpdatedAt(),
 	)
@@ -64,30 +144,8 @@ func (r *TestCaseRepository) Save(ctx context.Context, tc *domaintestcase.TestCa
 
 // FindByID retrieves a test case by ID
 func (r *TestCaseRepository) FindByID(ctx context.Context, id uuid.UUID) (*domaintestcase.TestCase, error) {
-	var row struct {
-		ID            uuid.UUID `db:"id"`
-		ModuleID      uuid.UUID `db:"module_id"`
-		UserID        uuid.UUID `db:"user_id"`
-		Number        string    `db:"number"`
-		Title         string    `db:"title"`
-		Preconditions string    `db:"preconditions"`
-		Steps         string    `db:"steps"`
-		Expected      string    `db:"expected_result"`
-		CaseType      string    `db:"case_type"`
-		Priority      string    `db:"priority"`
-		Status        string    `db:"status"`
-		AiMetadata    []byte    `db:"ai_metadata"`
-		CreatedAt     time.Time `db:"created_at"`
-		UpdatedAt     time.Time `db:"updated_at"`
-	}
-
-	query := `
-		SELECT id, module_id, user_id, number, title, preconditions, steps,
-			   expected_result, case_type, priority, status, ai_metadata,
-			   created_at, updated_at
-		FROM test_cases
-		WHERE id = $1 AND deleted_at IS NULL
-	`
+	var row caseRow
+	query := fmt.Sprintf(`SELECT %s FROM test_case WHERE id = $1 AND deleted_at IS NULL`, caseColumns)
 	err := r.db.GetContext(ctx, &row, query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -95,36 +153,13 @@ func (r *TestCaseRepository) FindByID(ctx context.Context, id uuid.UUID) (*domai
 		}
 		return nil, fmt.Errorf("find test case by id: %w", err)
 	}
-
-	return r.rowToTestCase(&row)
+	return r.toTestCase(&row)
 }
 
 // FindByNumber retrieves a test case by case number
 func (r *TestCaseRepository) FindByNumber(ctx context.Context, number domaintestcase.CaseNumber) (*domaintestcase.TestCase, error) {
-	var row struct {
-		ID            uuid.UUID `db:"id"`
-		ModuleID      uuid.UUID `db:"module_id"`
-		UserID        uuid.UUID `db:"user_id"`
-		Number        string    `db:"number"`
-		Title         string    `db:"title"`
-		Preconditions string    `db:"preconditions"`
-		Steps         string    `db:"steps"`
-		Expected      string    `db:"expected_result"`
-		CaseType      string    `db:"case_type"`
-		Priority      string    `db:"priority"`
-		Status        string    `db:"status"`
-		AiMetadata    []byte    `db:"ai_metadata"`
-		CreatedAt     time.Time `db:"created_at"`
-		UpdatedAt     time.Time `db:"updated_at"`
-	}
-
-	query := `
-		SELECT id, module_id, user_id, number, title, preconditions, steps,
-			   expected_result, case_type, priority, status, ai_metadata,
-			   created_at, updated_at
-		FROM test_cases
-		WHERE number = $1 AND deleted_at IS NULL
-	`
+	var row caseRow
+	query := fmt.Sprintf(`SELECT %s FROM test_case WHERE number = $1 AND deleted_at IS NULL`, caseColumns)
 	err := r.db.GetContext(ctx, &row, query, number.String())
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -132,55 +167,71 @@ func (r *TestCaseRepository) FindByNumber(ctx context.Context, number domaintest
 		}
 		return nil, fmt.Errorf("find test case by number: %w", err)
 	}
-
-	return r.rowToTestCase(&row)
+	return r.toTestCase(&row)
 }
 
 // FindByModuleID retrieves all test cases for a module with pagination
 func (r *TestCaseRepository) FindByModuleID(ctx context.Context, moduleID uuid.UUID, opts domaintestcase.QueryOptions) ([]*domaintestcase.TestCase, error) {
-	query := `
-		SELECT id, module_id, user_id, number, title, preconditions, steps,
-			   expected_result, case_type, priority, status, ai_metadata,
-			   created_at, updated_at
-		FROM test_cases
-		WHERE module_id = $1 AND deleted_at IS NULL
-		ORDER BY created_at DESC
-		LIMIT $2 OFFSET $3
-	`
-
-	var rows []struct {
-		ID            uuid.UUID `db:"id"`
-		ModuleID      uuid.UUID `db:"module_id"`
-		UserID        uuid.UUID `db:"user_id"`
-		Number        string    `db:"number"`
-		Title         string    `db:"title"`
-		Preconditions string    `db:"preconditions"`
-		Steps         string    `db:"steps"`
-		Expected      string    `db:"expected_result"`
-		CaseType      string    `db:"case_type"`
-		Priority      string    `db:"priority"`
-		Status        string    `db:"status"`
-		AiMetadata    []byte    `db:"ai_metadata"`
-		CreatedAt     time.Time `db:"created_at"`
-		UpdatedAt     time.Time `db:"updated_at"`
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = 20
 	}
 
-	if err := r.db.SelectContext(ctx, &rows, query, moduleID, opts.Limit, opts.Offset); err != nil {
+	var rows []caseRow
+	query := fmt.Sprintf(`SELECT %s FROM test_case WHERE module_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3`, caseColumns)
+	if err := r.db.SelectContext(ctx, &rows, query, moduleID, limit, opts.Offset); err != nil {
 		return nil, fmt.Errorf("find test cases by module id: %w", err)
 	}
 
-	return r.rowsToTestCases(rows)
+	return r.toTestCases(rows)
+}
+
+// FindByProjectID retrieves all test cases for a project with pagination
+// Joins module table to filter by project_id
+func (r *TestCaseRepository) FindByProjectID(ctx context.Context, projectID uuid.UUID, opts domaintestcase.QueryOptions) ([]*domaintestcase.TestCase, error) {
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+
+	var rows []caseRow
+	query := `
+		SELECT tc.id, tc.module_id, tc.user_id, tc.number, tc.title,
+		       tc.preconditions, tc.steps, tc.expected, tc.ai_metadata,
+		       tc.case_type, tc.priority, tc.status, tc.created_at, tc.updated_at
+		FROM test_case tc
+		INNER JOIN module m ON tc.module_id = m.id
+		WHERE m.project_id = $1 AND tc.deleted_at IS NULL
+		ORDER BY tc.created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+	if err := r.db.SelectContext(ctx, &rows, query, projectID, limit, opts.Offset); err != nil {
+		return nil, fmt.Errorf("find test cases by project id: %w", err)
+	}
+
+	return r.toTestCases(rows)
 }
 
 // Update updates an existing test case
 func (r *TestCaseRepository) Update(ctx context.Context, tc *domaintestcase.TestCase) error {
-	preconditionsJSON, _ := toJSON(tc.Preconditions())
-	stepsJSON, _ := toJSON(tc.Steps())
-	expectedJSON, _ := toJSON(tc.ExpectedResult())
+	preconditionsJSON, err := json.Marshal(tc.Preconditions())
+	if err != nil {
+		return fmt.Errorf("marshal preconditions: %w", err)
+	}
+
+	stepsJSON, err := json.Marshal(tc.Steps())
+	if err != nil {
+		return fmt.Errorf("marshal steps: %w", err)
+	}
+
+	expectedJSON, err := json.Marshal(tc.ExpectedResult())
+	if err != nil {
+		return fmt.Errorf("marshal expected result: %w", err)
+	}
 
 	query := `
-		UPDATE test_cases
-		SET title = $2, preconditions = $3, steps = $4, expected_result = $5,
+		UPDATE test_case
+		SET title = $2, preconditions = $3, steps = $4, expected = $5,
 			status = $6, updated_at = $7
 		WHERE id = $1 AND deleted_at IS NULL
 	`
@@ -208,7 +259,7 @@ func (r *TestCaseRepository) Update(ctx context.Context, tc *domaintestcase.Test
 
 // Delete removes a test case (soft delete)
 func (r *TestCaseRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	query := `UPDATE test_cases SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	query := `UPDATE test_case SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
 	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("delete test case: %w", err)
@@ -228,7 +279,7 @@ func (r *TestCaseRepository) CountByDate(ctx context.Context, moduleID uuid.UUID
 	var count int64
 	query := `
 		SELECT COUNT(*)
-		FROM test_cases
+		FROM test_case
 		WHERE module_id = $1
 		  AND DATE(created_at) = DATE($2)
 		  AND deleted_at IS NULL
@@ -240,21 +291,15 @@ func (r *TestCaseRepository) CountByDate(ctx context.Context, moduleID uuid.UUID
 	return count, nil
 }
 
-// Helper functions
-func (r *TestCaseRepository) rowToTestCase(row any) (*domaintestcase.TestCase, error) {
-	// Implementation depends on row structure
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (r *TestCaseRepository) rowsToTestCases(rows any) ([]*domaintestcase.TestCase, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
-func toJSON(v any) ([]byte, error) {
-	return jsonMarshal(v)
-}
-
-func jsonMarshal(v any) ([]byte, error) {
-	// Simple implementation - in production use encoding/json
-	return []byte("{}"), nil
+// toTestCases converts multiple rows to domain TestCases
+func (r *TestCaseRepository) toTestCases(rows []caseRow) ([]*domaintestcase.TestCase, error) {
+	cases := make([]*domaintestcase.TestCase, 0, len(rows))
+	for i := range rows {
+		tc, err := r.toTestCase(&rows[i])
+		if err != nil {
+			return nil, fmt.Errorf("convert row %d: %w", i, err)
+		}
+		cases = append(cases, tc)
+	}
+	return cases, nil
 }

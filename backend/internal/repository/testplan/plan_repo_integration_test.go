@@ -7,8 +7,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/liang21/aitestos/internal/domain/identity"
 	domainproject "github.com/liang21/aitestos/internal/domain/project"
-	"github.com/liang21/aitestos/internal/domain/testplan"
-	"github.com/liang21/aitestos/internal/repository/testplan"
+	domaintestplan "github.com/liang21/aitestos/internal/domain/testplan"
+	identityRepo "github.com/liang21/aitestos/internal/repository/identity"
+	projectPackage "github.com/liang21/aitestos/internal/repository/project"
+	testplanRepo "github.com/liang21/aitestos/internal/repository/testplan"
 	"github.com/liang21/aitestos/internal/repository/testsetup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,9 +24,9 @@ func TestPlanRepository_Integration(t *testing.T) {
 	tc := testsetup.SetupTest(t)
 	defer tc.CleanupTest()
 
-	userRepo := identityrepo.NewUserRepository(tc.DB)
-	projectRepo := repository.NewProjectRepository(tc.DB)
-	planRepo := repository.NewTestPlanRepository(tc.DB)
+	userRepo := identityRepo.NewUserRepository(tc.DB)
+	projectRepo := projectPackage.NewProjectRepository(tc.DB)
+	planRepo := testplanRepo.NewTestPlanRepository(tc.DB)
 	ctx := context.Background()
 
 	// 辅助函数：创建用户
@@ -56,12 +58,12 @@ func TestPlanRepository_Integration(t *testing.T) {
 		}{
 			{
 				name:    "save draft plan",
-				builder: testsetup.NewTestPlanBuilder(project.ID(), user.ID()).WithStatus(testplan.StatusDraft),
+				builder: testsetup.NewTestPlanBuilder(project.ID(), user.ID()).WithStatus(domaintestplan.StatusDraft),
 				wantErr: nil,
 			},
 			{
 				name:    "save active plan",
-				builder: testsetup.NewTestPlanBuilder(project.ID(), user.ID()).WithStatus(testplan.StatusActive),
+				builder: testsetup.NewTestPlanBuilder(project.ID(), user.ID()).WithStatus(domaintestplan.StatusActive),
 				wantErr: nil,
 			},
 		}
@@ -100,7 +102,7 @@ func TestPlanRepository_Integration(t *testing.T) {
 		// 测试不存在的 ID
 		_, err = planRepo.FindByID(ctx, uuid.New())
 		require.Error(t, err, "find non-existent plan should fail")
-		assert.ErrorIs(t, err, testplan.ErrPlanNotFound, "error should be ErrPlanNotFound")
+		assert.ErrorIs(t, err, domaintestplan.ErrPlanNotFound, "error should be ErrPlanNotFound")
 	})
 
 	t.Run("FindByProjectID", func(t *testing.T) {
@@ -116,7 +118,7 @@ func TestPlanRepository_Integration(t *testing.T) {
 			require.NoError(t, planRepo.Save(ctx, plan), "save plan should succeed")
 		}
 
-		plans, err := planRepo.FindByProjectID(ctx, project.ID(), testplan.QueryOptions{
+		plans, err := planRepo.FindByProjectID(ctx, project.ID(), domaintestplan.QueryOptions{
 			Limit:  10,
 			Offset: 0,
 		})
@@ -178,12 +180,12 @@ func TestPlanRepository_Integration(t *testing.T) {
 		require.NoError(t, planRepo.Save(ctx, plan), "save plan should succeed")
 
 		// 状态流转: draft -> active -> completed -> archived
-		err = planRepo.UpdateStatus(ctx, plan.ID(), testplan.StatusActive)
+		err = planRepo.UpdateStatus(ctx, plan.ID(), domaintestplan.StatusActive)
 		require.NoError(t, err, "update status to active should succeed")
 
 		found, err := planRepo.FindByID(ctx, plan.ID())
 		require.NoError(t, err, "find plan should succeed")
-		assert.Equal(t, testplan.StatusActive, found.Status(), "status should be active")
+		assert.Equal(t, domaintestplan.StatusActive, found.Status(), "status should be active")
 	})
 
 	t.Run("Delete", func(t *testing.T) {
@@ -202,7 +204,7 @@ func TestPlanRepository_Integration(t *testing.T) {
 		// 验证软删除
 		_, err = planRepo.FindByID(ctx, plan.ID())
 		require.Error(t, err, "find deleted plan should fail")
-		assert.ErrorIs(t, err, testplan.ErrPlanNotFound, "error should be ErrPlanNotFound")
+		assert.ErrorIs(t, err, domaintestplan.ErrPlanNotFound, "error should be ErrPlanNotFound")
 	})
 
 	t.Run("FindByStatus", func(t *testing.T) {
@@ -214,20 +216,20 @@ func TestPlanRepository_Integration(t *testing.T) {
 		// 创建不同状态的计划
 		for i := 0; i < 2; i++ {
 			plan, err := testsetup.NewTestPlanBuilder(project.ID(), user.ID()).
-				WithStatus(testplan.StatusDraft).Build()
+				WithStatus(domaintestplan.StatusDraft).Build()
 			require.NoError(t, err, "build plan should succeed")
 			require.NoError(t, planRepo.Save(ctx, plan), "save plan should succeed")
 		}
 
 		for i := 0; i < 3; i++ {
 			plan, err := testsetup.NewTestPlanBuilder(project.ID(), user.ID()).
-				WithStatus(testplan.StatusActive).Build()
+				WithStatus(domaintestplan.StatusActive).Build()
 			require.NoError(t, err, "build plan should succeed")
 			require.NoError(t, planRepo.Save(ctx, plan), "save plan should succeed")
 		}
 
 		// 查询 draft 状态的计划
-		plans, err := planRepo.FindByStatus(ctx, testplan.StatusDraft, testplan.QueryOptions{
+		plans, err := planRepo.FindByStatus(ctx, domaintestplan.StatusDraft, domaintestplan.QueryOptions{
 			Limit:  10,
 			Offset: 0,
 		})
@@ -235,7 +237,7 @@ func TestPlanRepository_Integration(t *testing.T) {
 		assert.GreaterOrEqual(t, len(plans), 2, "should return at least 2 draft plans")
 
 		// 查询 active 状态的计划
-		plans, err = planRepo.FindByStatus(ctx, testplan.StatusActive, testplan.QueryOptions{
+		plans, err = planRepo.FindByStatus(ctx, domaintestplan.StatusActive, domaintestplan.QueryOptions{
 			Limit:  10,
 			Offset: 0,
 		})

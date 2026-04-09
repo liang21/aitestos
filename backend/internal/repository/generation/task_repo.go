@@ -128,6 +128,36 @@ func (r *GenerationTaskRepository) FindByStatus(ctx context.Context, status doma
 	return r.findTasks(ctx, query, string(status), opts.Limit, opts.Offset)
 }
 
+// FindByUserID retrieves all generation tasks for a user with pagination
+func (r *GenerationTaskRepository) FindByUserID(ctx context.Context, userID uuid.UUID, opts domaingeneration.QueryOptions) ([]*domaingeneration.GenerationTask, error) {
+	query := `
+		SELECT id, project_id, module_id, user_id, prompt, status, result_summary, error_message, created_at, updated_at
+		FROM generation_tasks
+		WHERE user_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	return r.findTasks(ctx, query, userID, opts.Limit, opts.Offset)
+}
+
+// Delete removes a generation task
+func (r *GenerationTaskRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	query := `DELETE FROM generation_tasks WHERE id = $1`
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("delete generation task: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return domaingeneration.ErrTaskNotFound
+	}
+	return nil
+}
+
 // Update updates an existing generation task
 func (r *GenerationTaskRepository) Update(ctx context.Context, task *domaingeneration.GenerationTask) error {
 	resultSummaryJSON, _ := toJSON(task.ResultSummary())

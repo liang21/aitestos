@@ -5,10 +5,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/liang21/aitestos/internal/domain/generation"
 	"github.com/liang21/aitestos/internal/domain/identity"
 	domainproject "github.com/liang21/aitestos/internal/domain/project"
-	"github.com/liang21/aitestos/internal/domain/generation"
-	"github.com/liang21/aitestos/internal/repository/generation"
+	repoIdentity "github.com/liang21/aitestos/internal/repository/identity"
+	repoProject "github.com/liang21/aitestos/internal/repository/project"
+	repoGeneration "github.com/liang21/aitestos/internal/repository/generation"
 	"github.com/liang21/aitestos/internal/repository/testsetup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,9 +24,9 @@ func TestGenerationTaskRepository_Integration(t *testing.T) {
 	tc := testsetup.SetupTest(t)
 	defer tc.CleanupTest()
 
-	userRepo := identityrepo.NewUserRepository(tc.DB)
-	projectRepo := repository.NewProjectRepository(tc.DB)
-	taskRepo := repository.NewGenerationTaskRepository(tc.DB)
+	userRepo := repoIdentity.NewUserRepository(tc.DB)
+	projectRepo := repoProject.NewProjectRepository(tc.DB)
+	taskRepo := repoGeneration.NewGenerationTaskRepository(tc.DB)
 	ctx := context.Background()
 
 	// 辅助函数：创建用户

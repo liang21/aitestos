@@ -7,10 +7,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/liang21/aitestos/internal/domain/identity"
-	domainproject "github.com/liang21/aitestos/internal/domain/project"
 	"github.com/liang21/aitestos/internal/domain/testcase"
-	"github.com/liang21/aitestos/internal/domain/testplan"
-	"github.com/liang21/aitestos/internal/repository/testplan"
+	domaintestplan "github.com/liang21/aitestos/internal/domain/testplan"
+	identityRepo "github.com/liang21/aitestos/internal/repository/identity"
+	projectPackage "github.com/liang21/aitestos/internal/repository/project"
+	testcaseRepo "github.com/liang21/aitestos/internal/repository/testcase"
+	testplanRepo "github.com/liang21/aitestos/internal/repository/testplan"
 	"github.com/liang21/aitestos/internal/repository/testsetup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,12 +26,12 @@ func TestResultRepository_Integration(t *testing.T) {
 	tc := testsetup.SetupTest(t)
 	defer tc.CleanupTest()
 
-	userRepo := identityrepo.NewUserRepository(tc.DB)
-	projectRepo := repository.NewProjectRepository(tc.DB)
-	moduleRepo := repository.NewModuleRepository(tc.DB)
-	caseRepo := repository.NewTestCaseRepository(tc.DB)
-	planRepo := repository.NewTestPlanRepository(tc.DB)
-	resultRepo := repository.NewTestResultRepository(tc.DB)
+	userRepo := identityRepo.NewUserRepository(tc.DB)
+	projectRepo := projectPackage.NewProjectRepository(tc.DB)
+	moduleRepo := projectPackage.NewModuleRepository(tc.DB)
+	caseRepo := testcaseRepo.NewTestCaseRepository(tc.DB)
+	planRepo := testplanRepo.NewTestPlanRepository(tc.DB)
+	resultRepo := testplanRepo.NewTestResultRepository(tc.DB)
 	ctx := context.Background()
 
 	// 辅助函数：创建用户
@@ -41,7 +43,7 @@ func TestResultRepository_Integration(t *testing.T) {
 	}
 
 	// 辅助函数：创建项目、模块、用例、计划
-	createTestData := func(t *testing.T) (*identity.User, *testcase.TestCase, *testplan.TestPlan) {
+	createTestData := func(t *testing.T) (*identity.User, *testcase.TestCase, *domaintestplan.TestPlan) {
 		user := createUser(t)
 
 		project, err := testsetup.NewProjectBuilder().Build()
@@ -75,22 +77,22 @@ func TestResultRepository_Integration(t *testing.T) {
 		}{
 			{
 				name:    "save pass result",
-				builder: testsetup.NewTestResultBuilder(testCase.ID(), plan.ID(), user.ID()).WithResult(testplan.ResultPass),
+				builder: testsetup.NewTestResultBuilder(testCase.ID(), plan.ID(), user.ID()).WithResult(domaintestplan.ResultPass),
 				wantErr: nil,
 			},
 			{
 				name:    "save fail result",
-				builder: testsetup.NewTestResultBuilder(testCase.ID(), plan.ID(), user.ID()).WithResult(testplan.ResultFail),
+				builder: testsetup.NewTestResultBuilder(testCase.ID(), plan.ID(), user.ID()).WithResult(domaintestplan.ResultFail),
 				wantErr: nil,
 			},
 			{
 				name:    "save block result",
-				builder: testsetup.NewTestResultBuilder(testCase.ID(), plan.ID(), user.ID()).WithResult(testplan.ResultBlock),
+				builder: testsetup.NewTestResultBuilder(testCase.ID(), plan.ID(), user.ID()).WithResult(domaintestplan.ResultBlock),
 				wantErr: nil,
 			},
 			{
 				name:    "save skip result",
-				builder: testsetup.NewTestResultBuilder(testCase.ID(), plan.ID(), user.ID()).WithResult(testplan.ResultSkip),
+				builder: testsetup.NewTestResultBuilder(testCase.ID(), plan.ID(), user.ID()).WithResult(domaintestplan.ResultSkip),
 				wantErr: nil,
 			},
 		}
@@ -124,7 +126,7 @@ func TestResultRepository_Integration(t *testing.T) {
 			require.NoError(t, resultRepo.Save(ctx, result), "save result should succeed")
 		}
 
-		results, err := resultRepo.FindByPlanID(ctx, plan.ID())
+		results, err := resultRepo.FindByPlanID(ctx, plan.ID(), domaintestplan.QueryOptions{Limit: 10, Offset: 0})
 		require.NoError(t, err, "find results by plan ID should succeed")
 		assert.Equal(t, 3, len(results), "should return 3 results")
 	})
@@ -141,7 +143,7 @@ func TestResultRepository_Integration(t *testing.T) {
 			require.NoError(t, resultRepo.Save(ctx, result), "save result should succeed")
 		}
 
-		results, err := resultRepo.FindByCaseID(ctx, testCase.ID())
+		results, err := resultRepo.FindByCaseID(ctx, testCase.ID(), domaintestplan.QueryOptions{Limit: 10, Offset: 0})
 		require.NoError(t, err, "find results by case ID should succeed")
 		assert.GreaterOrEqual(t, len(results), 3, "should return at least 3 results")
 	})
@@ -152,12 +154,12 @@ func TestResultRepository_Integration(t *testing.T) {
 		user, testCase, plan := createTestData(t)
 
 		// 创建不同状态的结果
-		statuses := []testplan.ResultStatus{
-			testplan.ResultPass,
-			testplan.ResultPass,
-			testplan.ResultFail,
-			testplan.ResultBlock,
-			testplan.ResultSkip,
+		statuses := []domaintestplan.ResultStatus{
+			domaintestplan.ResultPass,
+			domaintestplan.ResultPass,
+			domaintestplan.ResultFail,
+			domaintestplan.ResultBlock,
+			domaintestplan.ResultSkip,
 		}
 
 		for _, status := range statuses {
@@ -170,10 +172,10 @@ func TestResultRepository_Integration(t *testing.T) {
 		// 统计各状态数量
 		counts, err := resultRepo.CountByStatus(ctx, plan.ID())
 		require.NoError(t, err, "count by status should succeed")
-		assert.Equal(t, 2, counts[testplan.ResultPass], "should have 2 pass results")
-		assert.Equal(t, 1, counts[testplan.ResultFail], "should have 1 fail result")
-		assert.Equal(t, 1, counts[testplan.ResultBlock], "should have 1 block result")
-		assert.Equal(t, 1, counts[testplan.ResultSkip], "should have 1 skip result")
+		assert.Equal(t, 2, counts[domaintestplan.ResultPass], "should have 2 pass results")
+		assert.Equal(t, 1, counts[domaintestplan.ResultFail], "should have 1 fail result")
+		assert.Equal(t, 1, counts[domaintestplan.ResultBlock], "should have 1 block result")
+		assert.Equal(t, 1, counts[domaintestplan.ResultSkip], "should have 1 skip result")
 	})
 
 	t.Run("FindLatestByCaseID", func(t *testing.T) {
@@ -184,13 +186,13 @@ func TestResultRepository_Integration(t *testing.T) {
 		// 创建多个结果（不同时间）
 		time.Sleep(10 * time.Millisecond)
 		result1, err := testsetup.NewTestResultBuilder(testCase.ID(), plan.ID(), user.ID()).
-			WithResult(testplan.ResultFail).Build()
+			WithResult(domaintestplan.ResultFail).Build()
 		require.NoError(t, err, "build result1 should succeed")
 		require.NoError(t, resultRepo.Save(ctx, result1), "save result1 should succeed")
 
 		time.Sleep(10 * time.Millisecond)
 		result2, err := testsetup.NewTestResultBuilder(testCase.ID(), plan.ID(), user.ID()).
-			WithResult(testplan.ResultPass).Build()
+			WithResult(domaintestplan.ResultPass).Build()
 		require.NoError(t, err, "build result2 should succeed")
 		require.NoError(t, resultRepo.Save(ctx, result2), "save result2 should succeed")
 
@@ -198,7 +200,7 @@ func TestResultRepository_Integration(t *testing.T) {
 		latest, err := resultRepo.FindLatestByCaseID(ctx, testCase.ID())
 		require.NoError(t, err, "find latest result should succeed")
 		assert.Equal(t, result2.ID(), latest.ID(), "should return the latest result")
-		assert.Equal(t, testplan.ResultPass, latest.Result(), "latest result should be pass")
+		assert.Equal(t, domaintestplan.ResultPass, latest.Status(), "latest result should be pass")
 	})
 
 	t.Run("FindByPlanIDAndCaseID", func(t *testing.T) {
@@ -212,11 +214,13 @@ func TestResultRepository_Integration(t *testing.T) {
 
 		found, err := resultRepo.FindByPlanIDAndCaseID(ctx, plan.ID(), testCase.ID())
 		require.NoError(t, err, "find result by plan and case ID should succeed")
-		testsetup.AssertTestResultEqual(t, result, found)
+		require.Len(t, found, 1, "should find 1 result")
+		testsetup.AssertTestResultEqual(t, result, found[0])
 
 		// 测试不存在的组合
-		_, err = resultRepo.FindByPlanIDAndCaseID(ctx, uuid.New(), uuid.New())
-		require.Error(t, err, "find non-existent result should fail")
+		found, err = resultRepo.FindByPlanIDAndCaseID(ctx, uuid.New(), uuid.New())
+		require.NoError(t, err, "find non-existent result should not error")
+		assert.Len(t, found, 0, "should find no results for non-existent combination")
 	})
 
 	t.Run("DeleteByPlanID", func(t *testing.T) {
@@ -236,7 +240,7 @@ func TestResultRepository_Integration(t *testing.T) {
 		require.NoError(t, err, "delete results by plan ID should succeed")
 
 		// 验证删除
-		results, err := resultRepo.FindByPlanID(ctx, plan.ID())
+		results, err := resultRepo.FindByPlanID(ctx, plan.ID(), domaintestplan.QueryOptions{Limit: 10, Offset: 0})
 		require.NoError(t, err, "find results should succeed")
 		assert.Equal(t, 0, len(results), "should have no results after deletion")
 	})

@@ -10,15 +10,16 @@ import (
 
 // Document is the aggregate root for knowledge context
 type Document struct {
-	id        uuid.UUID
-	projectID uuid.UUID
-	name      string
-	docType   DocumentType
-	url       string
-	status    DocumentStatus
-	createdBy uuid.UUID
-	createdAt time.Time
-	updatedAt time.Time
+	id          uuid.UUID
+	projectID   uuid.UUID
+	name        string
+	docType     DocumentType
+	url         string
+	contentText string
+	status      DocumentStatus
+	createdBy   uuid.UUID
+	createdAt   time.Time
+	updatedAt   time.Time
 }
 
 // NewDocument creates a new document
@@ -75,6 +76,17 @@ func (d *Document) URL() string {
 	return d.url
 }
 
+// ContentText returns the extracted text content
+func (d *Document) ContentText() string {
+	return d.contentText
+}
+
+// UpdateContentText updates the extracted text content
+func (d *Document) UpdateContentText(text string) {
+	d.contentText = text
+	d.updatedAt = time.Now()
+}
+
 // Status returns the document's processing status
 func (d *Document) Status() DocumentStatus {
 	return d.status
@@ -112,21 +124,23 @@ func ReconstructDocument(
 	name string,
 	docType DocumentType,
 	url string,
+	contentText string,
 	status DocumentStatus,
 	createdBy uuid.UUID,
 	createdAt time.Time,
 	updatedAt time.Time,
 ) *Document {
 	return &Document{
-		id:        id,
-		projectID: projectID,
-		name:      name,
-		docType:   docType,
-		url:       url,
-		status:    status,
-		createdBy: createdBy,
-		createdAt: createdAt,
-		updatedAt: updatedAt,
+		id:          id,
+		projectID:   projectID,
+		name:        name,
+		docType:     docType,
+		url:         url,
+		contentText: contentText,
+		status:      status,
+		createdBy:   createdBy,
+		createdAt:   createdAt,
+		updatedAt:   updatedAt,
 	}
 }
 
@@ -179,6 +193,11 @@ func (c *DocumentChunk) Embedding() []byte {
 // SetEmbedding sets the chunk's embedding vector
 func (c *DocumentChunk) SetEmbedding(embedding []byte) {
 	c.embedding = embedding
+}
+
+// UpdateContent updates the chunk's content
+func (c *DocumentChunk) UpdateContent(content string) {
+	c.content = content
 }
 
 // CreatedAt returns the creation timestamp

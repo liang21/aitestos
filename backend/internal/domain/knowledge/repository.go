@@ -18,11 +18,20 @@ type DocumentRepository interface {
 	// FindByProjectID retrieves all documents for a project with pagination
 	FindByProjectID(ctx context.Context, projectID uuid.UUID, opts QueryOptions) ([]*Document, error)
 
+	// FindByType retrieves documents by type for a project with pagination
+	FindByType(ctx context.Context, projectID uuid.UUID, docType DocumentType, opts QueryOptions) ([]*Document, error)
+
+	// FindByStatus retrieves documents by status with pagination
+	FindByStatus(ctx context.Context, status DocumentStatus, opts QueryOptions) ([]*Document, error)
+
 	// Update updates an existing document
 	Update(ctx context.Context, doc *Document) error
 
 	// UpdateStatus updates the document processing status
 	UpdateStatus(ctx context.Context, id uuid.UUID, status DocumentStatus) error
+
+	// UpdateContentText updates the document's extracted text content
+	UpdateContentText(ctx context.Context, id uuid.UUID, contentText string) error
 
 	// Delete removes a document
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -33,11 +42,23 @@ type DocumentRepository interface {
 
 // DocumentChunkRepository defines the interface for document chunk persistence
 type DocumentChunkRepository interface {
+	// Save persists a single document chunk
+	Save(ctx context.Context, chunk *DocumentChunk) error
+
 	// SaveBatch persists multiple document chunks
 	SaveBatch(ctx context.Context, chunks []*DocumentChunk) error
 
+	// FindByID retrieves a document chunk by ID
+	FindByID(ctx context.Context, id uuid.UUID) (*DocumentChunk, error)
+
 	// FindByDocumentID retrieves all chunks for a document
 	FindByDocumentID(ctx context.Context, documentID uuid.UUID) ([]*DocumentChunk, error)
+
+	// FindByChunkIndex retrieves a chunk by document ID and chunk index
+	FindByChunkIndex(ctx context.Context, documentID uuid.UUID, chunkIndex int) (*DocumentChunk, error)
+
+	// Update updates an existing document chunk
+	Update(ctx context.Context, chunk *DocumentChunk) error
 
 	// DeleteByDocumentID removes all chunks for a document
 	DeleteByDocumentID(ctx context.Context, documentID uuid.UUID) error

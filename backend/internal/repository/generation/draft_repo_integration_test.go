@@ -5,10 +5,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/liang21/aitestos/internal/domain/generation"
 	"github.com/liang21/aitestos/internal/domain/identity"
 	domainproject "github.com/liang21/aitestos/internal/domain/project"
-	"github.com/liang21/aitestos/internal/domain/generation"
-	"github.com/liang21/aitestos/internal/repository/generation"
+	repoGeneration "github.com/liang21/aitestos/internal/repository/generation"
+	repoIdentity "github.com/liang21/aitestos/internal/repository/identity"
+	repoProject "github.com/liang21/aitestos/internal/repository/project"
 	"github.com/liang21/aitestos/internal/repository/testsetup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,11 +24,11 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 	tc := testsetup.SetupTest(t)
 	defer tc.CleanupTest()
 
-	userRepo := identityrepo.NewUserRepository(tc.DB)
-	projectRepo := repository.NewProjectRepository(tc.DB)
-	moduleRepo := repository.NewModuleRepository(tc.DB)
-	taskRepo := repository.NewGenerationTaskRepository(tc.DB)
-	draftRepo := repository.NewCaseDraftRepository(tc.DB)
+	userRepo := repoIdentity.NewUserRepository(tc.DB)
+	projectRepo := repoProject.NewProjectRepository(tc.DB)
+	moduleRepo := repoProject.NewModuleRepository(tc.DB)
+	taskRepo := repoGeneration.NewGenerationTaskRepository(tc.DB)
+	draftRepo := repoGeneration.NewCaseDraftRepository(tc.DB)
 	ctx := context.Background()
 
 	// 辅助函数：创建用户
@@ -84,9 +86,10 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				draft := tt.builder.Build()
+				draft, err := tt.builder.Build()
+				require.NoError(t, err, "build draft should succeed")
 
-				err := draftRepo.Save(ctx, draft)
+				err = draftRepo.Save(ctx, draft)
 				testsetup.AssertErrorIs(t, tt.wantErr, err)
 
 				if tt.wantErr == nil {
@@ -103,7 +106,8 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 
 		_, _, task := createProjectModuleTask(t)
 
-		draft := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+		draft, err := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+		require.NoError(t, err, "build draft should succeed")
 		require.NoError(t, draftRepo.Save(ctx, draft), "save draft should succeed")
 
 		found, err := draftRepo.FindByID(ctx, draft.ID())
@@ -123,7 +127,8 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 
 		// 创建多个草稿
 		for i := 0; i < 3; i++ {
-			draft := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+			draft, err := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+			require.NoError(t, err, "build draft should succeed")
 			require.NoError(t, draftRepo.Save(ctx, draft), "save draft should succeed")
 		}
 
@@ -139,14 +144,16 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 
 		// 创建不同状态的草稿
 		for i := 0; i < 2; i++ {
-			draft := testsetup.NewCaseDraftBuilder(task.ID()).
+			draft, err := testsetup.NewCaseDraftBuilder(task.ID()).
 				WithStatus(generation.DraftPending).Build()
+			require.NoError(t, err, "build pending draft should succeed")
 			require.NoError(t, draftRepo.Save(ctx, draft), "save pending draft should succeed")
 		}
 
 		for i := 0; i < 3; i++ {
-			draft := testsetup.NewCaseDraftBuilder(task.ID()).
+			draft, err := testsetup.NewCaseDraftBuilder(task.ID()).
 				WithStatus(generation.DraftConfirmed).Build()
+			require.NoError(t, err, "build confirmed draft should succeed")
 			require.NoError(t, draftRepo.Save(ctx, draft), "save confirmed draft should succeed")
 		}
 
@@ -166,12 +173,13 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 
 		_, module, task := createProjectModuleTask(t)
 
-		draft := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+		draft, err := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+		require.NoError(t, err, "build draft should succeed")
 		require.NoError(t, draftRepo.Save(ctx, draft), "save draft should succeed")
 
 		// 更新：确认草稿
 		draft.Confirm(module.ID())
-		err := draftRepo.Update(ctx, draft)
+		err = draftRepo.Update(ctx, draft)
 		require.NoError(t, err, "update draft should succeed")
 
 		found, err := draftRepo.FindByID(ctx, draft.ID())
@@ -185,12 +193,13 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 
 		_, _, task := createProjectModuleTask(t)
 
-		draft := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+		draft, err := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+		require.NoError(t, err, "build draft should succeed")
 		require.NoError(t, draftRepo.Save(ctx, draft), "save draft should succeed")
 
 		// 更新：拒绝草稿
-		draft.Reject(generation.RejectionLowQuality, "Content is too simple")
-		err := draftRepo.Update(ctx, draft)
+		draft.Reject(generation.ReasonLowQuality, "Content is too simple")
+		err = draftRepo.Update(ctx, draft)
 		require.NoError(t, err, "update draft should succeed")
 
 		found, err := draftRepo.FindByID(ctx, draft.ID())
@@ -207,7 +216,8 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 		// 创建多个草稿
 		draftIDs := make([]uuid.UUID, 3)
 		for i := 0; i < 3; i++ {
-			draft := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+			draft, err := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+			require.NoError(t, err, "build draft should succeed")
 			require.NoError(t, draftRepo.Save(ctx, draft), "save draft should succeed")
 			draftIDs[i] = draft.ID()
 		}
@@ -232,14 +242,16 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 
 		// 创建不同状态的草稿
 		for i := 0; i < 2; i++ {
-			draft := testsetup.NewCaseDraftBuilder(task.ID()).
+			draft, err := testsetup.NewCaseDraftBuilder(task.ID()).
 				WithStatus(generation.DraftPending).Build()
+			require.NoError(t, err, "build pending draft should succeed")
 			require.NoError(t, draftRepo.Save(ctx, draft), "save pending draft should succeed")
 		}
 
 		for i := 0; i < 3; i++ {
-			draft := testsetup.NewCaseDraftBuilder(task.ID()).
+			draft, err := testsetup.NewCaseDraftBuilder(task.ID()).
 				WithStatus(generation.DraftConfirmed).Build()
+			require.NoError(t, err, "build confirmed draft should succeed")
 			require.NoError(t, draftRepo.Save(ctx, draft), "save confirmed draft should succeed")
 		}
 
@@ -259,10 +271,11 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 
 		_, _, task := createProjectModuleTask(t)
 
-		draft := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+		draft, err := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+		require.NoError(t, err, "build draft should succeed")
 		require.NoError(t, draftRepo.Save(ctx, draft), "save draft should succeed")
 
-		err := draftRepo.Delete(ctx, draft.ID())
+		err = draftRepo.Delete(ctx, draft.ID())
 		require.NoError(t, err, "delete draft should succeed")
 
 		// 验证删除
@@ -278,7 +291,8 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 
 		// 创建多个草稿
 		for i := 0; i < 3; i++ {
-			draft := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+			draft, err := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+			require.NoError(t, err, "build draft should succeed")
 			require.NoError(t, draftRepo.Save(ctx, draft), "save draft should succeed")
 		}
 
@@ -297,11 +311,12 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 
 		_, _, task := createProjectModuleTask(t)
 
-		draft := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+		draft, err := testsetup.NewCaseDraftBuilder(task.ID()).Build()
+		require.NoError(t, err, "build draft should succeed")
 		require.NoError(t, draftRepo.Save(ctx, draft), "save draft should succeed")
 
 		// 删除任务
-		err := taskRepo.Delete(ctx, task.ID())
+		err = taskRepo.Delete(ctx, task.ID())
 		require.NoError(t, err, "delete task should succeed")
 
 		// 验证草稿也被删除（级联删除）
