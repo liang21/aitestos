@@ -1,5 +1,5 @@
 # aitestos Makefile
-.PHONY: all build test run clean lint fmt vet dev docker-up docker-down
+.PHONY: all build test run clean lint fmt vet dev docker-up docker-down docker-full
 
 APP_NAME := aitestos
 BUILD_DIR := bin
@@ -40,7 +40,7 @@ run: build
 # Development mode with dependencies
 dev:
 	@echo "Starting development environment..."
-	docker-compose up -d
+	docker compose up -d
 	@sleep 5
 	$(MAKE) run
 
@@ -86,13 +86,16 @@ migrate-down:
 
 # Docker commands
 docker-up:
-	docker-compose up -d
+	docker compose up -d
+
+docker-full:
+	docker compose --profile app up -d
 
 docker-down:
-	docker-compose down
+	docker compose --profile app down
 
 docker-logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 # Install development tools
 install-tools:
@@ -122,7 +125,8 @@ help:
 	@echo "  generate       - Run go generate"
 	@echo "  migrate-up     - Run database migrations"
 	@echo "  migrate-down   - Rollback database migrations"
-	@echo "  docker-up      - Start Docker containers"
+	@echo "  docker-up      - Start Docker containers (infra only)"
+	@echo "  docker-full    - Start full stack with app container"
 	@echo "  docker-down    - Stop Docker containers"
 	@echo "  docker-logs    - View Docker logs"
 	@echo "  install-tools  - Install development tools"
