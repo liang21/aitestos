@@ -88,6 +88,26 @@ func (m *MockTestPlanRepository) Delete(ctx context.Context, id uuid.UUID) error
 	return nil
 }
 
+func (m *MockTestPlanRepository) FindByStatus(ctx context.Context, status testplan.PlanStatus, opts testplan.QueryOptions) ([]*testplan.TestPlan, error) {
+	return []*testplan.TestPlan{}, nil
+}
+
+func (m *MockTestPlanRepository) AddCase(ctx context.Context, planID, caseID uuid.UUID) error {
+	return nil
+}
+
+func (m *MockTestPlanRepository) RemoveCase(ctx context.Context, planID, caseID uuid.UUID) error {
+	return nil
+}
+
+func (m *MockTestPlanRepository) GetCaseIDs(ctx context.Context, planID uuid.UUID) ([]uuid.UUID, error) {
+	return []uuid.UUID{}, nil
+}
+
+func (m *MockTestPlanRepository) UpdateStatus(ctx context.Context, planID uuid.UUID, status testplan.PlanStatus) error {
+	return nil
+}
+
 // MockTestResultRepository implements testplan.TestResultRepository for testing
 type MockTestResultRepository struct {
 	results   map[uuid.UUID]*testplan.TestResult
@@ -193,6 +213,18 @@ func (m *MockTestResultRepository) CountByPlanID(ctx context.Context, planID uui
 		return 0, m.findErr
 	}
 	return int64(len(m.planIndex[planID])), nil
+}
+
+func (m *MockTestResultRepository) CountByStatus(ctx context.Context, planID uuid.UUID) (map[testplan.ResultStatus]int, error) {
+	return make(map[testplan.ResultStatus]int), nil
+}
+
+func (m *MockTestResultRepository) FindLatestByCaseID(ctx context.Context, caseID uuid.UUID) (*testplan.TestResult, error) {
+	return nil, nil
+}
+
+func (m *MockTestResultRepository) FindByPlanIDAndCaseID(ctx context.Context, planID, caseID uuid.UUID) ([]*testplan.TestResult, error) {
+	return nil, nil
 }
 
 // MockTestCaseRepository for testing

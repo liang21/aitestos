@@ -288,6 +288,15 @@ func (m *MockProjectConfigRepository) Delete(ctx context.Context, id uuid.UUID) 
 	return nil
 }
 
+func (m *MockProjectConfigRepository) Update(ctx context.Context, cfg *project.ProjectConfig) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	key := cfg.ProjectID().String() + ":" + cfg.Key()
+	m.configs[key] = cfg
+	return nil
+}
+
 // TestProjectService_CreateProject tests project creation
 func TestProjectService_CreateProject(t *testing.T) {
 	ctx := context.Background()

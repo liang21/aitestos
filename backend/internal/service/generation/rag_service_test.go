@@ -87,6 +87,23 @@ func (m *MockChunkRepo) CountByDocumentID(ctx context.Context, documentID uuid.U
 	return int64(count), nil
 }
 
+func (m *MockChunkRepo) FindByChunkIndex(ctx context.Context, documentID uuid.UUID, chunkIndex int) (*knowledge.DocumentChunk, error) {
+	return nil, nil
+}
+
+func (m *MockChunkRepo) FindByID(ctx context.Context, id uuid.UUID) (*knowledge.DocumentChunk, error) {
+	return nil, nil
+}
+
+func (m *MockChunkRepo) Update(ctx context.Context, chunk *knowledge.DocumentChunk) error {
+	return nil
+}
+
+func (m *MockChunkRepo) Save(ctx context.Context, chunk *knowledge.DocumentChunk) error {
+	m.chunks[chunk.ID()] = chunk
+	return nil
+}
+
 // MockDocRepo for RAG testing
 type MockDocRepo struct {
 	docs map[uuid.UUID]*knowledge.Document
@@ -149,6 +166,26 @@ func (m *MockDocRepo) CountByProjectID(ctx context.Context, projectID uuid.UUID)
 		}
 	}
 	return int64(count), nil
+}
+
+func (m *MockDocRepo) FindByType(ctx context.Context, projectID uuid.UUID, docType knowledge.DocumentType, opts knowledge.QueryOptions) ([]*knowledge.Document, error) {
+	return []*knowledge.Document{}, nil
+}
+
+func (m *MockDocRepo) FindByStatus(ctx context.Context, status knowledge.DocumentStatus, opts knowledge.QueryOptions) ([]*knowledge.Document, error) {
+	return []*knowledge.Document{}, nil
+}
+
+func (m *MockDocRepo) FindAll(ctx context.Context, opts knowledge.QueryOptions) ([]*knowledge.Document, error) {
+	docs := make([]*knowledge.Document, 0, len(m.docs))
+	for _, d := range m.docs {
+		docs = append(docs, d)
+	}
+	return docs, nil
+}
+
+func (m *MockDocRepo) UpdateContentText(ctx context.Context, id uuid.UUID, contentText string) error {
+	return nil
 }
 
 // TestRAGService_Retrieve tests document retrieval

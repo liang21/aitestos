@@ -157,3 +157,34 @@ func (r *ProjectConfigRepository) Delete(ctx context.Context, id uuid.UUID) erro
 	}
 	return nil
 }
+
+// Update updates an existing configuration
+func (r *ProjectConfigRepository) Update(ctx context.Context, config *domainproject.ProjectConfig) error {
+	valueJSON, err := toJSON(config.Value())
+	if err != nil {
+		return fmt.Errorf("serialize config value: %w", err)
+	}
+
+	query := `
+		UPDATE project_configs
+		SET value = $1, description = $2, updated_at = $3
+		WHERE id = $4
+	`
+	result, err := r.db.ExecContext(ctx, query,
+		valueJSON,
+		config.Description(),
+		config.UpdatedAt(),
+		config.ID(),
+	)
+	if err != nil {
+		return fmt.Errorf("update project config: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return domainproject.ErrConfigNotFound
+	}
+	return nil
+}

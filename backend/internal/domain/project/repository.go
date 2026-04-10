@@ -62,6 +62,9 @@ type ProjectConfigRepository interface {
 
 	// Delete removes a configuration
 	Delete(ctx context.Context, id uuid.UUID) error
+
+	// Update updates an existing configuration
+	Update(ctx context.Context, config *ProjectConfig) error
 }
 
 // QueryOptions holds pagination and filtering options

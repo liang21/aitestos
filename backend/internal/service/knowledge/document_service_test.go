@@ -98,6 +98,18 @@ func (m *MockDocumentRepository) CountByProjectID(ctx context.Context, projectID
 	return int64(count), nil
 }
 
+func (m *MockDocumentRepository) FindByType(ctx context.Context, projectID uuid.UUID, docType knowledge.DocumentType, opts knowledge.QueryOptions) ([]*knowledge.Document, error) {
+	return []*knowledge.Document{}, nil
+}
+
+func (m *MockDocumentRepository) FindByStatus(ctx context.Context, status knowledge.DocumentStatus, opts knowledge.QueryOptions) ([]*knowledge.Document, error) {
+	return []*knowledge.Document{}, nil
+}
+
+func (m *MockDocumentRepository) UpdateContentText(ctx context.Context, id uuid.UUID, contentText string) error {
+	return nil
+}
+
 // MockDocumentChunkRepository implements knowledge.DocumentChunkRepository for testing
 type MockDocumentChunkRepository struct {
 	chunks       map[uuid.UUID]*knowledge.DocumentChunk
@@ -171,6 +183,26 @@ func (m *MockDocumentChunkRepository) CountByDocumentID(ctx context.Context, doc
 		}
 	}
 	return int64(count), nil
+}
+
+func (m *MockDocumentChunkRepository) FindByChunkIndex(ctx context.Context, documentID uuid.UUID, chunkIndex int) (*knowledge.DocumentChunk, error) {
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
+	for _, c := range m.chunks {
+		if c.DocumentID() == documentID && c.ChunkIndex() == chunkIndex {
+			return c, nil
+		}
+	}
+	return nil, nil
+}
+
+func (m *MockDocumentChunkRepository) Update(ctx context.Context, chunk *knowledge.DocumentChunk) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	m.chunks[chunk.ID()] = chunk
+	return nil
 }
 
 // MockVectorRepository implements knowledge.VectorRepository for testing

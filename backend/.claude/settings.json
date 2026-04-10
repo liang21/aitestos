@@ -1,6 +1,5 @@
 {
   "permissions": {
-    "defaultMode": "plan",
     "allow": [
       "Read(**/*.go)",
       "// 允许递归读取所有 Go 文件",
@@ -25,6 +24,16 @@
       "Bash(goimports -l .)",
       "Bash(golangci-lint run*)"
     ],
+    "deny": [
+      "Read(**/.env*)",
+      "Read(**/*.{pem,key})",
+      "Read(**/node_modules/**)",
+      "Read(**/.history/**)",
+      "// 防止泄漏本地历史记录",
+      "Bash(rm **)",
+      "Bash(git push **)",
+      "WebFetch"
+    ],
     "ask": [
       "Write",
       "Edit",
@@ -36,15 +45,14 @@
       "Bash(git add **)",
       "Bash(git commit **)"
     ],
-    "deny": [
-      "Read(**/.env*)",
-      "Read(**/*.{pem,key})",
-      "Read(**/node_modules/**)",
-      "Read(**/.history/**)",
-      "// 防止泄漏本地历史记录",
-      "Bash(rm **)",
-      "Bash(git push **)",
-      "WebFetch"
-    ]
+    "defaultMode": "plan"
+  },
+  "enabledPlugins": {
+    "supabase@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "github@claude-plugins-official": true
   }
 }

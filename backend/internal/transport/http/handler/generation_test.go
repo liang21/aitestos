@@ -403,8 +403,3 @@ func TestBatchConfirmHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }
-
-const (
-	taskIDContextKey  contextKey = "task_id"
-	draftIDContextKey contextKey = "draft_id"
-)

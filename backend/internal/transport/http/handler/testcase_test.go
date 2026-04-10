@@ -307,5 +307,3 @@ func TestDeleteCaseHandler(t *testing.T) {
 		assert.Equal(t, http.StatusNoContent, w.Code)
 	})
 }
-
-const caseIDContextKey contextKey = "case_id"

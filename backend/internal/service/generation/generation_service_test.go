@@ -81,6 +81,14 @@ func (m *MockGenTaskRepo) Update(ctx context.Context, task *generation.Generatio
 	return nil
 }
 
+func (m *MockGenTaskRepo) FindByUserID(ctx context.Context, userID uuid.UUID, opts generation.QueryOptions) ([]*generation.GenerationTask, error) {
+	return []*generation.GenerationTask{}, nil
+}
+
+func (m *MockGenTaskRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	return nil
+}
+
 // MockCaseDraftRepository for testing
 type MockDraftRepo struct {
 	drafts  map[uuid.UUID]*generation.GeneratedCaseDraft
@@ -150,6 +158,22 @@ func (m *MockDraftRepo) Update(ctx context.Context, draft *generation.GeneratedC
 
 func (m *MockDraftRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	delete(m.drafts, id)
+	return nil
+}
+
+func (m *MockDraftRepo) FindByTaskIDAndStatus(ctx context.Context, taskID uuid.UUID, status generation.DraftStatus) ([]*generation.GeneratedCaseDraft, error) {
+	return []*generation.GeneratedCaseDraft{}, nil
+}
+
+func (m *MockDraftRepo) BatchUpdateStatus(ctx context.Context, draftIDs []uuid.UUID, status generation.DraftStatus, moduleID uuid.UUID) error {
+	return nil
+}
+
+func (m *MockDraftRepo) CountByTaskIDAndStatus(ctx context.Context, taskID uuid.UUID, status generation.DraftStatus) (int64, error) {
+	return 0, nil
+}
+
+func (m *MockDraftRepo) DeleteByTaskID(ctx context.Context, taskID uuid.UUID) error {
 	return nil
 }
 

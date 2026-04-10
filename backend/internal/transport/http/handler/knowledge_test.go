@@ -306,5 +306,3 @@ func TestProcessDocumentHandler(t *testing.T) {
 		assert.Equal(t, http.StatusConflict, w.Code)
 	})
 }
-
-const documentIDContextKey contextKey = "document_id"

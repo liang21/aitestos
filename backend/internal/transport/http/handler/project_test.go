@@ -307,11 +307,3 @@ func TestSetConfigHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }
-
-// Context key types for type-safe context values
-type contextKey string
-
-const (
-	userIDContextKey    contextKey = "user_id"
-	projectIDContextKey contextKey = "project_id"
-)

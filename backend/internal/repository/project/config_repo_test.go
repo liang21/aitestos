@@ -130,6 +130,17 @@ func (m *MockProjectConfigRepository) Delete(ctx context.Context, id uuid.UUID) 
 	return nil
 }
 
+func (m *MockProjectConfigRepository) Update(ctx context.Context, config *domainproject.ProjectConfig) error {
+	_, ok := m.configs[config.ID()]
+	if !ok {
+		return domainproject.ErrConfigNotFound
+	}
+	m.configs[config.ID()] = config
+	fullKey := config.ProjectID().String() + ":" + config.Key()
+	m.configsByKey[fullKey] = config
+	return nil
+}
+
 func TestMockProjectConfigRepository_CRUD(t *testing.T) {
 	ctx := context.Background()
 	repo := NewMockProjectConfigRepository()

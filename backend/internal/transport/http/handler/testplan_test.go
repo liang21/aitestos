@@ -299,5 +299,3 @@ func TestGetResultsHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }
-
-const planIDContextKey contextKey = "plan_id"

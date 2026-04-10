@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	domainproject "github.com/liang21/aitestos/internal/domain/project"
-	"github.com/liang21/aitestos/internal/repository/project"
+	repository "github.com/liang21/aitestos/internal/repository/project"
 	"github.com/liang21/aitestos/internal/repository/testsetup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

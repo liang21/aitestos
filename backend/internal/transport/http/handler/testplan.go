@@ -202,3 +202,25 @@ func (h *TestPlanHandler) GetResults(w http.ResponseWriter, r *http.Request) {
 
 	respondWithJSON(w, http.StatusOK, results)
 }
+
+// RemoveCase handles removing a test case from a plan
+func (h *TestPlanHandler) RemoveCase(w http.ResponseWriter, r *http.Request) {
+	planID, err := getIDFromURL(r, "id")
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid plan ID")
+		return
+	}
+
+	caseID, err := getIDFromURL(r, "caseId")
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid case ID")
+		return
+	}
+
+	if err := h.planService.RemoveCase(r.Context(), planID, caseID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

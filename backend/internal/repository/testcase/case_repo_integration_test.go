@@ -9,7 +9,9 @@ import (
 	"github.com/liang21/aitestos/internal/domain/identity"
 	domainproject "github.com/liang21/aitestos/internal/domain/project"
 	"github.com/liang21/aitestos/internal/domain/testcase"
-	"github.com/liang21/aitestos/internal/repository/testcase"
+	identityrepo "github.com/liang21/aitestos/internal/repository/identity"
+	repository "github.com/liang21/aitestos/internal/repository/project"
+	testcaserepo "github.com/liang21/aitestos/internal/repository/testcase"
 	"github.com/liang21/aitestos/internal/repository/testsetup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +28,7 @@ func TestCaseRepository_Integration(t *testing.T) {
 	userRepo := identityrepo.NewUserRepository(tc.DB)
 	projectRepo := repository.NewProjectRepository(tc.DB)
 	moduleRepo := repository.NewModuleRepository(tc.DB)
-	caseRepo := repository.NewTestCaseRepository(tc.DB)
+	caseRepo := testcaserepo.NewTestCaseRepository(tc.DB)
 	ctx := context.Background()
 
 	// 辅助函数：创建用户
@@ -69,13 +71,12 @@ func TestCaseRepository_Integration(t *testing.T) {
 			{
 				name: "save test case with AI metadata",
 				builder: testsetup.NewTestCaseBuilder(module.ID(), user.ID()).
-					WithAIMetadata(&testcase.AiMetadata{
-						GenerationTaskID: uuid.New(),
-						Confidence:       testcase.ConfidenceHigh,
-						ReferencedChunks: []testcase.ReferencedChunk{},
-						ModelVersion:     "deepseek-v3",
-						GeneratedAt:      time.Now(),
-					}),
+					WithAIMetadata(testcase.NewAiMetadata(
+						uuid.New(),
+						testcase.ConfidenceHigh,
+						[]*testcase.ReferencedChunk{},
+						"deepseek-v3",
+					)),
 				wantErr: nil,
 			},
 		}

@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/liang21/aitestos/internal/domain/identity"
-	"github.com/liang21/aitestos/internal/domain/identity"
+	identityrepo "github.com/liang21/aitestos/internal/repository/identity"
 	"github.com/liang21/aitestos/internal/repository/testsetup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +20,7 @@ func TestUserRepository_Integration(t *testing.T) {
 	tc := testsetup.SetupTest(t)
 	defer tc.CleanupTest()
 
-	userRepo := identity.NewUserRepository(tc.DB)
+	userRepo := identityrepo.NewUserRepository(tc.DB)
 	ctx := context.Background()
 
 	t.Run("Save", func(t *testing.T) {
@@ -191,7 +191,7 @@ func TestUserRepository_Integration(t *testing.T) {
 		}
 
 		// 测试分页
-		users, _, err := userRepo.List(ctx, identity.QueryOptions{
+		users, total, err := userRepo.List(ctx, identity.QueryOptions{
 			Limit:  3,
 			Offset: 0,
 		})
