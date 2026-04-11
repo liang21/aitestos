@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+
+	domaintestcase "github.com/liang21/aitestos/internal/domain/testcase"
 	caseservice "github.com/liang21/aitestos/internal/service/testcase"
 )
 
@@ -86,7 +88,7 @@ func (h *TestCaseHandler) ListCases(w http.ResponseWriter, r *http.Request) {
 	opts.CaseType = r.URL.Query().Get("case_type")
 	opts.Priority = r.URL.Query().Get("priority")
 
-	var cases interface{}
+	var cases []*domaintestcase.TestCase
 	var total int64
 	var err error
 
@@ -104,7 +106,7 @@ func (h *TestCaseHandler) ListCases(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]interface{}{
+	respondWithJSON(w, http.StatusOK, map[string]any{
 		"data":   cases,
 		"total":  total,
 		"offset": opts.Offset,

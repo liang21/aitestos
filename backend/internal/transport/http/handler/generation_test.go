@@ -12,12 +12,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"github.com/liang21/aitestos/internal/domain/generation"
 	"github.com/liang21/aitestos/internal/domain/testcase"
 	genservice "github.com/liang21/aitestos/internal/service/generation"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 // MockGenerationService implements genservice.GenerationService for testing
@@ -111,10 +111,10 @@ func TestCreateTaskHandler(t *testing.T) {
 		require.NotNil(t, handler)
 
 		body := map[string]interface{}{
-			"project_id": uuid.New().String(),
-			"module_id":  uuid.New().String(),
-			"prompt":     "Generate test cases for user login functionality",
-			"case_count": 5,
+			"project_id":  uuid.New().String(),
+			"module_id":   uuid.New().String(),
+			"prompt":      "Generate test cases for user login functionality",
+			"case_count":  5,
 			"scene_types": []string{"positive", "negative"},
 		}
 		jsonBody, _ := json.Marshal(body)
@@ -333,7 +333,7 @@ func TestRejectDraftHandler(t *testing.T) {
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"reason":  "duplicate",
+			"reason":   "duplicate",
 			"feedback": "Already exists",
 		}
 		jsonBody, _ := json.Marshal(body)
@@ -354,7 +354,7 @@ func TestRejectDraftHandler(t *testing.T) {
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"reason":  "duplicate",
+			"reason":   "duplicate",
 			"feedback": "Already exists",
 		}
 		jsonBody, _ := json.Marshal(body)

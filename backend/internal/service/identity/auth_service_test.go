@@ -12,11 +12,11 @@ import (
 
 // MockUserRepository implements identity.UserRepository for testing
 type MockUserRepository struct {
-	users       map[uuid.UUID]*identity.User
-	emailIndex  map[string]*identity.User
-	nameIndex   map[string]*identity.User
-	saveErr     error
-	findErr     error
+	users      map[uuid.UUID]*identity.User
+	emailIndex map[string]*identity.User
+	nameIndex  map[string]*identity.User
+	saveErr    error
+	findErr    error
 }
 
 func NewMockUserRepository() *MockUserRepository {

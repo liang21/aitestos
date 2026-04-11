@@ -75,16 +75,16 @@ func TestGenerationTaskRepository_Update(t *testing.T) {
 
 // MockGenerationTaskRepository for testing without database
 type MockGenerationTaskRepository struct {
-	tasks       map[uuid.UUID]*domaingeneration.GenerationTask
+	tasks          map[uuid.UUID]*domaingeneration.GenerationTask
 	tasksByProject map[uuid.UUID][]*domaingeneration.GenerationTask
-	tasksByStatus map[domaingeneration.TaskStatus][]*domaingeneration.GenerationTask
+	tasksByStatus  map[domaingeneration.TaskStatus][]*domaingeneration.GenerationTask
 }
 
 func NewMockGenerationTaskRepository() *MockGenerationTaskRepository {
 	return &MockGenerationTaskRepository{
-		tasks:        make(map[uuid.UUID]*domaingeneration.GenerationTask),
+		tasks:          make(map[uuid.UUID]*domaingeneration.GenerationTask),
 		tasksByProject: make(map[uuid.UUID][]*domaingeneration.GenerationTask),
-		tasksByStatus: make(map[domaingeneration.TaskStatus][]*domaingeneration.GenerationTask),
+		tasksByStatus:  make(map[domaingeneration.TaskStatus][]*domaingeneration.GenerationTask),
 	}
 }
 

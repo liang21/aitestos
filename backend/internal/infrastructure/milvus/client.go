@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/liang21/aitestos/internal/config"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
-	"github.com/liang21/aitestos/internal/config"
 )
 
 // Client wraps Milvus SDK client with connection management
@@ -133,4 +133,9 @@ func (c *Client) EnsureCollection(ctx context.Context) error {
 // Close gracefully closes the connection
 func (c *Client) Close() error {
 	return c.Client.Close()
+}
+
+// Config returns the Milvus configuration
+func (c *Client) Config() *config.MilvusConfig {
+	return c.config
 }

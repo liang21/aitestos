@@ -12,11 +12,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/liang21/aitestos/internal/domain/knowledge"
+	docservice "github.com/liang21/aitestos/internal/service/knowledge"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/liang21/aitestos/internal/domain/knowledge"
-	docservice "github.com/liang21/aitestos/internal/service/knowledge"
 )
 
 // MockDocumentService implements docservice.DocumentService for testing

@@ -11,11 +11,11 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/liang21/aitestos/internal/domain/identity"
+	authservice "github.com/liang21/aitestos/internal/service/identity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/liang21/aitestos/internal/domain/identity"
-	authservice "github.com/liang21/aitestos/internal/service/identity"
 )
 
 // MockAuthService implements authservice.AuthService for testing

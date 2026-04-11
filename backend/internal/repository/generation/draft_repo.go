@@ -13,6 +13,24 @@ import (
 	"github.com/liang21/aitestos/internal/domain/testcase"
 )
 
+// caseDraftRow maps a case_drafts table row
+type caseDraftRow struct {
+	ID            uuid.UUID  `db:"id"`
+	TaskID        uuid.UUID  `db:"task_id"`
+	ModuleID      *uuid.UUID `db:"module_id"`
+	Title         string     `db:"title"`
+	Preconditions string     `db:"preconditions"`
+	Steps         string     `db:"steps"`
+	Expected      string     `db:"expected_result"`
+	CaseType      string     `db:"case_type"`
+	Priority      string     `db:"priority"`
+	AiMetadata    []byte     `db:"ai_metadata"`
+	Status        string     `db:"status"`
+	Feedback      string     `db:"feedback"`
+	CreatedAt     string     `db:"created_at"`
+	UpdatedAt     string     `db:"updated_at"`
+}
+
 // CaseDraftRepository implements domaingeneration.CaseDraftRepository interface
 type CaseDraftRepository struct {
 	db *sqlx.DB
@@ -32,20 +50,32 @@ func (r *CaseDraftRepository) Save(ctx context.Context, draft *domaingeneration.
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	`
 
-	preconditionsJSON, _ := toJSON(draft.Preconditions())
-	stepsJSON, _ := toJSON(draft.Steps())
-	expectedJSON, _ := toJSON(draft.ExpectedResult())
+	preconditionsJSON, err := toJSON(draft.Preconditions())
+	if err != nil {
+		return fmt.Errorf("marshal preconditions: %w", err)
+	}
+	stepsJSON, err := toJSON(draft.Steps())
+	if err != nil {
+		return fmt.Errorf("marshal steps: %w", err)
+	}
+	expectedJSON, err := toJSON(draft.ExpectedResult())
+	if err != nil {
+		return fmt.Errorf("marshal expected result: %w", err)
+	}
 	var aiMetadataJSON []byte
 	if draft.AiMetadata() != nil {
-		aiMetadataJSON, _ = jsonMarshal(draft.AiMetadata())
+		aiMetadataJSON, err = jsonMarshal(draft.AiMetadata())
+		if err != nil {
+			return fmt.Errorf("marshal ai metadata: %w", err)
+		}
 	}
 
-	var moduleID interface{}
+	var moduleID any
 	if draft.ModuleID() != nil {
 		moduleID = *draft.ModuleID()
 	}
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err = r.db.ExecContext(ctx, query,
 		draft.ID(),
 		draft.TaskID(),
 		moduleID,
@@ -76,23 +106,7 @@ func (r *CaseDraftRepository) FindByID(ctx context.Context, id uuid.UUID) (*doma
 		WHERE id = $1
 	`
 
-	var row struct {
-		ID            uuid.UUID  `db:"id"`
-		TaskID        uuid.UUID  `db:"task_id"`
-		ModuleID      *uuid.UUID `db:"module_id"`
-		Title         string     `db:"title"`
-		Preconditions string     `db:"preconditions"`
-		Steps         string     `db:"steps"`
-		Expected      string     `db:"expected_result"`
-		CaseType      string     `db:"case_type"`
-		Priority      string     `db:"priority"`
-		AiMetadata    []byte     `db:"ai_metadata"`
-		Status        string     `db:"status"`
-		Feedback      string     `db:"feedback"`
-		CreatedAt     string     `db:"created_at"`
-		UpdatedAt     string     `db:"updated_at"`
-	}
-
+	var row caseDraftRow
 	err := r.db.GetContext(ctx, &row, query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -114,23 +128,7 @@ func (r *CaseDraftRepository) FindByTaskID(ctx context.Context, taskID uuid.UUID
 		ORDER BY created_at ASC
 	`
 
-	var rows []struct {
-		ID            uuid.UUID  `db:"id"`
-		TaskID        uuid.UUID  `db:"task_id"`
-		ModuleID      *uuid.UUID `db:"module_id"`
-		Title         string     `db:"title"`
-		Preconditions string     `db:"preconditions"`
-		Steps         string     `db:"steps"`
-		Expected      string     `db:"expected_result"`
-		CaseType      string     `db:"case_type"`
-		Priority      string     `db:"priority"`
-		AiMetadata    []byte     `db:"ai_metadata"`
-		Status        string     `db:"status"`
-		Feedback      string     `db:"feedback"`
-		CreatedAt     string     `db:"created_at"`
-		UpdatedAt     string     `db:"updated_at"`
-	}
-
+	var rows []caseDraftRow
 	if err := r.db.SelectContext(ctx, &rows, query, taskID); err != nil {
 		return nil, fmt.Errorf("find case drafts by task id: %w", err)
 	}
@@ -149,23 +147,7 @@ func (r *CaseDraftRepository) FindByStatus(ctx context.Context, status domaingen
 		LIMIT $2 OFFSET $3
 	`
 
-	var rows []struct {
-		ID            uuid.UUID  `db:"id"`
-		TaskID        uuid.UUID  `db:"task_id"`
-		ModuleID      *uuid.UUID `db:"module_id"`
-		Title         string     `db:"title"`
-		Preconditions string     `db:"preconditions"`
-		Steps         string     `db:"steps"`
-		Expected      string     `db:"expected_result"`
-		CaseType      string     `db:"case_type"`
-		Priority      string     `db:"priority"`
-		AiMetadata    []byte     `db:"ai_metadata"`
-		Status        string     `db:"status"`
-		Feedback      string     `db:"feedback"`
-		CreatedAt     string     `db:"created_at"`
-		UpdatedAt     string     `db:"updated_at"`
-	}
-
+	var rows []caseDraftRow
 	if err := r.db.SelectContext(ctx, &rows, query, string(status), opts.Limit, opts.Offset); err != nil {
 		return nil, fmt.Errorf("find case drafts by status: %w", err)
 	}
@@ -183,23 +165,7 @@ func (r *CaseDraftRepository) FindByTaskIDAndStatus(ctx context.Context, taskID 
 		ORDER BY created_at ASC
 	`
 
-	var rows []struct {
-		ID            uuid.UUID  `db:"id"`
-		TaskID        uuid.UUID  `db:"task_id"`
-		ModuleID      *uuid.UUID `db:"module_id"`
-		Title         string     `db:"title"`
-		Preconditions string     `db:"preconditions"`
-		Steps         string     `db:"steps"`
-		Expected      string     `db:"expected_result"`
-		CaseType      string     `db:"case_type"`
-		Priority      string     `db:"priority"`
-		AiMetadata    []byte     `db:"ai_metadata"`
-		Status        string     `db:"status"`
-		Feedback      string     `db:"feedback"`
-		CreatedAt     string     `db:"created_at"`
-		UpdatedAt     string     `db:"updated_at"`
-	}
-
+	var rows []caseDraftRow
 	if err := r.db.SelectContext(ctx, &rows, query, taskID, string(status)); err != nil {
 		return nil, fmt.Errorf("find case drafts by task id and status: %w", err)
 	}
@@ -257,7 +223,7 @@ func (r *CaseDraftRepository) Update(ctx context.Context, draft *domaingeneratio
 		WHERE id = $1
 	`
 
-	var moduleID interface{}
+	var moduleID any
 	if draft.ModuleID() != nil {
 		moduleID = *draft.ModuleID()
 	}
@@ -310,22 +276,8 @@ func (r *CaseDraftRepository) DeleteByTaskID(ctx context.Context, taskID uuid.UU
 }
 
 // Helper functions
-func (r *CaseDraftRepository) rowToDraft(row *struct {
-	ID            uuid.UUID  `db:"id"`
-	TaskID        uuid.UUID  `db:"task_id"`
-	ModuleID      *uuid.UUID `db:"module_id"`
-	Title         string     `db:"title"`
-	Preconditions string     `db:"preconditions"`
-	Steps         string     `db:"steps"`
-	Expected      string     `db:"expected_result"`
-	CaseType      string     `db:"case_type"`
-	Priority      string     `db:"priority"`
-	AiMetadata    []byte     `db:"ai_metadata"`
-	Status        string     `db:"status"`
-	Feedback      string     `db:"feedback"`
-	CreatedAt     string     `db:"created_at"`
-	UpdatedAt     string     `db:"updated_at"`
-}) (*domaingeneration.GeneratedCaseDraft, error) {
+
+func (r *CaseDraftRepository) rowToDraft(row *caseDraftRow) (*domaingeneration.GeneratedCaseDraft, error) {
 	status, err := domaingeneration.ParseDraftStatus(row.Status)
 	if err != nil {
 		return nil, fmt.Errorf("parse draft status: %w", err)
@@ -378,25 +330,10 @@ func (r *CaseDraftRepository) rowToDraft(row *struct {
 	), nil
 }
 
-func (r *CaseDraftRepository) rowsToDrafts(rows []struct {
-	ID            uuid.UUID  `db:"id"`
-	TaskID        uuid.UUID  `db:"task_id"`
-	ModuleID      *uuid.UUID `db:"module_id"`
-	Title         string     `db:"title"`
-	Preconditions string     `db:"preconditions"`
-	Steps         string     `db:"steps"`
-	Expected      string     `db:"expected_result"`
-	CaseType      string     `db:"case_type"`
-	Priority      string     `db:"priority"`
-	AiMetadata    []byte     `db:"ai_metadata"`
-	Status        string     `db:"status"`
-	Feedback      string     `db:"feedback"`
-	CreatedAt     string     `db:"created_at"`
-	UpdatedAt     string     `db:"updated_at"`
-}) ([]*domaingeneration.GeneratedCaseDraft, error) {
+func (r *CaseDraftRepository) rowsToDrafts(rows []caseDraftRow) ([]*domaingeneration.GeneratedCaseDraft, error) {
 	drafts := make([]*domaingeneration.GeneratedCaseDraft, 0, len(rows))
-	for _, row := range rows {
-		draft, err := r.rowToDraft(&row)
+	for i := range rows {
+		draft, err := r.rowToDraft(&rows[i])
 		if err != nil {
 			return nil, err
 		}

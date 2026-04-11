@@ -4,24 +4,33 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+
+	domainGeneration "github.com/liang21/aitestos/internal/domain/generation"
+	domainIdentity "github.com/liang21/aitestos/internal/domain/identity"
+	domainKnowledge "github.com/liang21/aitestos/internal/domain/knowledge"
+	domainProject "github.com/liang21/aitestos/internal/domain/project"
+	domainTestcase "github.com/liang21/aitestos/internal/domain/testcase"
+	domainTestplan "github.com/liang21/aitestos/internal/domain/testplan"
 )
 
 // Context key types for type-safe context values
 type contextKey string
 
 const (
-	userIDContextKey    contextKey = "user_id"
-	projectIDContextKey contextKey = "project_id"
-	moduleIDContextKey  contextKey = "module_id"
-	caseIDContextKey    contextKey = "case_id"
-	planIDContextKey    contextKey = "plan_id"
-	taskIDContextKey    contextKey = "task_id"
-	draftIDContextKey   contextKey = "draft_id"
+	userIDContextKey     contextKey = "user_id"
+	projectIDContextKey  contextKey = "project_id"
+	moduleIDContextKey   contextKey = "module_id"
+	caseIDContextKey     contextKey = "case_id"
+	planIDContextKey     contextKey = "plan_id"
+	taskIDContextKey     contextKey = "task_id"
+	draftIDContextKey    contextKey = "draft_id"
 	documentIDContextKey contextKey = "document_id"
 )
 
@@ -34,41 +43,101 @@ func respondWithError(w http.ResponseWriter, code int, message string) {
 
 // respondWithJSON sends a JSON response
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to encode response"})
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(payload)
+	w.Write(data)
 }
 
-// handleServiceError maps service errors to HTTP status codes
+// handleServiceError maps service errors to HTTP status codes using errors.Is()
 func handleServiceError(w http.ResponseWriter, err error) {
-	// Default to internal server error
-	code := http.StatusInternalServerError
-	message := err.Error()
-
-	// Map common errors to HTTP status codes
-	switch err.Error() {
-	case "user not found", "invalid credentials", "password mismatch", "unauthorized", "invalid refresh token":
-		code = http.StatusUnauthorized
-	case "project not found", "module not found", "test case not found", "test plan not found",
-		"generation task not found", "draft not found", "document not found", "config not found":
-		code = http.StatusNotFound
-	case "email already exists", "username already exists", "project name already exists",
-		"project prefix already exists", "module name already exists", "module abbreviation already exists":
-		code = http.StatusConflict
-	case "invalid email format", "password too short", "invalid role",
-		"invalid project prefix", "invalid module abbreviation", "invalid case number",
-		"empty steps", "test case steps cannot be empty", "invalid priority", "invalid case type", "invalid document type",
-		"invalid plan status", "invalid result status", "invalid request body",
-		"invalid request: prompt too short", "invalid status value":
-		code = http.StatusBadRequest
-	case "insufficient permissions", "permission denied":
-		code = http.StatusForbidden
-	case "draft already confirmed", "draft already rejected", "task already processed",
-		"document is being processed":
-		code = http.StatusConflict
+	// 401 Unauthorized
+	switch {
+	case errors.Is(err, domainIdentity.ErrUserNotFound),
+		errors.Is(err, domainIdentity.ErrPasswordMismatch):
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
 	}
 
-	respondWithError(w, code, message)
+	// 403 Forbidden
+	if errors.Is(err, domainIdentity.ErrPermissionDenied) {
+		respondWithError(w, http.StatusForbidden, err.Error())
+		return
+	}
+
+	// 404 Not Found
+	switch {
+	case errors.Is(err, domainProject.ErrProjectNotFound),
+		errors.Is(err, domainProject.ErrModuleNotFound),
+		errors.Is(err, domainProject.ErrConfigNotFound),
+		errors.Is(err, domainTestcase.ErrCaseNotFound),
+		errors.Is(err, domainTestplan.ErrPlanNotFound),
+		errors.Is(err, domainTestplan.ErrResultNotFound),
+		errors.Is(err, domainGeneration.ErrTaskNotFound),
+		errors.Is(err, domainGeneration.ErrDraftNotFound),
+		errors.Is(err, domainKnowledge.ErrDocumentNotFound):
+		respondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	// 409 Conflict
+	switch {
+	case errors.Is(err, domainIdentity.ErrEmailDuplicate),
+		errors.Is(err, domainIdentity.ErrUsernameDuplicate),
+		errors.Is(err, domainProject.ErrProjectNameDuplicate),
+		errors.Is(err, domainProject.ErrProjectPrefixDuplicate),
+		errors.Is(err, domainProject.ErrModuleNameDuplicate),
+		errors.Is(err, domainProject.ErrModuleAbbrevDuplicate),
+		errors.Is(err, domainGeneration.ErrDraftAlreadyConfirmed),
+		errors.Is(err, domainGeneration.ErrDraftAlreadyRejected),
+		errors.Is(err, domainGeneration.ErrTaskAlreadyProcessed),
+		errors.Is(err, domainKnowledge.ErrDocumentProcessing):
+		respondWithError(w, http.StatusConflict, err.Error())
+		return
+	}
+
+	// 400 Bad Request
+	switch {
+	case errors.Is(err, domainIdentity.ErrInvalidEmail),
+		errors.Is(err, domainIdentity.ErrPasswordTooShort),
+		errors.Is(err, domainIdentity.ErrInvalidUsername),
+		errors.Is(err, domainProject.ErrInvalidProjectPrefix),
+		errors.Is(err, domainProject.ErrInvalidModuleAbbrev),
+		errors.Is(err, domainTestcase.ErrInvalidCaseNumber),
+		errors.Is(err, domainTestcase.ErrEmptySteps),
+		errors.Is(err, domainTestcase.ErrInvalidPriority),
+		errors.Is(err, domainTestplan.ErrPlanNameDuplicate):
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// 500 Internal Server Error (fallback)
+	// Note: service-layer errors without domain sentinel values are matched by message pattern.
+	errMsg := err.Error()
+	switch {
+	case strings.Contains(errMsg, "invalid") && strings.Contains(errMsg, "token"),
+		strings.Contains(errMsg, "expired"),
+		strings.Contains(errMsg, "revoked"),
+		errMsg == "unauthorized":
+		respondWithError(w, http.StatusUnauthorized, errMsg)
+		return
+	case strings.Contains(errMsg, "invalid request"),
+		strings.Contains(errMsg, "invalid") && strings.Contains(errMsg, "status"),
+		strings.Contains(errMsg, "too short"):
+		respondWithError(w, http.StatusBadRequest, errMsg)
+		return
+	case strings.Contains(errMsg, "being processed"):
+		respondWithError(w, http.StatusConflict, errMsg)
+		return
+	}
+
+	respondWithError(w, http.StatusInternalServerError, errMsg)
 }
 
 // getIDFromURL extracts a UUID from URL parameters

@@ -15,25 +15,32 @@ import (
 	"github.com/liang21/aitestos/internal/transport/http/handler"
 
 	// Repository imports
+	generationRepo "github.com/liang21/aitestos/internal/repository/generation"
 	identityRepo "github.com/liang21/aitestos/internal/repository/identity"
+	knowledgeRepo "github.com/liang21/aitestos/internal/repository/knowledge"
 	projectRepo "github.com/liang21/aitestos/internal/repository/project"
 	testcaseRepo "github.com/liang21/aitestos/internal/repository/testcase"
 	testplanRepo "github.com/liang21/aitestos/internal/repository/testplan"
-	knowledgeRepo "github.com/liang21/aitestos/internal/repository/knowledge"
-	generationRepo "github.com/liang21/aitestos/internal/repository/generation"
 
 	// Service imports
+	generationSvc "github.com/liang21/aitestos/internal/service/generation"
 	identitySvc "github.com/liang21/aitestos/internal/service/identity"
+	knowledgeSvc "github.com/liang21/aitestos/internal/service/knowledge"
 	projectSvc "github.com/liang21/aitestos/internal/service/project"
 	testcaseSvc "github.com/liang21/aitestos/internal/service/testcase"
 	testplanSvc "github.com/liang21/aitestos/internal/service/testplan"
-	knowledgeSvc "github.com/liang21/aitestos/internal/service/knowledge"
-	generationSvc "github.com/liang21/aitestos/internal/service/generation"
 
 	// Domain imports
+	domaingeneration "github.com/liang21/aitestos/internal/domain/generation"
 	domainKnowledge "github.com/liang21/aitestos/internal/domain/knowledge"
-	domainTestcase "github.com/liang21/aitestos/internal/domain/testcase"
 	domainProject "github.com/liang21/aitestos/internal/domain/project"
+	domaintestcase "github.com/liang21/aitestos/internal/domain/testcase"
+
+	// Infrastructure imports
+	"github.com/liang21/aitestos/internal/infrastructure/llm"
+	"github.com/liang21/aitestos/internal/infrastructure/milvus"
+	"github.com/liang21/aitestos/internal/infrastructure/rag"
+	"github.com/liang21/aitestos/internal/infrastructure/vector"
 )
 
 // Initialize creates a fully initialized application
@@ -74,19 +81,85 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 	genModuleRepoAdapter := &genModuleRepoAdapterImpl{repo: moduleRepo}
 	genProjectRepoAdapter := &genProjectRepoAdapterImpl{repo: projectRepository}
 
-	// 4. Initialize Services (using mocks for external dependencies)
-	mockRAGSvc := &mockRAGService{}
-	mockLLMSvc := &mockLLMService{}
-	mockVectorRepo := &mockVectorRepository{}
+	// 4. Initialize external infrastructure services
+	// NOTE: These are placeholder implementations that return "not yet implemented" errors.
+	// TODO: Replace with real implementations when LLM/Milvus are available.
 
+	// Initialize Milvus client for vector operations
+	var milvusClient *milvus.Client
+	var vectorRepo *vector.Repository
+	if cfg.Milvus.Host != "" {
+		milvusClient, err = milvus.NewClient(&cfg.Milvus)
+		if err != nil {
+			log.Warn().Err(err).Msg("Failed to initialize Milvus client, vector search will be unavailable")
+		} else {
+			// Ensure collection exists
+			if err := milvusClient.EnsureCollection(context.Background()); err != nil {
+				log.Warn().Err(err).Msg("Failed to ensure Milvus collection, vector search may be unavailable")
+			}
+			vectorRepo = vector.NewRepository(milvusClient)
+		}
+	}
+
+	// Initialize LLM client
+	var llmClient *llm.Client
+	if cfg.LLM.APIKey != "" {
+		llmClient, err = llm.NewClient(&cfg.LLM)
+		if err != nil {
+			log.Warn().Err(err).Msg("Failed to initialize LLM client, AI features will be unavailable")
+		}
+	}
+
+	// Initialize RAG service (requires Vector repository)
+	var ragSvc *rag.Service
+	if vectorRepo != nil {
+		ragSvc, err = rag.NewService(&cfg.Milvus, vectorRepo)
+		if err != nil {
+			log.Warn().Err(err).Msg("Failed to initialize RAG service, semantic search will be unavailable")
+		} else {
+			// Wire up dependencies for RAG service
+			ragSvc = ragSvc.WithDocumentRepo(documentRepo).
+				WithChunkRepo(chunkRepo)
+			// LLM client will be set after generation service is created
+		}
+	}
+
+	// Create vector repo adapter for knowledge service
+	var vectorRepoAdapter domainKnowledge.VectorRepository
+	if vectorRepo != nil {
+		vectorRepoAdapter = &vectorRepoAdapterImpl{repo: vectorRepo}
+	} else {
+		// Fallback to nil adapter - document operations will work but vector search will fail
+		vectorRepoAdapter = nil
+		log.Warn().Msg("Vector repository not available, knowledge features limited to storage only")
+	}
+
+	// 5. Initialize Services
 	authService := identitySvc.NewAuthService(userRepo, cfg.JWT.Secret)
 	projectService := projectSvc.NewProjectService(projectRepository, moduleRepo, configRepo)
 	caseService := testcaseSvc.NewCaseService(caseRepo, moduleRepoAdapter, projectRepoAdapter)
 	planService := testplanSvc.NewPlanService(planRepo, resultRepo, caseRepo)
-	documentService := knowledgeSvc.NewDocumentService(documentRepo, chunkRepo, mockVectorRepo)
-	generationService := generationSvc.NewGenerationService(taskRepo, draftRepo, mockRAGSvc, mockLLMSvc, genModuleRepoAdapter, genProjectRepoAdapter, caseRepo)
+	documentService := knowledgeSvc.NewDocumentService(documentRepo, chunkRepo, vectorRepoAdapter)
 
-	// 5. Initialize Handlers
+	// Generation service requires LLM and RAG
+	var generationService generationSvc.GenerationService
+	if llmClient != nil && ragSvc != nil {
+		generationService = generationSvc.NewGenerationService(
+			taskRepo,
+			draftRepo,
+			ragSvc,
+			llmClient,
+			genModuleRepoAdapter,
+			genProjectRepoAdapter,
+			caseRepo,
+		)
+	} else {
+		log.Warn().Msg("LLM or RAG service unavailable, generation features disabled")
+		// Create a placeholder service that returns proper errors
+		generationService = &placeholderGenerationService{}
+	}
+
+	// 6. Initialize Handlers
 	identityHandler := handler.NewIdentityHandler(authService)
 	projectHandler := handler.NewProjectHandler(projectService)
 	caseHandler := handler.NewTestCaseHandler(caseService)
@@ -94,7 +167,7 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 	generationHandler := handler.NewGenerationHandler(generationService)
 	knowledgeHandler := handler.NewKnowledgeHandler(documentService)
 
-	// 6. Create HTTP handlers struct
+	// 7. Create HTTP handlers struct
 	handlers := &httptransport.Handlers{
 		Identity:   identityHandler,
 		Project:    projectHandler,
@@ -104,20 +177,23 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 		Knowledge:  knowledgeHandler,
 	}
 
-	// 7. Create router with authentication middleware
+	// 8. Create router with authentication middleware
 	router := httptransport.NewRouterWithMiddleware(handlers, cfg.JWT.Secret)
 
-	// 8. Create HTTP server
+	// 9. Create HTTP server
 	httpServer := NewHTTPServerFromConfig(cfg, router)
 
-	// 9. Create shutdown manager and register closers
+	// 10. Create shutdown manager and register closers
 	shutdownMgr := NewShutdownManagerWithTimeout(cfg.Server.ShutdownTimeout)
 	shutdownMgr.Register(dbCloser)
+	if milvusClient != nil {
+		shutdownMgr.Register(&milvusCloser{client: milvusClient})
+	}
 
-	// 10. Create application
+	// 11. Create application
 	app := New(cfg, httpServer, shutdownMgr)
 
-	// 11. Return cleanup function
+	// 12. Return cleanup function
 	cleanup := func() {
 		log.Info().Msg("Running cleanup...")
 	}
@@ -157,6 +233,19 @@ func NewShutdownManagerWithTimeout(timeout time.Duration) *ShutdownManager {
 	}
 }
 
+// milvusCloser wraps milvus.Client to implement Closer interface
+type milvusCloser struct {
+	client *milvus.Client
+}
+
+func (m *milvusCloser) Name() string {
+	return "milvus"
+}
+
+func (m *milvusCloser) Close(ctx context.Context) error {
+	return m.client.Close()
+}
+
 // Repository adapters for testcase service
 
 type moduleRepoAdapterImpl struct {
@@ -175,9 +264,9 @@ type moduleWrapper struct {
 	*domainProject.Module
 }
 
-func (w *moduleWrapper) ID() uuid.UUID { return w.Module.ID() }
+func (w *moduleWrapper) ID() uuid.UUID        { return w.Module.ID() }
 func (w *moduleWrapper) ProjectID() uuid.UUID { return w.Module.ProjectID() }
-func (w *moduleWrapper) Name() string { return w.Module.Name() }
+func (w *moduleWrapper) Name() string         { return w.Module.Name() }
 func (w *moduleWrapper) Abbreviation() string { return w.Module.Abbreviation().String() }
 
 type projectRepoAdapterImpl struct {
@@ -196,8 +285,8 @@ type projectWrapper struct {
 	*domainProject.Project
 }
 
-func (w *projectWrapper) ID() uuid.UUID { return w.Project.ID() }
-func (w *projectWrapper) Name() string { return w.Project.Name() }
+func (w *projectWrapper) ID() uuid.UUID  { return w.Project.ID() }
+func (w *projectWrapper) Name() string   { return w.Project.Name() }
 func (w *projectWrapper) Prefix() string { return w.Project.Prefix().String() }
 
 // Repository adapters for generation service
@@ -222,57 +311,58 @@ func (a *genProjectRepoAdapterImpl) FindByID(ctx context.Context, id uuid.UUID) 
 	return a.repo.FindByID(ctx, id)
 }
 
-// Mock implementations for external dependencies
-
-type mockRAGService struct{}
-
-func (m *mockRAGService) Retrieve(ctx context.Context, req *generationSvc.RetrieveRequest) (*generationSvc.RetrieveResult, error) {
-	return &generationSvc.RetrieveResult{
-		Chunks: []*generationSvc.RetrievedChunk{},
-		Query:  req.Query,
-	}, nil
+// Vector repository adapter for knowledge service
+type vectorRepoAdapterImpl struct {
+	repo *vector.Repository
 }
 
-func (m *mockRAGService) CalculateConfidence(chunks []*generationSvc.RetrievedChunk) domainTestcase.Confidence {
-	return domainTestcase.ConfidenceMedium
+func (a *vectorRepoAdapterImpl) Upsert(ctx context.Context, chunks []*domainKnowledge.DocumentChunk) error {
+	return a.repo.Upsert(ctx, chunks)
 }
 
-type mockLLMService struct{}
-
-func (m *mockLLMService) GenerateCases(ctx context.Context, req *generationSvc.GenerateCasesRequest) (*generationSvc.GenerateCasesResponse, error) {
-	return &generationSvc.GenerateCasesResponse{
-		Cases:        []*generationSvc.GeneratedCase{},
-		ModelVersion: "mock-v1.0",
-		TokensUsed:   1000,
-	}, nil
+func (a *vectorRepoAdapterImpl) Search(ctx context.Context, queryVector []float32, topK int, filter map[string]any) ([]*domainKnowledge.DocumentChunk, error) {
+	return a.repo.Search(ctx, queryVector, topK, filter)
 }
 
-func (m *mockLLMService) GenerateEmbedding(ctx context.Context, req *generationSvc.GenerateEmbeddingRequest) (*generationSvc.GenerateEmbeddingResponse, error) {
-	embedding := make([]byte, 1536*4)
-	return &generationSvc.GenerateEmbeddingResponse{
-		Embedding: embedding,
-		Model:     "mock-embedding-v1",
-	}, nil
+func (a *vectorRepoAdapterImpl) DeleteByDocumentID(ctx context.Context, documentID uuid.UUID) error {
+	return a.repo.DeleteByDocumentID(ctx, documentID)
 }
 
-func (m *mockLLMService) GetModelVersion() string {
-	return "mock-v1.0"
+func (a *vectorRepoAdapterImpl) CountByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error) {
+	return a.repo.CountByProjectID(ctx, projectID)
 }
 
-type mockVectorRepository struct{}
+// placeholderGenerationService is used when LLM/RAG services are unavailable
+type placeholderGenerationService struct{}
 
-func (m *mockVectorRepository) Upsert(ctx context.Context, chunks []*domainKnowledge.DocumentChunk) error {
-	return nil
+func (s *placeholderGenerationService) CreateTask(ctx context.Context, req *generationSvc.CreateTaskRequest, userID uuid.UUID) (*domaingeneration.GenerationTask, error) {
+	return nil, fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
 }
 
-func (m *mockVectorRepository) Search(ctx context.Context, queryVector []float32, topK int, filter map[string]any) ([]*domainKnowledge.DocumentChunk, error) {
-	return []*domainKnowledge.DocumentChunk{}, nil
+func (s *placeholderGenerationService) GetTask(ctx context.Context, id uuid.UUID) (*domaingeneration.GenerationTask, error) {
+	return nil, fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
 }
 
-func (m *mockVectorRepository) DeleteByDocumentID(ctx context.Context, documentID uuid.UUID) error {
-	return nil
+func (s *placeholderGenerationService) ListTasks(ctx context.Context, projectID uuid.UUID, opts generationSvc.ListTaskOptions) ([]*domaingeneration.GenerationTask, int64, error) {
+	return nil, 0, fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
 }
 
-func (m *mockVectorRepository) CountByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error) {
-	return 0, nil
+func (s *placeholderGenerationService) GetDrafts(ctx context.Context, taskID uuid.UUID) ([]*domaingeneration.GeneratedCaseDraft, error) {
+	return nil, fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
+}
+
+func (s *placeholderGenerationService) ConfirmDraft(ctx context.Context, req *generationSvc.ConfirmDraftRequest, userID uuid.UUID) (*domaintestcase.TestCase, error) {
+	return nil, fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
+}
+
+func (s *placeholderGenerationService) RejectDraft(ctx context.Context, req *generationSvc.RejectDraftRequest) error {
+	return fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
+}
+
+func (s *placeholderGenerationService) BatchConfirm(ctx context.Context, req *generationSvc.BatchConfirmRequest, userID uuid.UUID) (*generationSvc.BatchConfirmResult, error) {
+	return nil, fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
+}
+
+func (s *placeholderGenerationService) ProcessTask(ctx context.Context, taskID uuid.UUID) error {
+	return fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
 }

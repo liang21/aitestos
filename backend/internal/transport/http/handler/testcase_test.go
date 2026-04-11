@@ -11,11 +11,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/liang21/aitestos/internal/domain/testcase"
+	caseservice "github.com/liang21/aitestos/internal/service/testcase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/liang21/aitestos/internal/domain/testcase"
-	caseservice "github.com/liang21/aitestos/internal/service/testcase"
 )
 
 // MockCaseService implements caseservice.CaseService for testing
@@ -88,13 +88,13 @@ func TestCreateCaseHandler(t *testing.T) {
 		require.NotNil(t, handler)
 
 		body := map[string]interface{}{
-			"module_id":      uuid.New().String(),
-			"title":          "Test Case Title",
-			"preconditions":  []string{"Precondition 1"},
-			"steps":          []string{"Step 1", "Step 2"},
-			"expected":       map[string]interface{}{"result": "success"},
-			"case_type":      "functionality",
-			"priority":       "P1",
+			"module_id":     uuid.New().String(),
+			"title":         "Test Case Title",
+			"preconditions": []string{"Precondition 1"},
+			"steps":         []string{"Step 1", "Step 2"},
+			"expected":      map[string]interface{}{"result": "success"},
+			"case_type":     "functionality",
+			"priority":      "P1",
 		}
 		jsonBody, _ := json.Marshal(body)
 

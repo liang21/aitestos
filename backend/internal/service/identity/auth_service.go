@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -71,7 +71,7 @@ type AuthService interface {
 type AuthServiceImpl struct {
 	userRepo   identity.UserRepository
 	jwtSecret  []byte
-	tokenStore map[string]*refreshTokenInfo // In production, use Redis
+	tokenStore sync.Map // map[string]*refreshTokenInfo; In production, use Redis
 }
 
 type refreshTokenInfo struct {
@@ -82,9 +82,8 @@ type refreshTokenInfo struct {
 // NewAuthService creates a new AuthService instance
 func NewAuthService(userRepo identity.UserRepository, jwtSecret string) AuthService {
 	return &AuthServiceImpl{
-		userRepo:   userRepo,
-		jwtSecret:  []byte(jwtSecret),
-		tokenStore: make(map[string]*refreshTokenInfo),
+		userRepo:  userRepo,
+		jwtSecret: []byte(jwtSecret),
 	}
 }
 
@@ -223,6 +222,20 @@ func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string)
 		return nil, errors.New("invalid refresh token")
 	}
 
+	// Verify token exists in store (not revoked)
+	info, ok := s.tokenStore.Load(refreshToken)
+	if !ok {
+		return nil, errors.New("refresh token has been revoked")
+	}
+	tokenInfo, ok := info.(*refreshTokenInfo)
+	if !ok || time.Now().After(tokenInfo.expiresAt) {
+		s.tokenStore.Delete(refreshToken)
+		return nil, errors.New("refresh token has expired")
+	}
+
+	// Invalidate old refresh token
+	s.tokenStore.Delete(refreshToken)
+
 	// Get user
 	user, err := s.userRepo.FindByID(ctx, claims.UserID)
 	if err != nil {
@@ -288,15 +301,10 @@ func (s *AuthServiceImpl) generateRefreshToken(user *identity.User) (string, err
 	}
 
 	// Store refresh token info (in production, use Redis)
-	s.tokenStore[signedToken] = &refreshTokenInfo{
+	s.tokenStore.Store(signedToken, &refreshTokenInfo{
 		userID:    user.ID(),
 		expiresAt: now.Add(refreshTokenExpiry),
-	}
+	})
 
 	return signedToken, nil
-}
-
-// normalizeEmail normalizes email to lowercase
-func normalizeEmail(email string) string {
-	return strings.ToLower(strings.TrimSpace(email))
 }

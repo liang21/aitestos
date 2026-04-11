@@ -173,9 +173,13 @@ func TestDocument_UpdateStatus(t *testing.T) {
 
 func TestDocumentChunk(t *testing.T) {
 	docID := uuid.New()
+	projectID := uuid.New()
 	content := "This is a test chunk content"
 
-	chunk := knowledge.NewDocumentChunk(docID, 0, content)
+	chunk, err := knowledge.NewDocumentChunk(docID, projectID, 0, content)
+	if err != nil {
+		t.Fatalf("NewDocumentChunk() error = %v", err)
+	}
 
 	if chunk.ID() == uuid.Nil {
 		t.Error("DocumentChunk.ID() should not be nil")
