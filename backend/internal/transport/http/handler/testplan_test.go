@@ -5,10 +5,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -157,8 +159,10 @@ func TestGetPlanHandler(t *testing.T) {
 		handler := NewTestPlanHandler(mockSvc)
 
 		req := httptest.NewRequest("GET", "/api/v1/plans/"+planID.String(), nil)
-		ctx := context.WithValue(req.Context(), planIDContextKey, planID)
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", planID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
 		handler.GetPlan(w, req)
@@ -176,8 +180,10 @@ func TestGetPlanHandler(t *testing.T) {
 		handler := NewTestPlanHandler(mockSvc)
 
 		req := httptest.NewRequest("GET", "/api/v1/plans/"+planID.String(), nil)
-		ctx := context.WithValue(req.Context(), planIDContextKey, planID)
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", planID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
 		handler.GetPlan(w, req)
@@ -206,8 +212,10 @@ func TestAddCasesToPlanHandler(t *testing.T) {
 
 		req := httptest.NewRequest("POST", "/api/v1/plans/"+planID.String()+"/cases", bytes.NewReader(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), planIDContextKey, planID)
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", planID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
 		handler.AddCases(w, req)
@@ -230,7 +238,6 @@ func TestRecordResultHandler(t *testing.T) {
 		handler := NewTestPlanHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"plan_id": planID.String(),
 			"case_id": caseID.String(),
 			"status":  "pass",
 			"note":    "Test passed",
@@ -239,9 +246,12 @@ func TestRecordResultHandler(t *testing.T) {
 
 		req := httptest.NewRequest("POST", "/api/v1/plans/"+planID.String()+"/results", bytes.NewReader(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), planIDContextKey, planID)
-		ctx = context.WithValue(ctx, userIDContextKey, uuid.New())
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", planID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		// Set user context
+		req = req.WithContext(context.WithValue(req.Context(), userIDContextKey, uuid.New()))
 		w := httptest.NewRecorder()
 
 		handler.RecordResult(w, req)
@@ -254,11 +264,12 @@ func TestRecordResultHandler(t *testing.T) {
 
 		mockSvc := new(MockPlanService)
 		planID := uuid.New()
+		// Set mock expectation - service should return validation error
+		mockSvc.On("RecordResult", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("invalid status value"))
 
 		handler := NewTestPlanHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"plan_id": planID.String(),
 			"case_id": uuid.New().String(),
 			"status":  "invalid_status",
 		}
@@ -266,9 +277,12 @@ func TestRecordResultHandler(t *testing.T) {
 
 		req := httptest.NewRequest("POST", "/api/v1/plans/"+planID.String()+"/results", bytes.NewReader(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), planIDContextKey, planID)
-		ctx = context.WithValue(ctx, userIDContextKey, uuid.New())
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", planID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		// Set user context
+		req = req.WithContext(context.WithValue(req.Context(), userIDContextKey, uuid.New()))
 		w := httptest.NewRecorder()
 
 		handler.RecordResult(w, req)
@@ -290,8 +304,10 @@ func TestGetResultsHandler(t *testing.T) {
 		handler := NewTestPlanHandler(mockSvc)
 
 		req := httptest.NewRequest("GET", "/api/v1/plans/"+planID.String()+"/results", nil)
-		ctx := context.WithValue(req.Context(), planIDContextKey, planID)
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", planID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
 		handler.GetResults(w, req)

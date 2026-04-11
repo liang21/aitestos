@@ -45,7 +45,7 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 
 		_, doc := createProjectAndDocument(t)
 
-		chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), 0).Build()
+		chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), doc.ProjectID(), 0).Build()
 		require.NoError(t, err, "build chunk should succeed")
 
 		err = chunkRepo.Save(ctx, chunk)
@@ -64,7 +64,7 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 		// 批量创建块
 		chunks := make([]*domainknowledge.DocumentChunk, 5)
 		for i := 0; i < 5; i++ {
-			chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), i).Build()
+			chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), doc.ProjectID(), i).Build()
 			require.NoError(t, err, "build chunk should succeed")
 			chunks[i] = chunk
 		}
@@ -85,7 +85,7 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 
 		// 创建多个块
 		for i := 0; i < 3; i++ {
-			chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), i).Build()
+			chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), doc.ProjectID(), i).Build()
 			require.NoError(t, err, "build chunk should succeed")
 			require.NoError(t, chunkRepo.Save(ctx, chunk), "save chunk should succeed")
 		}
@@ -105,7 +105,7 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 
 		_, doc := createProjectAndDocument(t)
 
-		chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), 5).Build()
+		chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), doc.ProjectID(), 5).Build()
 		require.NoError(t, err, "build chunk should succeed")
 		require.NoError(t, chunkRepo.Save(ctx, chunk), "save chunk should succeed")
 
@@ -124,7 +124,7 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 
 		_, doc := createProjectAndDocument(t)
 
-		chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), 0).Build()
+		chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), doc.ProjectID(), 0).Build()
 		require.NoError(t, err, "build chunk should succeed")
 		require.NoError(t, chunkRepo.Save(ctx, chunk), "save chunk should succeed")
 
@@ -145,7 +145,7 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 
 		// 创建多个块
 		for i := 0; i < 3; i++ {
-			chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), i).Build()
+			chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), doc.ProjectID(), i).Build()
 			require.NoError(t, err, "build chunk should succeed")
 			require.NoError(t, chunkRepo.Save(ctx, chunk), "save chunk should succeed")
 		}
@@ -166,7 +166,7 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 		_, doc := createProjectAndDocument(t)
 
 		// 创建块
-		chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), 0).Build()
+		chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), doc.ProjectID(), 0).Build()
 		require.NoError(t, err, "build chunk should succeed")
 		require.NoError(t, chunkRepo.Save(ctx, chunk), "save chunk should succeed")
 
@@ -184,7 +184,7 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 
 		_, doc := createProjectAndDocument(t)
 
-		chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), 0).Build()
+		chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), doc.ProjectID(), 0).Build()
 		require.NoError(t, err, "build chunk should succeed")
 		require.NoError(t, chunkRepo.Save(ctx, chunk), "save chunk should succeed")
 
@@ -206,7 +206,7 @@ func TestDocumentChunkRepository_Integration(t *testing.T) {
 
 		// 创建多个块
 		for i := 0; i < 7; i++ {
-			chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), i).Build()
+			chunk, err := testsetup.NewDocumentChunkBuilder(doc.ID(), doc.ProjectID(), i).Build()
 			require.NoError(t, err, "build chunk should succeed")
 			require.NoError(t, chunkRepo.Save(ctx, chunk), "save chunk should succeed")
 		}

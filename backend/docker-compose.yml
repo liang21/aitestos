@@ -22,7 +22,7 @@ services:
   # ======================== Layer 0: Core Infrastructure ========================
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:latest
     container_name: aitestos-postgres
     restart: unless-stopped
     environment:
@@ -50,7 +50,7 @@ services:
           memory: 256M
 
   redis:
-    image: redis:7-alpine
+    image: redis:latest
     container_name: aitestos-redis
     restart: unless-stopped
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
@@ -134,7 +134,7 @@ services:
   # ======================== Layer 1: Application Infrastructure ========================
 
   milvus:
-    image: milvusdb/milvus:v2.5.11
+    image: milvusdb/milvus:latest
     container_name: aitestos-milvus
     restart: unless-stopped
     command: ["milvus", "run", "standalone"]

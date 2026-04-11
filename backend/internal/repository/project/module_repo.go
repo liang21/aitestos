@@ -189,3 +189,30 @@ func (r *ModuleRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 	return nil
 }
+
+// Update updates an existing module
+func (r *ModuleRepository) Update(ctx context.Context, module *domainproject.Module) error {
+	query := `
+		UPDATE modules
+		SET name = $2, abbreviation = $3, description = $4, updated_at = $5
+		WHERE id = $1 AND deleted_at IS NULL
+	`
+	result, err := r.db.ExecContext(ctx, query,
+		module.ID(),
+		module.Name(),
+		module.Abbreviation().String(),
+		module.Description(),
+		module.UpdatedAt(),
+	)
+	if err != nil {
+		return fmt.Errorf("update module: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return domainproject.ErrModuleNotFound
+	}
+	return nil
+}

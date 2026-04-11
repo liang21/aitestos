@@ -422,15 +422,17 @@ func (b *DocumentBuilder) Build() (*knowledge.Document, error) {
 // DocumentChunkBuilder 文档块构建器
 type DocumentChunkBuilder struct {
 	documentID uuid.UUID
+	projectID  uuid.UUID
 	chunkIndex int
 	content    string
 	metadata   map[string]any
 }
 
 // NewDocumentChunkBuilder 创建文档块构建器
-func NewDocumentChunkBuilder(documentID uuid.UUID, chunkIndex int) *DocumentChunkBuilder {
+func NewDocumentChunkBuilder(documentID uuid.UUID, projectID uuid.UUID, chunkIndex int) *DocumentChunkBuilder {
 	return &DocumentChunkBuilder{
 		documentID: documentID,
+		projectID:  projectID,
 		chunkIndex: chunkIndex,
 		content:    "Chunk content " + uuid.New().String()[:8],
 		metadata:   map[string]any{},
@@ -451,7 +453,7 @@ func (b *DocumentChunkBuilder) WithMetadata(metadata map[string]any) *DocumentCh
 
 // Build 构建文档块
 func (b *DocumentChunkBuilder) Build() (*knowledge.DocumentChunk, error) {
-	return knowledge.NewDocumentChunk(b.documentID, b.chunkIndex, b.content), nil
+	return knowledge.NewDocumentChunk(b.documentID, b.projectID, b.chunkIndex, b.content)
 }
 
 // GenerationTaskBuilder 生成任务构建器

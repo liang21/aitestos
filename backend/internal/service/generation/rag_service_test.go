@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"github.com/liang21/aitestos/internal/domain/knowledge"
 	"github.com/liang21/aitestos/internal/domain/testcase"
 )
@@ -203,9 +204,12 @@ func TestRAGService_Retrieve(t *testing.T) {
 	docRepo.docs[doc1.ID()] = doc1
 	docRepo.docs[doc2.ID()] = doc2
 
-	chunk1 := knowledge.NewDocumentChunk(doc1.ID(), 0, "User login feature description")
-	chunk2 := knowledge.NewDocumentChunk(doc1.ID(), 1, "Password validation rules")
-	chunk3 := knowledge.NewDocumentChunk(doc2.ID(), 0, "POST /api/login endpoint")
+	chunk1, err := knowledge.NewDocumentChunk(doc1.ID(), projectID, 0, "User login feature description")
+	require.NoError(t, err, "create chunk1 should succeed")
+	chunk2, err := knowledge.NewDocumentChunk(doc1.ID(), projectID, 1, "Password validation rules")
+	require.NoError(t, err, "create chunk2 should succeed")
+	chunk3, err := knowledge.NewDocumentChunk(doc2.ID(), projectID, 0, "POST /api/login endpoint")
+	require.NoError(t, err, "create chunk3 should succeed")
 	chunkRepo.chunks[chunk1.ID()] = chunk1
 	chunkRepo.chunks[chunk2.ID()] = chunk2
 	chunkRepo.chunks[chunk3.ID()] = chunk3

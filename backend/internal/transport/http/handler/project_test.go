@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -218,8 +219,10 @@ func TestGetProjectHandler(t *testing.T) {
 		handler := NewProjectHandler(mockSvc)
 
 		req := httptest.NewRequest("GET", "/api/v1/projects/"+projectID.String(), nil)
-		ctx := context.WithValue(req.Context(), projectIDContextKey, projectID)
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", projectID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
 		handler.GetProject(w, req)
@@ -237,8 +240,10 @@ func TestGetProjectHandler(t *testing.T) {
 		handler := NewProjectHandler(mockSvc)
 
 		req := httptest.NewRequest("GET", "/api/v1/projects/"+projectID.String(), nil)
-		ctx := context.WithValue(req.Context(), projectIDContextKey, projectID)
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", projectID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
 		handler.GetProject(w, req)
@@ -268,9 +273,12 @@ func TestCreateModuleHandler(t *testing.T) {
 
 		req := httptest.NewRequest("POST", "/api/v1/projects/"+projectID.String()+"/modules", bytes.NewReader(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), projectIDContextKey, projectID)
-		ctx = context.WithValue(ctx, userIDContextKey, uuid.New())
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("projectID", projectID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		// Set user context
+		req = req.WithContext(context.WithValue(req.Context(), userIDContextKey, uuid.New()))
 		w := httptest.NewRecorder()
 
 		handler.CreateModule(w, req)
@@ -298,8 +306,11 @@ func TestSetConfigHandler(t *testing.T) {
 
 		req := httptest.NewRequest("PUT", "/api/v1/projects/"+projectID.String()+"/configs/test-key", bytes.NewReader(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), projectIDContextKey, projectID)
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("projectID", projectID.String())
+		rctx.URLParams.Add("key", "test-key")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
 		handler.SetConfig(w, req)

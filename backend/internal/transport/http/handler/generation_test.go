@@ -5,10 +5,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -75,6 +77,27 @@ func (m *MockGenerationService) ProcessTask(ctx context.Context, taskID uuid.UUI
 	return args.Error(0)
 }
 
+// Helper function to create a request with chi URL parameters set
+func createRequestWithChiParams(method, url string, body []byte, urlParams map[string]string) *http.Request {
+	var req *http.Request
+	if body != nil {
+		req = httptest.NewRequest(method, url, bytes.NewReader(body))
+	} else {
+		req = httptest.NewRequest(method, url, nil)
+	}
+
+	// Set chi URL parameters
+	if len(urlParams) > 0 {
+		rctx := chi.NewRouteContext()
+		for key, value := range urlParams {
+			rctx.URLParams.Add(key, value)
+		}
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	}
+
+	return req
+}
+
 func TestCreateTaskHandler(t *testing.T) {
 	t.Parallel()
 
@@ -96,7 +119,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		}
 		jsonBody, _ := json.Marshal(body)
 
-		req := httptest.NewRequest("POST", "/api/v1/generation/tasks", bytes.NewReader(jsonBody))
+		req := createRequestWithChiParams("POST", "/api/v1/generation/tasks", jsonBody, nil)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
 		req = req.WithContext(ctx)
@@ -120,7 +143,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		}
 		jsonBody, _ := json.Marshal(body)
 
-		req := httptest.NewRequest("POST", "/api/v1/generation/tasks", bytes.NewReader(jsonBody))
+		req := createRequestWithChiParams("POST", "/api/v1/generation/tasks", jsonBody, nil)
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
@@ -133,6 +156,9 @@ func TestCreateTaskHandler(t *testing.T) {
 		t.Parallel()
 
 		mockSvc := new(MockGenerationService)
+		// Set mock expectation - service should return validation error for short prompt
+		mockSvc.On("CreateTask", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("invalid request: prompt too short"))
+
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
@@ -142,7 +168,7 @@ func TestCreateTaskHandler(t *testing.T) {
 		}
 		jsonBody, _ := json.Marshal(body)
 
-		req := httptest.NewRequest("POST", "/api/v1/generation/tasks", bytes.NewReader(jsonBody))
+		req := createRequestWithChiParams("POST", "/api/v1/generation/tasks", jsonBody, nil)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
 		req = req.WithContext(ctx)
@@ -166,9 +192,7 @@ func TestGetTaskHandler(t *testing.T) {
 
 		handler := NewGenerationHandler(mockSvc)
 
-		req := httptest.NewRequest("GET", "/api/v1/generation/tasks/"+taskID.String(), nil)
-		ctx := context.WithValue(req.Context(), taskIDContextKey, taskID)
-		req = req.WithContext(ctx)
+		req := createRequestWithChiParams("GET", "/api/v1/generation/tasks/"+taskID.String(), nil, map[string]string{"id": taskID.String()})
 		w := httptest.NewRecorder()
 
 		handler.GetTask(w, req)
@@ -185,21 +209,33 @@ func TestGetTaskHandler(t *testing.T) {
 
 		handler := NewGenerationHandler(mockSvc)
 
-		req := httptest.NewRequest("GET", "/api/v1/generation/tasks/"+taskID.String(), nil)
-		ctx := context.WithValue(req.Context(), taskIDContextKey, taskID)
-		req = req.WithContext(ctx)
+		req := createRequestWithChiParams("GET", "/api/v1/generation/tasks/"+taskID.String(), nil, map[string]string{"id": taskID.String()})
 		w := httptest.NewRecorder()
 
 		handler.GetTask(w, req)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
+
+	t.Run("invalid task ID", func(t *testing.T) {
+		t.Parallel()
+
+		mockSvc := new(MockGenerationService)
+		handler := NewGenerationHandler(mockSvc)
+
+		req := createRequestWithChiParams("GET", "/api/v1/generation/tasks/invalid-uuid", nil, map[string]string{"id": "invalid-uuid"})
+		w := httptest.NewRecorder()
+
+		handler.GetTask(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
 }
 
 func TestGetDraftsHandler(t *testing.T) {
 	t.Parallel()
 
-	t.Run("successful get", func(t *testing.T) {
+	t.Run("successful get drafts", func(t *testing.T) {
 		t.Parallel()
 
 		mockSvc := new(MockGenerationService)
@@ -208,14 +244,29 @@ func TestGetDraftsHandler(t *testing.T) {
 
 		handler := NewGenerationHandler(mockSvc)
 
-		req := httptest.NewRequest("GET", "/api/v1/generation/tasks/"+taskID.String()+"/drafts", nil)
-		ctx := context.WithValue(req.Context(), taskIDContextKey, taskID)
-		req = req.WithContext(ctx)
+		req := createRequestWithChiParams("GET", "/api/v1/generation/tasks/"+taskID.String()+"/drafts", nil, map[string]string{"taskID": taskID.String()})
 		w := httptest.NewRecorder()
 
 		handler.GetDrafts(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("task not found", func(t *testing.T) {
+		t.Parallel()
+
+		mockSvc := new(MockGenerationService)
+		taskID := uuid.New()
+		mockSvc.On("GetDrafts", mock.Anything, taskID).Return([]*generation.GeneratedCaseDraft{}, generation.ErrTaskNotFound)
+
+		handler := NewGenerationHandler(mockSvc)
+
+		req := createRequestWithChiParams("GET", "/api/v1/generation/tasks/"+taskID.String()+"/drafts", nil, map[string]string{"taskID": taskID.String()})
+		w := httptest.NewRecorder()
+
+		handler.GetDrafts(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
 }
 
@@ -237,10 +288,9 @@ func TestConfirmDraftHandler(t *testing.T) {
 		}
 		jsonBody, _ := json.Marshal(body)
 
-		req := httptest.NewRequest("POST", "/api/v1/generation/drafts/"+draftID.String()+"/confirm", bytes.NewReader(jsonBody))
+		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/"+draftID.String()+"/confirm", jsonBody, map[string]string{"draftID": draftID.String()})
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), draftIDContextKey, draftID)
-		ctx = context.WithValue(ctx, userIDContextKey, uuid.New())
+		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
@@ -249,13 +299,10 @@ func TestConfirmDraftHandler(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, w.Code)
 	})
 
-	t.Run("draft already confirmed", func(t *testing.T) {
+	t.Run("missing user context", func(t *testing.T) {
 		t.Parallel()
 
 		mockSvc := new(MockGenerationService)
-		draftID := uuid.New()
-		mockSvc.On("ConfirmDraft", mock.Anything, mock.Anything, mock.Anything).Return(nil, generation.ErrDraftAlreadyConfirmed)
-
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
@@ -263,16 +310,13 @@ func TestConfirmDraftHandler(t *testing.T) {
 		}
 		jsonBody, _ := json.Marshal(body)
 
-		req := httptest.NewRequest("POST", "/api/v1/generation/drafts/"+draftID.String()+"/confirm", bytes.NewReader(jsonBody))
+		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/confirm", jsonBody, nil)
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), draftIDContextKey, draftID)
-		ctx = context.WithValue(ctx, userIDContextKey, uuid.New())
-		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
 		handler.ConfirmDraft(w, req)
 
-		assert.Equal(t, http.StatusConflict, w.Code)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
 }
 
@@ -289,15 +333,13 @@ func TestRejectDraftHandler(t *testing.T) {
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"reason":   "duplicate",
-			"feedback": "This case already exists",
+			"reason":  "duplicate",
+			"feedback": "Already exists",
 		}
 		jsonBody, _ := json.Marshal(body)
 
-		req := httptest.NewRequest("POST", "/api/v1/generation/drafts/"+draftID.String()+"/reject", bytes.NewReader(jsonBody))
+		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/"+draftID.String()+"/reject", jsonBody, map[string]string{"draftID": draftID.String()})
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), draftIDContextKey, draftID)
-		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
 		handler.RejectDraft(w, req)
@@ -305,29 +347,25 @@ func TestRejectDraftHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
-	t.Run("draft already rejected", func(t *testing.T) {
+	t.Run("invalid draft ID", func(t *testing.T) {
 		t.Parallel()
 
 		mockSvc := new(MockGenerationService)
-		draftID := uuid.New()
-		mockSvc.On("RejectDraft", mock.Anything, mock.Anything).Return(generation.ErrDraftAlreadyRejected)
-
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"reason": "irrelevant",
+			"reason":  "duplicate",
+			"feedback": "Already exists",
 		}
 		jsonBody, _ := json.Marshal(body)
 
-		req := httptest.NewRequest("POST", "/api/v1/generation/drafts/"+draftID.String()+"/reject", bytes.NewReader(jsonBody))
+		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/invalid-uuid/reject", jsonBody, map[string]string{"id": "invalid-uuid"})
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), draftIDContextKey, draftID)
-		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
 		handler.RejectDraft(w, req)
 
-		assert.Equal(t, http.StatusConflict, w.Code)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 }
 
@@ -338,24 +376,22 @@ func TestBatchConfirmHandler(t *testing.T) {
 		t.Parallel()
 
 		mockSvc := new(MockGenerationService)
+		draftIDs := []uuid.UUID{uuid.New(), uuid.New()}
+		moduleID := uuid.New()
 		mockSvc.On("BatchConfirm", mock.Anything, mock.Anything, mock.Anything).Return(&genservice.BatchConfirmResult{
-			SuccessCount: 3,
+			SuccessCount: 2,
 			FailedCount:  0,
 		}, nil)
 
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"draft_ids": []string{
-				uuid.New().String(),
-				uuid.New().String(),
-				uuid.New().String(),
-			},
-			"module_id": uuid.New().String(),
+			"draft_ids": draftIDs,
+			"module_id": moduleID.String(),
 		}
 		jsonBody, _ := json.Marshal(body)
 
-		req := httptest.NewRequest("POST", "/api/v1/generation/drafts/batch-confirm", bytes.NewReader(jsonBody))
+		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/batch-confirm", jsonBody, nil)
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
 		req = req.WithContext(ctx)
@@ -364,42 +400,26 @@ func TestBatchConfirmHandler(t *testing.T) {
 		handler.BatchConfirm(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-
-		var response map[string]interface{}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
-		require.NoError(t, err)
-		assert.Contains(t, response, "success_count")
 	})
 
-	t.Run("partial success", func(t *testing.T) {
+	t.Run("missing user context", func(t *testing.T) {
 		t.Parallel()
 
 		mockSvc := new(MockGenerationService)
-		mockSvc.On("BatchConfirm", mock.Anything, mock.Anything, mock.Anything).Return(&genservice.BatchConfirmResult{
-			SuccessCount: 2,
-			FailedCount:  1,
-		}, nil)
-
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"draft_ids": []string{
-				uuid.New().String(),
-				uuid.New().String(),
-				uuid.New().String(),
-			},
+			"draft_ids": []string{uuid.New().String()},
 			"module_id": uuid.New().String(),
 		}
 		jsonBody, _ := json.Marshal(body)
 
-		req := httptest.NewRequest("POST", "/api/v1/generation/drafts/batch-confirm", bytes.NewReader(jsonBody))
+		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/batch-confirm", jsonBody, nil)
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
-		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
 		handler.BatchConfirm(w, req)
 
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
 }

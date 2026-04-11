@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -189,8 +190,10 @@ func TestGetCaseHandler(t *testing.T) {
 		handler := NewTestCaseHandler(mockSvc)
 
 		req := httptest.NewRequest("GET", "/api/v1/testcases/"+caseID.String(), nil)
-		ctx := context.WithValue(req.Context(), caseIDContextKey, caseID)
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", caseID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
 		handler.GetCase(w, req)
@@ -208,8 +211,10 @@ func TestGetCaseHandler(t *testing.T) {
 		handler := NewTestCaseHandler(mockSvc)
 
 		req := httptest.NewRequest("GET", "/api/v1/testcases/"+caseID.String(), nil)
-		ctx := context.WithValue(req.Context(), caseIDContextKey, caseID)
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", caseID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
 		handler.GetCase(w, req)
@@ -275,8 +280,10 @@ func TestUpdateCaseHandler(t *testing.T) {
 
 		req := httptest.NewRequest("PUT", "/api/v1/testcases/"+caseID.String(), bytes.NewReader(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), caseIDContextKey, caseID)
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", caseID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
 		handler.UpdateCase(w, req)
@@ -298,8 +305,10 @@ func TestDeleteCaseHandler(t *testing.T) {
 		handler := NewTestCaseHandler(mockSvc)
 
 		req := httptest.NewRequest("DELETE", "/api/v1/testcases/"+caseID.String(), nil)
-		ctx := context.WithValue(req.Context(), caseIDContextKey, caseID)
-		req = req.WithContext(ctx)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", caseID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
 		handler.DeleteCase(w, req)

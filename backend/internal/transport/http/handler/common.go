@@ -47,7 +47,7 @@ func handleServiceError(w http.ResponseWriter, err error) {
 
 	// Map common errors to HTTP status codes
 	switch err.Error() {
-	case "user not found", "invalid credentials", "password mismatch", "unauthorized":
+	case "user not found", "invalid credentials", "password mismatch", "unauthorized", "invalid refresh token":
 		code = http.StatusUnauthorized
 	case "project not found", "module not found", "test case not found", "test plan not found",
 		"generation task not found", "draft not found", "document not found", "config not found":
@@ -57,8 +57,9 @@ func handleServiceError(w http.ResponseWriter, err error) {
 		code = http.StatusConflict
 	case "invalid email format", "password too short", "invalid role",
 		"invalid project prefix", "invalid module abbreviation", "invalid case number",
-		"empty steps", "invalid priority", "invalid case type", "invalid document type",
-		"invalid plan status", "invalid result status", "invalid request body":
+		"empty steps", "test case steps cannot be empty", "invalid priority", "invalid case type", "invalid document type",
+		"invalid plan status", "invalid result status", "invalid request body",
+		"invalid request: prompt too short", "invalid status value":
 		code = http.StatusBadRequest
 	case "insufficient permissions", "permission denied":
 		code = http.StatusForbidden

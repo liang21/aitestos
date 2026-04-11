@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"github.com/liang21/aitestos/internal/domain/knowledge"
 )
 
@@ -453,7 +454,8 @@ func TestDocumentService_DeleteDocument(t *testing.T) {
 	docRepo.documents[doc.ID()] = doc
 
 	// Create some chunks
-	chunk := knowledge.NewDocumentChunk(doc.ID(), 0, "test content")
+	chunk, err := knowledge.NewDocumentChunk(doc.ID(), projectID, 0, "test content")
+	require.NoError(t, err, "create chunk should succeed")
 	chunkRepo.chunks[chunk.ID()] = chunk
 	chunkRepo.docIndex[doc.ID()] = []*knowledge.DocumentChunk{chunk}
 

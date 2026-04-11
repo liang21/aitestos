@@ -20,7 +20,7 @@ func TestProjectRepository_Integration(t *testing.T) {
 	tc := testsetup.SetupTest(t)
 	defer tc.CleanupTest()
 
-	projectRepo := repository.NewProjectRepository(tc.DB)
+	projectRepo := project.NewProjectRepository(tc.DB)
 	ctx := context.Background()
 
 	t.Run("Save", func(t *testing.T) {
@@ -190,12 +190,11 @@ func TestProjectRepository_Integration(t *testing.T) {
 		}
 
 		// 测试分页
-		projects, total, err := projectRepo.FindAll(ctx, domainproject.QueryOptions{
+		projects, err := projectRepo.FindAll(ctx, domainproject.QueryOptions{
 			Limit:  3,
 			Offset: 0,
 		})
 		require.NoError(t, err, "find all projects should succeed")
 		assert.Equal(t, 3, len(projects), "should return 3 projects")
-		assert.GreaterOrEqual(t, total, int64(5), "total count should be at least 5")
 	})
 }

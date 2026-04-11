@@ -148,6 +148,7 @@ func ReconstructDocument(
 type DocumentChunk struct {
 	id         uuid.UUID
 	documentID uuid.UUID
+	projectID  uuid.UUID
 	chunkIndex int
 	content    string
 	embedding  []byte
@@ -155,14 +156,18 @@ type DocumentChunk struct {
 }
 
 // NewDocumentChunk creates a new document chunk
-func NewDocumentChunk(documentID uuid.UUID, chunkIndex int, content string) *DocumentChunk {
+func NewDocumentChunk(documentID uuid.UUID, projectID uuid.UUID, chunkIndex int, content string) (*DocumentChunk, error) {
+	if projectID == uuid.Nil {
+		return nil, errors.New("project ID cannot be nil")
+	}
 	return &DocumentChunk{
 		id:         uuid.New(),
 		documentID: documentID,
+		projectID:  projectID,
 		chunkIndex: chunkIndex,
 		content:    content,
 		createdAt:  time.Now(),
-	}
+	}, nil
 }
 
 // ID returns the chunk's unique identifier
@@ -173,6 +178,11 @@ func (c *DocumentChunk) ID() uuid.UUID {
 // DocumentID returns the associated document's ID
 func (c *DocumentChunk) DocumentID() uuid.UUID {
 	return c.documentID
+}
+
+// ProjectID returns the associated project's ID
+func (c *DocumentChunk) ProjectID() uuid.UUID {
+	return c.projectID
 }
 
 // ChunkIndex returns the chunk's index in the document
@@ -209,6 +219,7 @@ func (c *DocumentChunk) CreatedAt() time.Time {
 func ReconstructDocumentChunk(
 	id uuid.UUID,
 	documentID uuid.UUID,
+	projectID uuid.UUID,
 	chunkIndex int,
 	content string,
 	embedding []byte,
@@ -217,6 +228,7 @@ func ReconstructDocumentChunk(
 	return &DocumentChunk{
 		id:         id,
 		documentID: documentID,
+		projectID:  projectID,
 		chunkIndex: chunkIndex,
 		content:    content,
 		embedding:  embedding,

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/rs/zerolog"
@@ -73,19 +74,36 @@ func TestLoggingMiddleware(t *testing.T) {
 
 			handler.ServeHTTP(w, req)
 
-			// Verify log output contains expected fields
-			var logEntry map[string]interface{}
-			err := json.Unmarshal(buf.Bytes(), &logEntry)
-			assert.NoError(t, err)
+			// Split log output into lines and find the completion log
+			lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+			var completionLog map[string]interface{}
+			for _, line := range lines {
+				if line == "" {
+					continue
+				}
+				var logEntry map[string]interface{}
+				err := json.Unmarshal([]byte(line), &logEntry)
+				assert.NoError(t, err)
 
+				// Check if this is the completion log (has status field)
+				if _, hasStatus := logEntry["status"]; hasStatus {
+					completionLog = logEntry
+					break
+				}
+			}
+
+			// Verify we found the completion log
+			assert.NotNil(t, completionLog, "should have completion log")
+
+			// Verify expected fields
 			for key, expected := range tt.wantFields {
-				if actual, ok := logEntry[key]; ok {
+				if actual, ok := completionLog[key]; ok {
 					assert.Equal(t, expected, actual, "log field %s mismatch", key)
 				}
 			}
 
 			// Should have duration
-			_, hasDuration := logEntry["duration"]
+			_, hasDuration := completionLog["duration"]
 			assert.True(t, hasDuration, "log should contain duration")
 		})
 	}
@@ -108,14 +126,27 @@ func TestLoggingMiddlewareWithTraceID(t *testing.T) {
 
 	handler.ServeHTTP(w, req)
 
-	var logEntry map[string]interface{}
-	err := json.Unmarshal(buf.Bytes(), &logEntry)
-	assert.NoError(t, err)
+	// Parse all log lines
+	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+	var foundTraceID bool
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		var logEntry map[string]interface{}
+		err := json.Unmarshal([]byte(line), &logEntry)
+		assert.NoError(t, err)
 
-	// Should contain trace ID
-	if traceIDVal, ok := logEntry["trace_id"]; ok {
-		assert.Equal(t, traceID, traceIDVal)
+		// Check if this log has trace_id
+		if traceIDVal, ok := logEntry["trace_id"]; ok {
+			if traceIDVal == traceID {
+				foundTraceID = true
+				break
+			}
+		}
 	}
+
+	assert.True(t, foundTraceID, "should find trace ID in logs")
 }
 
 func TestLoggingMiddlewareGeneratesTraceID(t *testing.T) {

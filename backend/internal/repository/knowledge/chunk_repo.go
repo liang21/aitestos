@@ -15,6 +15,7 @@ import (
 type chunkRow struct {
 	ID         uuid.UUID `db:"id"`
 	DocumentID uuid.UUID `db:"document_id"`
+	ProjectID  uuid.UUID `db:"project_id"`
 	ChunkIndex int       `db:"chunk_index"`
 	Content    string    `db:"content"`
 	Embedding  []byte    `db:"embedding"`
@@ -34,12 +35,13 @@ func NewDocumentChunkRepository(db *sqlx.DB) *DocumentChunkRepository {
 // Save persists a single document chunk
 func (r *DocumentChunkRepository) Save(ctx context.Context, chunk *domainknowledge.DocumentChunk) error {
 	query := `
-		INSERT INTO document_chunks (id, document_id, chunk_index, content, embedding, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO document_chunks (id, document_id, project_id, chunk_index, content, embedding, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 	_, err := r.db.ExecContext(ctx, query,
 		chunk.ID(),
 		chunk.DocumentID(),
+		chunk.ProjectID(),
 		chunk.ChunkIndex(),
 		chunk.Content(),
 		chunk.Embedding(),
@@ -58,14 +60,15 @@ func (r *DocumentChunkRepository) SaveBatch(ctx context.Context, chunks []*domai
 	}
 
 	query := `
-		INSERT INTO document_chunks (id, document_id, chunk_index, content, embedding, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO document_chunks (id, document_id, project_id, chunk_index, content, embedding, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
 	for _, chunk := range chunks {
 		_, err := r.db.ExecContext(ctx, query,
 			chunk.ID(),
 			chunk.DocumentID(),
+			chunk.ProjectID(),
 			chunk.ChunkIndex(),
 			chunk.Content(),
 			chunk.Embedding(),
@@ -81,7 +84,7 @@ func (r *DocumentChunkRepository) SaveBatch(ctx context.Context, chunks []*domai
 // FindByID retrieves a document chunk by ID
 func (r *DocumentChunkRepository) FindByID(ctx context.Context, id uuid.UUID) (*domainknowledge.DocumentChunk, error) {
 	query := `
-		SELECT id, document_id, chunk_index, content, embedding, created_at
+		SELECT id, document_id, project_id, chunk_index, content, embedding, created_at
 		FROM document_chunks
 		WHERE id = $1
 	`
@@ -97,6 +100,7 @@ func (r *DocumentChunkRepository) FindByID(ctx context.Context, id uuid.UUID) (*
 	return domainknowledge.ReconstructDocumentChunk(
 		row.ID,
 		row.DocumentID,
+		row.ProjectID,
 		row.ChunkIndex,
 		row.Content,
 		row.Embedding,
@@ -107,7 +111,7 @@ func (r *DocumentChunkRepository) FindByID(ctx context.Context, id uuid.UUID) (*
 // FindByDocumentID retrieves all chunks for a document
 func (r *DocumentChunkRepository) FindByDocumentID(ctx context.Context, documentID uuid.UUID) ([]*domainknowledge.DocumentChunk, error) {
 	query := `
-		SELECT id, document_id, chunk_index, content, embedding, created_at
+		SELECT id, document_id, project_id, chunk_index, content, embedding, created_at
 		FROM document_chunks
 		WHERE document_id = $1
 		ORDER BY chunk_index ASC
@@ -123,6 +127,7 @@ func (r *DocumentChunkRepository) FindByDocumentID(ctx context.Context, document
 		chunk := domainknowledge.ReconstructDocumentChunk(
 			row.ID,
 			row.DocumentID,
+			row.ProjectID,
 			row.ChunkIndex,
 			row.Content,
 			row.Embedding,
@@ -137,7 +142,7 @@ func (r *DocumentChunkRepository) FindByDocumentID(ctx context.Context, document
 // FindByChunkIndex retrieves a chunk by document ID and chunk index
 func (r *DocumentChunkRepository) FindByChunkIndex(ctx context.Context, documentID uuid.UUID, chunkIndex int) (*domainknowledge.DocumentChunk, error) {
 	query := `
-		SELECT id, document_id, chunk_index, content, embedding, created_at
+		SELECT id, document_id, project_id, chunk_index, content, embedding, created_at
 		FROM document_chunks
 		WHERE document_id = $1 AND chunk_index = $2
 	`
@@ -153,6 +158,7 @@ func (r *DocumentChunkRepository) FindByChunkIndex(ctx context.Context, document
 	return domainknowledge.ReconstructDocumentChunk(
 		row.ID,
 		row.DocumentID,
+		row.ProjectID,
 		row.ChunkIndex,
 		row.Content,
 		row.Embedding,

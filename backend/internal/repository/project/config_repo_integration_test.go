@@ -4,9 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	domainproject "github.com/liang21/aitestos/internal/domain/project"
-	repository "github.com/liang21/aitestos/internal/repository/project"
+	"github.com/liang21/aitestos/internal/repository/project"
 	"github.com/liang21/aitestos/internal/repository/testsetup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,8 +19,8 @@ func TestProjectConfigRepository_Integration(t *testing.T) {
 	tc := testsetup.SetupTest(t)
 	defer tc.CleanupTest()
 
-	projectRepo := repository.NewProjectRepository(tc.DB)
-	configRepo := repository.NewProjectConfigRepository(tc.DB)
+	projectRepo := project.NewProjectRepository(tc.DB)
+	configRepo := project.NewProjectConfigRepository(tc.DB)
 	ctx := context.Background()
 
 	// 辅助函数：创建项目

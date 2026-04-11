@@ -10,9 +10,13 @@ import (
 )
 
 // Test fixtures
-func createTestChunk(t *testing.T, documentID uuid.UUID, index int, content string) *domainknowledge.DocumentChunk {
+func createTestChunk(t *testing.T, documentID uuid.UUID, projectID uuid.UUID, index int, content string) *domainknowledge.DocumentChunk {
 	t.Helper()
-	return domainknowledge.NewDocumentChunk(documentID, index, content)
+	chunk, err := domainknowledge.NewDocumentChunk(documentID, projectID, index, content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return chunk
 }
 
 func TestDocumentChunkRepository_SaveBatch(t *testing.T) {
@@ -112,12 +116,13 @@ func TestMockDocumentChunkRepository_BatchOperations(t *testing.T) {
 	ctx := context.Background()
 	repo := NewMockDocumentChunkRepository()
 	documentID := uuid.New()
+	projectID := uuid.New()
 
 	// Create batch
 	chunks := []*domainknowledge.DocumentChunk{
-		createTestChunk(t, documentID, 0, "Chunk 0 content"),
-		createTestChunk(t, documentID, 1, "Chunk 1 content"),
-		createTestChunk(t, documentID, 2, "Chunk 2 content"),
+		createTestChunk(t, documentID, projectID, 0, "Chunk 0 content"),
+		createTestChunk(t, documentID, projectID, 1, "Chunk 1 content"),
+		createTestChunk(t, documentID, projectID, 2, "Chunk 2 content"),
 	}
 
 	// Save batch

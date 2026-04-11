@@ -502,7 +502,17 @@ func (m *MockVectorRepository) Upsert(ctx context.Context, chunks []*domainKnowl
 
 // Search performs vector similarity search (mock implementation)
 func (m *MockVectorRepository) Search(ctx context.Context, queryVector []float32, topK int, filter map[string]any) ([]*domainKnowledge.DocumentChunk, error) {
-	return []*domainKnowledge.DocumentChunk{}, nil
+	// Return mock chunk with projectID
+	chunk := domainKnowledge.ReconstructDocumentChunk(
+		uuid.New(),
+		uuid.New(),
+		uuid.New(), // projectID
+		0,
+		"mock content",
+		nil,
+		time.Time{},
+	)
+	return []*domainKnowledge.DocumentChunk{chunk}, nil
 }
 
 // DeleteByDocumentID deletes vectors by document ID (mock implementation)

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -61,7 +62,6 @@ func TestRegisterHandler(t *testing.T) {
 		t.Parallel()
 
 		mockSvc := new(MockAuthService)
-		userID := uuid.New()
 		mockSvc.On("Register", mock.Anything, mock.Anything).Return(&identity.User{}, nil).Run(func(args mock.Arguments) {
 			req := args.Get(1).(*authservice.RegisterRequest)
 			assert.Equal(t, "testuser", req.Username)
@@ -240,7 +240,7 @@ func TestRefreshTokenHandler(t *testing.T) {
 		t.Parallel()
 
 		mockSvc := new(MockAuthService)
-		mockSvc.On("RefreshToken", mock.Anything, "invalid_token").Return(nil, assert.AnError{Message: "invalid token"})
+		mockSvc.On("RefreshToken", mock.Anything, "invalid_token").Return(nil, errors.New("invalid refresh token"))
 
 		handler := NewIdentityHandler(mockSvc)
 

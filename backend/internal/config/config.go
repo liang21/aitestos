@@ -66,6 +66,23 @@ type MilvusConfig struct {
 	Collection string `mapstructure:"collection"`
 }
 
+// Validate validates MilvusConfig
+func (c *MilvusConfig) Validate() error {
+	if c.Host == "" {
+		return fmt.Errorf("host cannot be empty")
+	}
+	if c.Port <= 0 || c.Port > 65535 {
+		return fmt.Errorf("port must be between 1 and 65535")
+	}
+	if c.Database == "" {
+		return fmt.Errorf("database cannot be empty")
+	}
+	if c.Collection == "" {
+		return fmt.Errorf("collection cannot be empty")
+	}
+	return nil
+}
+
 // StorageConfig holds object storage configuration
 type StorageConfig struct {
 	Provider  string `mapstructure:"provider"`
@@ -105,6 +122,9 @@ func (c *Config) Validate() error {
 	}
 	if err := c.LLM.Validate(); err != nil {
 		return fmt.Errorf("llm config: %w", err)
+	}
+	if err := c.Milvus.Validate(); err != nil {
+		return fmt.Errorf("milvus config: %w", err)
 	}
 	if err := c.JWT.Validate(); err != nil {
 		return fmt.Errorf("jwt config: %w", err)
