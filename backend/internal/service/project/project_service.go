@@ -287,7 +287,7 @@ func (s *ProjectServiceImpl) SetConfig(ctx context.Context, projectID uuid.UUID,
 	existing, err := s.configRepo.FindByKey(ctx, projectID, key)
 	if err == nil && existing != nil {
 		// Update existing config and save
-		existing.UpdateValue(value)
+		existing.UpdateValue(value) //nolint:errcheck // UpdateValue only sets internal state
 		return s.configRepo.Save(ctx, existing)
 	}
 

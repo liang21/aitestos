@@ -46,17 +46,17 @@ func TestReferencedChunk(t *testing.T) {
 
 	chunk := testcase.NewReferencedChunk(chunkID, docID, "Test Document", 0.85)
 
-	if chunk.ChunkID() != chunkID {
-		t.Errorf("ChunkID() = %v, want %v", chunk.ChunkID(), chunkID)
+	if chunk.ChunkID != chunkID {
+		t.Errorf("ChunkID = %v, want %v", chunk.ChunkID, chunkID)
 	}
-	if chunk.DocumentID() != docID {
-		t.Errorf("DocumentID() = %v, want %v", chunk.DocumentID(), docID)
+	if chunk.DocumentID != docID {
+		t.Errorf("DocumentID = %v, want %v", chunk.DocumentID, docID)
 	}
-	if chunk.DocumentTitle() != "Test Document" {
-		t.Errorf("DocumentTitle() = %v, want Test Document", chunk.DocumentTitle())
+	if chunk.DocumentTitle != "Test Document" {
+		t.Errorf("DocumentTitle = %v, want Test Document", chunk.DocumentTitle)
 	}
-	if chunk.SimilarityScore() != 0.85 {
-		t.Errorf("SimilarityScore() = %v, want 0.85", chunk.SimilarityScore())
+	if chunk.SimilarityScore != 0.85 {
+		t.Errorf("SimilarityScore = %v, want 0.85", chunk.SimilarityScore)
 	}
 }
 
@@ -114,20 +114,20 @@ func TestNewAiMetadata(t *testing.T) {
 
 	metadata := testcase.NewAiMetadata(taskID, testcase.ConfidenceHigh, chunks, "deepseek-v3")
 
-	if metadata.GenerationTaskID() != taskID {
-		t.Errorf("GenerationTaskID() = %v, want %v", metadata.GenerationTaskID(), taskID)
+	if metadata.GenerationTaskID != taskID {
+		t.Errorf("GenerationTaskID = %v, want %v", metadata.GenerationTaskID, taskID)
 	}
-	if metadata.Confidence() != testcase.ConfidenceHigh {
-		t.Errorf("Confidence() = %v, want high", metadata.Confidence())
+	if metadata.Confidence != testcase.ConfidenceHigh {
+		t.Errorf("Confidence = %v, want high", metadata.Confidence)
 	}
-	if metadata.ModelVersion() != "deepseek-v3" {
-		t.Errorf("ModelVersion() = %v, want deepseek-v3", metadata.ModelVersion())
+	if metadata.ModelVersion != "deepseek-v3" {
+		t.Errorf("ModelVersion = %v, want deepseek-v3", metadata.ModelVersion)
 	}
-	if len(metadata.ReferencedChunks()) != 2 {
-		t.Errorf("ReferencedChunks() length = %v, want 2", len(metadata.ReferencedChunks()))
+	if len(metadata.ReferencedChunks) != 2 {
+		t.Errorf("ReferencedChunks length = %v, want 2", len(metadata.ReferencedChunks))
 	}
-	if metadata.GeneratedAt().IsZero() {
-		t.Error("GeneratedAt() should not be zero")
+	if metadata.GeneratedAt.IsZero() {
+		t.Error("GeneratedAt should not be zero")
 	}
 }
 

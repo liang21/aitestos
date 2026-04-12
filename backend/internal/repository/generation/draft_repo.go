@@ -183,7 +183,7 @@ func (r *CaseDraftRepository) BatchUpdateStatus(ctx context.Context, draftIDs []
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	query := `
 		UPDATE case_drafts

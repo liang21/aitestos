@@ -64,7 +64,7 @@ func (n CaseNumber) Sequence() int {
 	parts := splitByHyphen(s)
 	if len(parts) >= 4 {
 		var seq int
-		fmt.Sscanf(parts[3], "%d", &seq)
+		_, _ = fmt.Sscanf(parts[3], "%d", &seq)
 		return seq
 	}
 	return 0

@@ -200,7 +200,7 @@ func TestUserRepository_Integration(t *testing.T) {
 		assert.GreaterOrEqual(t, total, int64(5), "total count should be at least 5")
 
 		// 测试第二页
-		users, total, err = userRepo.List(ctx, identity.QueryOptions{
+		users, _, err = userRepo.List(ctx, identity.QueryOptions{
 			Limit:  3,
 			Offset: 3,
 		})

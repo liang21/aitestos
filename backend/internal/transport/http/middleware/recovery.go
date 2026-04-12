@@ -35,7 +35,7 @@ func Recovery() func(http.Handler) http.Handler {
 						response["traceId"] = traceID
 					}
 
-					json.NewEncoder(w).Encode(response)
+					_ = json.NewEncoder(w).Encode(response)
 				}
 			}()
 

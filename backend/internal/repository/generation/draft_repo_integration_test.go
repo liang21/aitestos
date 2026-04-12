@@ -178,7 +178,7 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 		require.NoError(t, draftRepo.Save(ctx, draft), "save draft should succeed")
 
 		// 更新：确认草稿
-		draft.Confirm(module.ID())
+		require.NoError(t, draft.Confirm(module.ID()), "confirm draft should succeed")
 		err = draftRepo.Update(ctx, draft)
 		require.NoError(t, err, "update draft should succeed")
 
@@ -198,7 +198,7 @@ func TestCaseDraftRepository_Integration(t *testing.T) {
 		require.NoError(t, draftRepo.Save(ctx, draft), "save draft should succeed")
 
 		// 更新：拒绝草稿
-		draft.Reject(generation.ReasonLowQuality, "Content is too simple")
+		require.NoError(t, draft.Reject(generation.ReasonLowQuality, "Content is too simple"), "reject draft should succeed")
 		err = draftRepo.Update(ctx, draft)
 		require.NoError(t, err, "update draft should succeed")
 

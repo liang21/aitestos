@@ -167,7 +167,9 @@ func TestMockGenerationTaskRepository_CRUD(t *testing.T) {
 	}
 
 	// Update - Start processing
-	task.StartProcessing()
+	if err := task.StartProcessing(); err != nil {
+		t.Fatalf("StartProcessing() unexpected error: %v", err)
+	}
 	err = repo.Update(ctx, task)
 	if err != nil {
 		t.Fatalf("Update() error = %v", err)

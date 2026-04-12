@@ -73,7 +73,7 @@ func TestVectorRepository_Integration_Upsert(t *testing.T) {
 	defer func() {
 		// Clean up collection
 		_ = client.DropCollection(ctx, cfg.Collection)
-		client.Close()
+		_ = client.Close()
 	}()
 
 	// Ensure collection exists
@@ -144,7 +144,7 @@ func TestVectorRepository_Integration_Search(t *testing.T) {
 	}
 	defer func() {
 		_ = client.DropCollection(ctx, cfg.Collection)
-		client.Close()
+		_ = client.Close()
 	}()
 
 	require.NoError(t, client.EnsureCollection(ctx))
@@ -220,7 +220,7 @@ func TestVectorRepository_Integration_DeleteByDocumentID(t *testing.T) {
 	}
 	defer func() {
 		_ = client.DropCollection(ctx, cfg.Collection)
-		client.Close()
+		_ = client.Close()
 	}()
 
 	require.NoError(t, client.EnsureCollection(ctx))
@@ -280,7 +280,7 @@ func TestVectorRepository_Integration_CountByProjectID(t *testing.T) {
 	}
 	defer func() {
 		_ = client.DropCollection(ctx, cfg.Collection)
-		client.Close()
+		_ = client.Close()
 	}()
 
 	require.NoError(t, client.EnsureCollection(ctx))

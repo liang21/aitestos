@@ -3,7 +3,6 @@ package generation
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -203,13 +202,4 @@ func (s *LLMServiceImpl) buildUserPrompt(req *GenerateCasesRequest) string {
 		prompt += fmt.Sprintf("\nContext:\n%s\n", req.Context)
 	}
 	return prompt
-}
-
-// parseGeneratedCases parses LLM response into GeneratedCase structs
-func (s *LLMServiceImpl) parseGeneratedCases(response string) ([]*GeneratedCase, error) {
-	var cases []*GeneratedCase
-	if err := json.Unmarshal([]byte(response), &cases); err != nil {
-		return nil, fmt.Errorf("parse generated cases: %w", err)
-	}
-	return cases, nil
 }

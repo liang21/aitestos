@@ -141,7 +141,7 @@ func (m *MockDocumentRepository) UpdateStatus(ctx context.Context, id uuid.UUID,
 	if !ok {
 		return domainknowledge.ErrDocumentNotFound
 	}
-	doc.UpdateStatus(status)
+	_ = doc.UpdateStatus(status)
 	return nil
 }
 

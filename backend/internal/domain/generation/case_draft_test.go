@@ -133,7 +133,9 @@ func TestGeneratedCaseDraft_Confirm(t *testing.T) {
 	originalUpdatedAt := draft.UpdatedAt()
 	time.Sleep(10 * time.Millisecond)
 
-	draft.Confirm(moduleID)
+	if err := draft.Confirm(moduleID); err != nil {
+		t.Fatalf("Confirm() unexpected error: %v", err)
+	}
 
 	if draft.Status() != generation.DraftConfirmed {
 		t.Errorf("GeneratedCaseDraft.Status() = %v, want confirmed", draft.Status())
@@ -159,7 +161,9 @@ func TestGeneratedCaseDraft_Reject(t *testing.T) {
 	originalUpdatedAt := draft.UpdatedAt()
 	time.Sleep(10 * time.Millisecond)
 
-	draft.Reject(generation.ReasonLowQuality, "Steps are not detailed enough")
+	if err := draft.Reject(generation.ReasonLowQuality, "Steps are not detailed enough"); err != nil {
+		t.Fatalf("Reject() unexpected error: %v", err)
+	}
 
 	if draft.Status() != generation.DraftRejected {
 		t.Errorf("GeneratedCaseDraft.Status() = %v, want rejected", draft.Status())
@@ -190,8 +194,8 @@ func TestGeneratedCaseDraft_SetAiMetadata(t *testing.T) {
 	if draft.AiMetadata() == nil {
 		t.Error("GeneratedCaseDraft.AiMetadata() should not be nil")
 	}
-	if draft.AiMetadata().Confidence() != testcase.ConfidenceHigh {
-		t.Errorf("GeneratedCaseDraft.AiMetadata().Confidence() = %v, want high", draft.AiMetadata().Confidence())
+	if draft.AiMetadata().Confidence != testcase.ConfidenceHigh {
+		t.Errorf("GeneratedCaseDraft.AiMetadata().Confidence = %v, want high", draft.AiMetadata().Confidence)
 	}
 }
 

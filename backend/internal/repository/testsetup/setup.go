@@ -302,7 +302,7 @@ func TruncateAllTables(ctx context.Context, db *sqlx.DB) error {
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	for _, table := range tables {
 		query := fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table)
@@ -337,14 +337,14 @@ func SetupTest(t *testing.T) *TestContext {
 
 	db, err := container.CreateDB(ctx)
 	if err != nil {
-		container.Teardown(ctx)
+		_ = container.Teardown(ctx)
 		cancel()
 		t.Fatalf("create database connection: %v", err)
 	}
 
 	// 执行迁移
 	if err := RunMigrations(ctx, db); err != nil {
-		container.Teardown(ctx)
+		_ = container.Teardown(ctx)
 		cancel()
 		t.Fatalf("run migrations: %v", err)
 	}

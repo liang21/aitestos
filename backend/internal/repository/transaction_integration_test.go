@@ -90,9 +90,7 @@ func TestTxManager_Integration(t *testing.T) {
 		// recovered tracks panic recovery
 		func() {
 			defer func() {
-				if r := recover(); r != nil {
-	// panic recovered
-				}
+				_ = recover()
 			}()
 
 			_ = txManager.WithTransaction(ctx, func(txCtx context.Context) error {

@@ -86,7 +86,7 @@ func NewIntegrationTestSuite(db *sqlx.DB) *IntegrationTestSuite {
 	// Health check endpoint
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 
 	// API v1 routes
@@ -173,7 +173,7 @@ func NewIntegrationTestSuite(db *sqlx.DB) *IntegrationTestSuite {
 func (s *IntegrationTestSuite) MakeRequest(method, path string, body interface{}, userID uuid.UUID) *httptest.ResponseRecorder {
 	var reqBody bytes.Buffer
 	if body != nil {
-		json.NewEncoder(&reqBody).Encode(body)
+		_ = json.NewEncoder(&reqBody).Encode(body)
 	}
 
 	req := httptest.NewRequest(method, path, &reqBody)
@@ -193,7 +193,7 @@ func (s *IntegrationTestSuite) MakeRequest(method, path string, body interface{}
 func (s *IntegrationTestSuite) MakeRequestWithoutAuth(method, path string, body interface{}) *httptest.ResponseRecorder {
 	var reqBody bytes.Buffer
 	if body != nil {
-		json.NewEncoder(&reqBody).Encode(body)
+		_ = json.NewEncoder(&reqBody).Encode(body)
 	}
 
 	req := httptest.NewRequest(method, path, &reqBody)

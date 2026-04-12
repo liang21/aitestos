@@ -187,7 +187,7 @@ func (c *Client) callChatAPI(ctx context.Context, prompt string) (string, error)
 	if err != nil {
 		return "", fmt.Errorf("execute request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -234,7 +234,7 @@ func (c *Client) callEmbeddingAPI(ctx context.Context, text string) ([]float32, 
 	if err != nil {
 		return nil, "", fmt.Errorf("execute request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

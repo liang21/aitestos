@@ -204,13 +204,11 @@ func (s *PlanServiceImpl) UpdatePlan(ctx context.Context, id uuid.UUID, req *Upd
 	}
 
 	if req.Name != nil {
-		// Update name via reflection or direct field access if available
-		// For now, we'll skip this as TestPlan doesn't have UpdateName method
+		plan.UpdateName(*req.Name)
 	}
 
 	if req.Description != nil {
-		// Update description via reflection or direct field access if available
-		// For now, we'll skip this as TestPlan doesn't have UpdateDescription method
+		plan.UpdateDescription(*req.Description)
 	}
 
 	if err := s.planRepo.Update(ctx, plan); err != nil {

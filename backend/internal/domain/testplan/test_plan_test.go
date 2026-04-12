@@ -156,7 +156,9 @@ func TestTestPlan_RemoveCase(t *testing.T) {
 	}
 
 	caseID := uuid.New()
-	tp.AddCase(caseID)
+	if err := tp.AddCase(caseID); err != nil {
+		t.Fatalf("AddCase() unexpected error: %v", err)
+	}
 	tp.RemoveCase(caseID)
 
 	if tp.HasCase(caseID) {
@@ -206,9 +208,15 @@ func TestTestPlan_CaseIDs(t *testing.T) {
 	case2 := uuid.New()
 	case3 := uuid.New()
 
-	tp.AddCase(case1)
-	tp.AddCase(case2)
-	tp.AddCase(case3)
+	if err := tp.AddCase(case1); err != nil {
+		t.Fatalf("AddCase() unexpected error: %v", err)
+	}
+	if err := tp.AddCase(case2); err != nil {
+		t.Fatalf("AddCase() unexpected error: %v", err)
+	}
+	if err := tp.AddCase(case3); err != nil {
+		t.Fatalf("AddCase() unexpected error: %v", err)
+	}
 
 	cases := tp.CaseIDs()
 	if len(cases) != 3 {

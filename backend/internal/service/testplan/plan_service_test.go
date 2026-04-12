@@ -486,7 +486,7 @@ func TestPlanService_AddCases(t *testing.T) {
 
 	// Create archived plan
 	archivedPlan, _ := testplan.NewTestPlan(projectID, "Archived Plan", "Description", userID)
-	archivedPlan.UpdateStatus(testplan.StatusArchived)
+	_ = archivedPlan.UpdateStatus(testplan.StatusArchived)
 	planRepo.plans[archivedPlan.ID()] = archivedPlan
 
 	tests := []struct {
@@ -577,7 +577,7 @@ func TestPlanService_RecordResult(t *testing.T) {
 
 	// Create test plan with the case
 	testPlan, _ := testplan.NewTestPlan(projectID, "Test Plan", "Description", userID)
-	testPlan.AddCase(testCase.ID())
+	_ = testPlan.AddCase(testCase.ID())
 	planRepo.plans[testPlan.ID()] = testPlan
 
 	tests := []struct {
@@ -686,15 +686,15 @@ func TestPlanService_UpdatePlanStatus(t *testing.T) {
 
 	// Create completed plan
 	completedPlan, _ := testplan.NewTestPlan(projectID, "Completed Plan", "Description", userID)
-	completedPlan.UpdateStatus(testplan.StatusActive)
-	completedPlan.UpdateStatus(testplan.StatusCompleted)
+	_ = completedPlan.UpdateStatus(testplan.StatusActive)
+	_ = completedPlan.UpdateStatus(testplan.StatusCompleted)
 	planRepo.plans[completedPlan.ID()] = completedPlan
 
 	// Create archived plan
 	archivedPlan, _ := testplan.NewTestPlan(projectID, "Archived Plan", "Description", userID)
-	archivedPlan.UpdateStatus(testplan.StatusActive)
-	archivedPlan.UpdateStatus(testplan.StatusCompleted)
-	archivedPlan.UpdateStatus(testplan.StatusArchived)
+	_ = archivedPlan.UpdateStatus(testplan.StatusActive)
+	_ = archivedPlan.UpdateStatus(testplan.StatusCompleted)
+	_ = archivedPlan.UpdateStatus(testplan.StatusArchived)
 	planRepo.plans[archivedPlan.ID()] = archivedPlan
 
 	tests := []struct {

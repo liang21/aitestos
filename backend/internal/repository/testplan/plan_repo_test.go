@@ -165,7 +165,9 @@ func TestMockTestPlanRepository_CRUD(t *testing.T) {
 	}
 
 	// Update
-	plan.UpdateStatus(domaintestplan.StatusActive)
+	if err := plan.UpdateStatus(domaintestplan.StatusActive); err != nil {
+		t.Fatalf("UpdateStatus() error = %v", err)
+	}
 	err = repo.Update(ctx, plan)
 	if err != nil {
 		t.Fatalf("Update() error = %v", err)

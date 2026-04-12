@@ -121,6 +121,17 @@ func (p *TestPlan) HasCase(caseID uuid.UUID) bool {
 }
 
 // UpdateStatus updates the test plan status
+func (p *TestPlan) UpdateName(name string) {
+	p.name = name
+	p.updatedAt = time.Now()
+}
+
+// UpdateDescription updates the test plan's description
+func (p *TestPlan) UpdateDescription(desc string) {
+	p.description = desc
+	p.updatedAt = time.Now()
+}
+
 func (p *TestPlan) UpdateStatus(status PlanStatus) error {
 	if !p.status.CanTransitionTo(status) {
 		return errors.New("invalid status transition")

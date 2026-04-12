@@ -38,7 +38,7 @@ const (
 func respondWithError(w http.ResponseWriter, code int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(map[string]string{"error": message})
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
 
 // respondWithJSON sends a JSON response
@@ -47,12 +47,12 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "failed to encode response"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "failed to encode response"})
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(data)
+	_, _ = w.Write(data)
 }
 
 // handleServiceError maps service errors to HTTP status codes using errors.Is()
@@ -158,14 +158,6 @@ func getIntQueryParam(r *http.Request, key string, defaultValue int) int {
 		if i, err := strconv.Atoi(v); err == nil {
 			return i
 		}
-	}
-	return defaultValue
-}
-
-// getStringQueryParam extracts a string from query parameters with default value
-func getStringQueryParam(r *http.Request, key string, defaultValue string) string {
-	if v := r.URL.Query().Get(key); v != "" {
-		return v
 	}
 	return defaultValue
 }

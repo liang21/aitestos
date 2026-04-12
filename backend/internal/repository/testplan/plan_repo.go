@@ -42,7 +42,7 @@ func (r *TestPlanRepository) Save(ctx context.Context, plan *domaintestplan.Test
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	query := `
 		INSERT INTO test_plan (id, project_id, user_id, name, description, status, created_at, updated_at)
@@ -160,7 +160,7 @@ func (r *TestPlanRepository) Update(ctx context.Context, plan *domaintestplan.Te
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	query := `
 		UPDATE test_plan

@@ -135,7 +135,9 @@ func TestGenerationTask_StartProcessing(t *testing.T) {
 	originalUpdatedAt := task.UpdatedAt()
 	time.Sleep(10 * time.Millisecond)
 
-	task.StartProcessing()
+	if err := task.StartProcessing(); err != nil {
+		t.Fatalf("StartProcessing() unexpected error: %v", err)
+	}
 
 	if task.Status() != generation.TaskProcessing {
 		t.Errorf("GenerationTask.Status() = %v, want processing", task.Status())
@@ -161,7 +163,9 @@ func TestGenerationTask_Complete(t *testing.T) {
 		t.Fatalf("Failed to create task: %v", err)
 	}
 
-	task.StartProcessing()
+	if err := task.StartProcessing(); err != nil {
+		t.Fatalf("StartProcessing() unexpected error: %v", err)
+	}
 
 	summary := map[string]any{
 		"total_drafts":  5,
@@ -187,7 +191,9 @@ func TestGenerationTask_Fail(t *testing.T) {
 		t.Fatalf("Failed to create task: %v", err)
 	}
 
-	task.StartProcessing()
+	if err := task.StartProcessing(); err != nil {
+		t.Fatalf("StartProcessing() unexpected error: %v", err)
+	}
 	task.Fail("LLM API timeout")
 
 	if task.Status() != generation.TaskFailed {

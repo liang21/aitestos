@@ -151,7 +151,7 @@ func TestProjectConfigRepository_Integration(t *testing.T) {
 
 		// 更新值
 		newValue := map[string]any{"updated": true}
-		config.UpdateValue(newValue)
+		require.NoError(t, config.UpdateValue(newValue), "update config value should succeed")
 		err = configRepo.Update(ctx, config)
 		require.NoError(t, err, "update config should succeed")
 

@@ -526,8 +526,8 @@ func TestDocumentService_UpdateStatus(t *testing.T) {
 
 	// Create completed document for archived test
 	completedDoc, _ := knowledge.NewDocument(projectID, "Completed.pdf", knowledge.TypePRD, "https://example.com/completed.pdf", userID)
-	completedDoc.UpdateStatus(knowledge.StatusProcessing)
-	completedDoc.UpdateStatus(knowledge.StatusCompleted)
+	_ = completedDoc.UpdateStatus(knowledge.StatusProcessing)
+	_ = completedDoc.UpdateStatus(knowledge.StatusCompleted)
 	docRepo.documents[completedDoc.ID()] = completedDoc
 
 	tests := []struct {

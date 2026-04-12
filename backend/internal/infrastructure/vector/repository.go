@@ -84,24 +84,4 @@ func (r *Repository) Close() error {
 	return nil
 }
 
-// Helper methods for future implementation
-
-// buildFilterExpression creates a Milvus filter expression from the filter map
-func (r *Repository) buildFilterExpression(filter map[string]any) string {
-	if len(filter) == 0 {
-		return ""
-	}
-
-	expr := ""
-	if projectID, ok := filter["project_id"].(string); ok && projectID != "" {
-		expr = fmt.Sprintf("project_id == '%s'", projectID)
-	}
-	if documentID, ok := filter["document_id"].(string); ok && documentID != "" {
-		if expr != "" {
-			expr += " && "
-		}
-		expr += fmt.Sprintf("document_id == '%s'", documentID)
-	}
-
-	return expr
-}
+// Helper methods for future implementation are intentionally omitted (YAGNI)

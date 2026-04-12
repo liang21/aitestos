@@ -21,98 +21,53 @@ const (
 
 // ReferencedChunk represents a document chunk referenced by AI
 type ReferencedChunk struct {
-	chunkID         uuid.UUID
-	documentID      uuid.UUID
-	documentTitle   string
-	similarityScore float64
+	ChunkID         uuid.UUID `json:"chunk_id"`
+	DocumentID      uuid.UUID `json:"document_id"`
+	DocumentTitle   string    `json:"document_title"`
+	SimilarityScore float64   `json:"similarity_score"`
 }
 
 // NewReferencedChunk creates a new ReferencedChunk
 func NewReferencedChunk(chunkID, documentID uuid.UUID, title string, score float64) *ReferencedChunk {
 	return &ReferencedChunk{
-		chunkID:         chunkID,
-		documentID:      documentID,
-		documentTitle:   title,
-		similarityScore: score,
+		ChunkID:         chunkID,
+		DocumentID:      documentID,
+		DocumentTitle:   title,
+		SimilarityScore: score,
 	}
-}
-
-// ChunkID returns the chunk's ID
-func (r *ReferencedChunk) ChunkID() uuid.UUID {
-	return r.chunkID
-}
-
-// DocumentID returns the document's ID
-func (r *ReferencedChunk) DocumentID() uuid.UUID {
-	return r.documentID
-}
-
-// DocumentTitle returns the document title
-func (r *ReferencedChunk) DocumentTitle() string {
-	return r.documentTitle
-}
-
-// SimilarityScore returns the similarity score
-func (r *ReferencedChunk) SimilarityScore() float64 {
-	return r.similarityScore
 }
 
 // AiMetadata represents metadata about AI-generated test cases
 type AiMetadata struct {
-	generationTaskID uuid.UUID
-	confidence       Confidence
-	referencedChunks []*ReferencedChunk
-	modelVersion     string
-	generatedAt      time.Time
+	GenerationTaskID uuid.UUID         `json:"generation_task_id"`
+	Confidence       Confidence        `json:"confidence"`
+	ReferencedChunks []*ReferencedChunk `json:"referenced_chunks"`
+	ModelVersion     string            `json:"model_version"`
+	GeneratedAt      time.Time         `json:"generated_at"`
 }
 
 // NewAiMetadata creates new AI metadata
 func NewAiMetadata(taskID uuid.UUID, confidence Confidence, chunks []*ReferencedChunk, modelVersion string) *AiMetadata {
 	return &AiMetadata{
-		generationTaskID: taskID,
-		confidence:       confidence,
-		referencedChunks: chunks,
-		modelVersion:     modelVersion,
-		generatedAt:      time.Now(),
+		GenerationTaskID: taskID,
+		Confidence:       confidence,
+		ReferencedChunks: chunks,
+		ModelVersion:     modelVersion,
+		GeneratedAt:      time.Now(),
 	}
-}
-
-// GenerationTaskID returns the generation task ID
-func (m *AiMetadata) GenerationTaskID() uuid.UUID {
-	return m.generationTaskID
-}
-
-// Confidence returns the confidence level
-func (m *AiMetadata) Confidence() Confidence {
-	return m.confidence
-}
-
-// ReferencedChunks returns the referenced chunks
-func (m *AiMetadata) ReferencedChunks() []*ReferencedChunk {
-	return m.referencedChunks
-}
-
-// ModelVersion returns the model version
-func (m *AiMetadata) ModelVersion() string {
-	return m.modelVersion
-}
-
-// GeneratedAt returns the generation timestamp
-func (m *AiMetadata) GeneratedAt() time.Time {
-	return m.generatedAt
 }
 
 // IsAIGenerated returns true if metadata represents AI-generated content
 func (m *AiMetadata) IsAIGenerated() bool {
-	return m != nil && m.generationTaskID != uuid.Nil
+	return m != nil && m.GenerationTaskID != uuid.Nil
 }
 
 // CalculateConfidence determines confidence based on chunks
 func CalculateConfidence(chunks []*ReferencedChunk) Confidence {
-	if len(chunks) >= 2 && chunks[0].SimilarityScore() > 0.8 {
+	if len(chunks) >= 2 && chunks[0].SimilarityScore > 0.8 {
 		return ConfidenceHigh
 	}
-	if len(chunks) >= 1 && chunks[0].SimilarityScore() >= 0.5 {
+	if len(chunks) >= 1 && chunks[0].SimilarityScore >= 0.5 {
 		return ConfidenceMedium
 	}
 	return ConfidenceLow

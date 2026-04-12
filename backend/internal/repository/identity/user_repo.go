@@ -168,10 +168,8 @@ func (r *UserRepository) List(ctx context.Context, opts identity.QueryOptions) (
 	}
 
 	var countArgs []interface{}
-	argIdx := 1
 	if opts.Keywords != "" {
 		countArgs = append(countArgs, opts.Keywords)
-		argIdx++
 	}
 	if opts.Role != "" {
 		countArgs = append(countArgs, string(opts.Role))
@@ -188,7 +186,7 @@ func (r *UserRepository) List(ctx context.Context, opts identity.QueryOptions) (
 		WHERE deleted_at IS NULL
 	`
 	var args []interface{}
-	argIdx = 1
+	argIdx := 1
 
 	if opts.Keywords != "" {
 		query += fmt.Sprintf(" AND (username LIKE '%%' || $%d || '%%' OR email LIKE '%%' || $%d || '%%')", argIdx, argIdx)

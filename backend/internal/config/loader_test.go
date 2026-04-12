@@ -269,8 +269,7 @@ func TestLoad_EnvironmentVariableOverride(t *testing.T) {
 	}
 
 	for k, v := range envVars {
-		os.Setenv(k, v)
-		defer os.Unsetenv(k)
+		t.Setenv(k, v)
 	}
 
 	tmpDir := t.TempDir()

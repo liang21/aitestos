@@ -179,7 +179,9 @@ func TestGenerationTaskRepository_Integration(t *testing.T) {
 		require.NoError(t, taskRepo.Save(ctx, task), "save task should succeed")
 
 		// 更新状态：pending -> processing
-		task.StartProcessing()
+		if err := task.StartProcessing(); err != nil {
+				t.Fatalf("StartProcessing() unexpected error: %v", err)
+			}
 		err := taskRepo.Update(ctx, task)
 		require.NoError(t, err, "update task should succeed")
 
@@ -209,7 +211,9 @@ func TestGenerationTaskRepository_Integration(t *testing.T) {
 		require.NoError(t, taskRepo.Save(ctx, task), "save task should succeed")
 
 		// 更新状态：pending -> processing -> failed
-		task.StartProcessing()
+		if err := task.StartProcessing(); err != nil {
+				t.Fatalf("StartProcessing() unexpected error: %v", err)
+			}
 		task.Fail("API timeout error")
 		err := taskRepo.Update(ctx, task)
 		require.NoError(t, err, "update task should succeed")

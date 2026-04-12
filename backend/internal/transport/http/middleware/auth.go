@@ -106,5 +106,5 @@ func respondWithError(w http.ResponseWriter, httpStatus int, message string) {
 	response := map[string]interface{}{
 		"error": message,
 	}
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }

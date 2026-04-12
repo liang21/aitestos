@@ -514,7 +514,7 @@ func TestGenerationService_ConfirmDraft(t *testing.T) {
 					testcase.CaseTypeFunctionality,
 					testcase.PriorityP1,
 				)
-				draft.Confirm(moduleID) // Pre-confirm the draft
+				_ = draft.Confirm(moduleID) // Pre-confirm the draft (setup)
 				draftRepo.drafts[draft.ID()] = draft
 
 				service := NewGenerationService(taskRepo, draftRepo, ragSvc, llmSvc, moduleRepo, projectRepo, caseRepo).(*GenerationServiceImpl)
@@ -703,7 +703,7 @@ func TestGenerationService_RejectDraft(t *testing.T) {
 					testcase.CaseTypeFunctionality,
 					testcase.PriorityP1,
 				)
-				draft.Confirm(moduleID) // Pre-confirm the draft
+				_ = draft.Confirm(moduleID) // Pre-confirm the draft (setup)
 				draftRepo.drafts[draft.ID()] = draft
 
 				service := NewGenerationService(taskRepo, draftRepo, ragSvc, llmSvc, moduleRepo, projectRepo, caseRepo).(*GenerationServiceImpl)
@@ -864,7 +864,7 @@ func TestGenerationService_BatchConfirm(t *testing.T) {
 
 				draft1, _ := generation.NewGeneratedCaseDraft(task.ID(), "Draft 1", nil, testcase.Steps{"Step"}, testcase.ExpectedResult{}, testcase.CaseTypeFunctionality, testcase.PriorityP1)
 				draft2, _ := generation.NewGeneratedCaseDraft(task.ID(), "Draft 2", nil, testcase.Steps{"Step"}, testcase.ExpectedResult{}, testcase.CaseTypeFunctionality, testcase.PriorityP1)
-				draft1.Confirm(moduleID) // Pre-confirm draft1
+				_ = draft1.Confirm(moduleID) // Pre-confirm draft1 (setup)
 				draftRepo.drafts[draft1.ID()] = draft1
 				draftRepo.drafts[draft2.ID()] = draft2
 

@@ -495,8 +495,8 @@ func TestCaseService_GetCaseDetail(t *testing.T) {
 				return
 			}
 
-			if detail.TestCase.ID() != tt.caseID {
-				t.Errorf("GetCaseDetail() ID = %v, want %v", detail.TestCase.ID(), tt.caseID)
+			if detail.ID() != tt.caseID {
+				t.Errorf("GetCaseDetail() ID = %v, want %v", detail.ID(), tt.caseID)
 			}
 		})
 	}
