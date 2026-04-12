@@ -28,7 +28,7 @@ CREATE TYPE document_type_enum AS ENUM ('prd', 'figma', 'api_spec');
 -- project 项目表
 -- -----------------------------------------------------------
 CREATE TABLE project (
-    id          uuid                        DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    id          uuid                        DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
     name        varchar(255)                                            NOT NULL UNIQUE,
     prefix      varchar(4)                                             NOT NULL UNIQUE,
     description text,
@@ -43,7 +43,7 @@ COMMENT ON COLUMN project.prefix IS '项目前缀，用于用例编号生成，2
 -- project_config 项目配置表 (新增)
 -- -----------------------------------------------------------
 CREATE TABLE project_config (
-    id          uuid                        DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    id          uuid                        DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
     project_id  uuid                        NOT NULL REFERENCES project ON DELETE CASCADE,
     key         varchar(255)                NOT NULL,
     value       jsonb                       DEFAULT '{}'::jsonb,
@@ -57,7 +57,7 @@ CREATE TABLE project_config (
 -- module 模块表
 -- -----------------------------------------------------------
 CREATE TABLE module (
-    id            uuid DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    id            uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
     project_id    uuid                            NOT NULL REFERENCES project ON DELETE CASCADE,
     name          varchar(255)                    NOT NULL,
     abbreviation  varchar(4)                      NOT NULL,
@@ -72,7 +72,7 @@ COMMENT ON COLUMN module.abbreviation IS '模块缩写，用于用例编号生�
 -- users 用户表
 -- -----------------------------------------------------------
 CREATE TABLE users (
-    id         uuid                        DEFAULT uuid_generate_v4()       NOT NULL PRIMARY KEY,
+    id         uuid                        DEFAULT gen_random_uuid()       NOT NULL PRIMARY KEY,
     username   varchar(32)                                                  NOT NULL,
     email      varchar(255)                                                 NOT NULL UNIQUE,
     password   varchar(255)                                                 NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE users (
 -- test_case 测试用例表
 -- -----------------------------------------------------------
 CREATE TABLE test_case (
-    id            uuid                        DEFAULT uuid_generate_v4()              NOT NULL PRIMARY KEY,
+    id            uuid                        DEFAULT gen_random_uuid()              NOT NULL PRIMARY KEY,
     module_id     uuid                                                                NOT NULL REFERENCES module ON DELETE CASCADE,
     user_id       uuid                                                                NOT NULL REFERENCES users ON DELETE NO ACTION,
     number        varchar(32)                                                         NOT NULL UNIQUE,
@@ -105,7 +105,7 @@ CREATE TABLE test_case (
 -- test_plan 测试计划表
 -- -----------------------------------------------------------
 CREATE TABLE test_plan (
-    id           uuid                        DEFAULT uuid_generate_v4()        NOT NULL PRIMARY KEY,
+    id           uuid                        DEFAULT gen_random_uuid()        NOT NULL PRIMARY KEY,
     project_id   uuid                                                          NOT NULL REFERENCES project ON DELETE CASCADE,
     user_id      uuid                                                          NOT NULL REFERENCES users ON DELETE NO ACTION,
     name         varchar(255)                                                  NOT NULL,
@@ -119,7 +119,7 @@ CREATE TABLE test_plan (
 -- test_result 测试结果表
 -- -----------------------------------------------------------
 CREATE TABLE test_result (
-    id             uuid                        DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    id             uuid                        DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
     case_id        uuid                                                   NOT NULL REFERENCES test_case ON DELETE CASCADE,
     plan_id        uuid                                                   NOT NULL REFERENCES test_plan ON DELETE CASCADE,
     executor_id    uuid                                                   NOT NULL REFERENCES users ON DELETE NO ACTION,
@@ -136,7 +136,7 @@ CREATE TABLE test_result (
 -- document 文档表
 -- -----------------------------------------------------------
 CREATE TABLE document (
-    id           uuid                        DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    id           uuid                        DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
     project_id   uuid                                                   NOT NULL REFERENCES project ON DELETE CASCADE,
     name         varchar(255)                                           NOT NULL,
     type         document_type_enum                                     NOT NULL,
@@ -154,7 +154,7 @@ COMMENT ON COLUMN document.status IS '文档处理状态：pending/processing/co
 -- document_chunk 文档分块表
 -- -----------------------------------------------------------
 CREATE TABLE document_chunk (
-    id          uuid                        DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    id          uuid                        DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
     document_id uuid                                                   NOT NULL REFERENCES document ON DELETE CASCADE,
     chunk_index integer                                                NOT NULL,
     content     text                                                   NOT NULL,
@@ -166,7 +166,7 @@ CREATE TABLE document_chunk (
 -- generation_task 生成任务表
 -- -----------------------------------------------------------
 CREATE TABLE generation_task (
-    id             uuid                        DEFAULT uuid_generate_v4()           NOT NULL PRIMARY KEY,
+    id             uuid                        DEFAULT gen_random_uuid()           NOT NULL PRIMARY KEY,
     project_id     uuid                                                             NOT NULL REFERENCES project ON DELETE CASCADE,
     user_id        uuid                                                             NOT NULL REFERENCES users ON DELETE NO ACTION,
     status         task_status_enum            DEFAULT 'pending'::task_status_enum  NOT NULL,
@@ -181,7 +181,7 @@ CREATE TABLE generation_task (
 -- generated_case_draft 生成用例草稿表
 -- -----------------------------------------------------------
 CREATE TABLE generated_case_draft (
-    id            uuid                        DEFAULT uuid_generate_v4()           NOT NULL PRIMARY KEY,
+    id            uuid                        DEFAULT gen_random_uuid()           NOT NULL PRIMARY KEY,
     task_id       uuid                                                             NOT NULL REFERENCES generation_task ON DELETE CASCADE,
     module_id     uuid                                                             REFERENCES module ON DELETE SET NULL,
     title         varchar(255)                                                     NOT NULL,

@@ -5,7 +5,7 @@ info:
     智能测试管理平台 RESTful API 定义。
 
     ## 认证
-    所有 API（除登录注册外）需要 JWT Token 认证：
+    所有 API（除健康检查和认证接口外）需要 JWT Token 认证：
     ```
     Authorization: Bearer <token>
     ```
@@ -14,9 +14,7 @@ info:
     统一错误响应格式：
     ```json
     {
-      "code": 40001,
-      "message": "测试用例不存在",
-      "trace_id": "abc123"
+      "error": "错误信息"
     }
     ```
   version: 1.0.0
@@ -31,6 +29,8 @@ servers:
     description: 生产环境
 
 tags:
+  - name: System
+    description: 系统接口
   - name: Auth
     description: 认证相关接口
   - name: Projects
@@ -39,24 +39,39 @@ tags:
     description: 模块管理
   - name: ProjectConfig
     description: 项目配置
-  - name: Documents
-    description: 文档管理
-  - name: Generation
-    description: AI 用例生成
   - name: TestCases
     description: 测试用例管理
   - name: TestPlans
-    description: 测试计划管理
-  - name: TestResults
-    description: 测试结果管理
+    description: 测试计划管理（含结果）
+  - name: Generation
+    description: AI 用例生成
+  - name: Documents
+    description: 知识库文档管理
 
 paths:
+  # ==================== 系统 ====================
+  /health:
+    get:
+      tags: [System]
+      summary: 健康检查
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: 服务正常
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+
   # ==================== 认证 ====================
   /auth/register:
     post:
       tags: [Auth]
       summary: 用户注册
       operationId: register
+      security: []
       requestBody:
         required: true
         content:
@@ -69,7 +84,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenResponse'
+                $ref: '#/components/schemas/UserJSON'
         '400':
           description: 请求参数错误
           content:
@@ -88,6 +103,7 @@ paths:
       tags: [Auth]
       summary: 用户登录
       operationId: login
+      security: []
       requestBody:
         required: true
         content:
@@ -100,9 +116,35 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenResponse'
+                $ref: '#/components/schemas/LoginResponse'
         '401':
           description: 邮箱或密码错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: 刷新令牌
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: 刷新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: 无效或过期的刷新令牌
           content:
             application/json:
               schema:
@@ -117,17 +159,20 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: page
+        - name: offset
           in: query
           schema:
             type: integer
-            default: 1
-        - name: pageSize
+            default: 0
+        - name: limit
           in: query
           schema:
             type: integer
-            default: 20
-            maximum: 100
+            default: 10
+        - name: keywords
+          in: query
+          schema:
+            type: string
       responses:
         '200':
           description: 成功
@@ -154,8 +199,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Project'
+        '409':
+          description: 项目名称或前缀已存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /projects/{projectId}:
+  /projects/{id}:
     get:
       tags: [Projects]
       summary: 获取项目详情
@@ -163,14 +214,19 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/projectId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Project'
+                $ref: '#/components/schemas/ProjectDetail'
         '404':
           description: 项目不存在
           content:
@@ -184,7 +240,12 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/projectId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -205,13 +266,18 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/projectId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '204':
           description: 删除成功
 
   # ==================== 模块管理 ====================
-  /projects/{projectId}/modules:
+  /projects/{id}/modules:
     get:
       tags: [Modules]
       summary: 获取项目模块列表
@@ -219,7 +285,13 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/projectId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 项目 ID
       responses:
         '200':
           description: 成功
@@ -236,7 +308,13 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/projectId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 项目 ID
       requestBody:
         required: true
         content:
@@ -250,44 +328,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Module'
+        '409':
+          description: 模块名称或缩写已存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /modules/{moduleId}:
-    get:
-      tags: [Modules]
-      summary: 获取模块详情
-      operationId: getModule
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/moduleId'
-      responses:
-        '200':
-          description: 成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Module'
-    put:
-      tags: [Modules]
-      summary: 更新模块
-      operationId: updateModule
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/moduleId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateModuleRequest'
-      responses:
-        '200':
-          description: 更新成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Module'
+  /modules/{id}:
     delete:
       tags: [Modules]
       summary: 删除模块
@@ -295,13 +343,19 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/moduleId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 模块 ID
       responses:
         '204':
           description: 删除成功
 
   # ==================== 项目配置 ====================
-  /projects/{projectId}/configs:
+  /projects/{id}/configs:
     get:
       tags: [ProjectConfig]
       summary: 获取项目配置列表
@@ -309,434 +363,58 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/projectId'
-      responses:
-        '200':
-          description: 成功
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ProjectConfig'
-    post:
-      tags: [ProjectConfig]
-      summary: 创建或更新配置
-      operationId: upsertProjectConfig
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/projectId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpsertProjectConfigRequest'
-      responses:
-        '200':
-          description: 操作成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProjectConfig'
-
-  /projects/{projectId}/configs/{configKey}:
-    get:
-      tags: [ProjectConfig]
-      summary: 获取配置项
-      operationId: getProjectConfig
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/projectId'
-        - name: configKey
+        - name: id
           in: path
           required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: 成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProjectConfig'
-        '404':
-          description: 配置项不存在
-    delete:
-      tags: [ProjectConfig]
-      summary: 删除配置项
-      operationId: deleteProjectConfig
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/projectId'
-        - name: configKey
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: 删除成功
-
-  /projects/{projectId}/configs/import:
-    post:
-      tags: [ProjectConfig]
-      summary: 导入配置
-      operationId: importProjectConfigs
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/projectId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: object
-                required: [key, value]
-                properties:
-                  key:
-                    type: string
-                  value:
-                    type: object
-                  description:
-                    type: string
-      responses:
-        '200':
-          description: 导入成功
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  imported:
-                    type: integer
-                  skipped:
-                    type: integer
-
-  /projects/{projectId}/configs/export:
-    get:
-      tags: [ProjectConfig]
-      summary: 导出配置
-      operationId: exportProjectConfigs
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/projectId'
-      responses:
-        '200':
-          description: 导出成功
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ProjectConfig'
-
-  /projects/{projectId}/stats:
-    get:
-      tags: [Projects]
-      summary: 获取项目统计
-      description: 获取项目仪表盘统计数据
-      operationId: getProjectStats
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/projectId'
-      responses:
-        '200':
-          description: 成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProjectStats'
-
-  # ==================== 文档管理 ====================
-  /projects/{projectId}/documents:
-    post:
-      tags: [Documents]
-      summary: 上传文档
-      description: 上传 PRD、Figma 链接或 API Spec 文档
-      operationId: uploadDocument
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/projectId'
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required:
-                - type
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: 文档文件（与 url 二选一）
-                url:
-                  type: string
-                  format: uri
-                  description: 文档 URL（与 file 二选一，如 Figma 链接）
-                type:
-                  type: string
-                  enum: [prd, figma, api_spec]
-                name:
-                  type: string
-                  description: 文档名称（可选，默认使用文件名）
-      responses:
-        '201':
-          description: 上传成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Document'
-
-  /documents/{documentId}:
-    get:
-      tags: [Documents]
-      summary: 获取文档详情
-      operationId: getDocument
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/documentId'
-      responses:
-        '200':
-          description: 成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Document'
-    delete:
-      tags: [Documents]
-      summary: 删除文档
-      operationId: deleteDocument
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/documentId'
-      responses:
-        '204':
-          description: 删除成功
-
-  /documents/{documentId}/chunks:
-    get:
-      tags: [Documents]
-      summary: 获取文档分块列表
-      operationId: listDocumentChunks
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/documentId'
-      responses:
-        '200':
-          description: 成功
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DocumentChunk'
-
-  # ==================== AI 生成 ====================
-  /projects/{projectId}/generation/tasks:
-    post:
-      tags: [Generation]
-      summary: 创建生成任务
-      description: 发起 AI 用例生成任务，系统将异步处理
-      operationId: createGenerationTask
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/projectId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateGenerationTaskRequest'
-      responses:
-        '201':
-          description: 任务创建成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenerationTask'
-
-  /generation/tasks/{taskId}:
-    get:
-      tags: [Generation]
-      summary: 获取生成任务状态
-      operationId: getGenerationTask
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/taskId'
-      responses:
-        '200':
-          description: 成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenerationTask'
-
-  /generation/drafts/{draftId}/confirm:
-    put:
-      tags: [Generation]
-      summary: 确认草稿
-      description: 确认草稿并将其转为正式测试用例
-      operationId: confirmDraft
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/draftId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - moduleId
-              properties:
-                moduleId:
-                  type: string
-                  format: uuid
-                  description: 关联的模块 ID
-      responses:
-        '200':
-          description: 确认成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TestCase'
-
-  /generation/drafts/{draftId}/reject:
-    put:
-      tags: [Generation]
-      summary: 拒绝草稿
-      operationId: rejectDraft
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/draftId'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                feedback:
-                  type: string
-                  description: 拒绝原因反馈
-                reason:
-                  type: string
-                  enum: [duplicate, irrelevant, low_quality, other]
-                  description: 拒绝原因类型
-      responses:
-        '200':
-          description: 拒绝成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CaseDraft'
-
-  /generation/drafts/{draftId}:
-    put:
-      tags: [Generation]
-      summary: 保存草稿修改
-      operationId: updateDraft
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/draftId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                title:
-                  type: string
-                  maxLength: 255
-                preconditions:
-                  type: array
-                  items:
-                    type: string
-                steps:
-                  type: array
-                  items:
-                    type: string
-                expected:
-                  type: object
-                caseType:
-                  $ref: '#/components/schemas/CaseType'
-                priority:
-                  $ref: '#/components/schemas/Priority'
-      responses:
-        '200':
-          description: 保存成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CaseDraft'
-
-  /generation/drafts:
-    get:
-      tags: [Generation]
-      summary: 获取草稿列表
-      operationId: listDrafts
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: projectId
-          in: query
           schema:
             type: string
             format: uuid
-        - name: status
-          in: query
-          schema:
-            $ref: '#/components/schemas/DraftStatus'
-        - name: confidence
-          in: query
-          schema:
-            $ref: '#/components/schemas/Confidence'
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: pageSize
-          in: query
-          schema:
-            type: integer
-            default: 20
+          description: 项目 ID
       responses:
         '200':
           description: 成功
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CaseDraft'
-                  meta:
-                    $ref: '#/components/schemas/PaginationMeta'
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectConfig'
+
+  /projects/{id}/configs/{key}:
+    put:
+      tags: [ProjectConfig]
+      summary: 设置配置项
+      operationId: setProjectConfig
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 项目 ID
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 配置键名
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: 配置值（任意 JSON 对象）
+              additionalProperties: true
+      responses:
+        '200':
+          description: 设置成功
 
   # ==================== 测试用例 ====================
-  /cases:
+  /testcases:
     get:
       tags: [TestCases]
       summary: 获取测试用例列表
@@ -744,39 +422,46 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: moduleId
+        - name: project_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 项目 ID（与 module_id 至少填一个）
+        - name: module_id
           in: query
           schema:
             type: string
             format: uuid
-        - name: projectId
-          in: query
-          schema:
-            type: string
-            format: uuid
+          description: 模块 ID（与 project_id 至少填一个）
         - name: status
           in: query
           schema:
             $ref: '#/components/schemas/CaseStatus'
+        - name: case_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/CaseType'
         - name: priority
           in: query
           schema:
             $ref: '#/components/schemas/Priority'
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: pageSize
-          in: query
-          schema:
-            type: integer
-            default: 20
-        - name: keyword
+        - name: keywords
           in: query
           schema:
             type: string
-          description: 搜索关键词（标题或编号）
+          description: 搜索关键词
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
       responses:
         '200':
           description: 成功
@@ -803,8 +488,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestCase'
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /cases/{caseId}:
+  /testcases/{id}:
     get:
       tags: [TestCases]
       summary: 获取测试用例详情
@@ -812,14 +503,25 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/caseId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestCase'
+                $ref: '#/components/schemas/CaseDetail'
+        '404':
+          description: 测试用例不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     put:
       tags: [TestCases]
       summary: 更新测试用例
@@ -827,7 +529,12 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/caseId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -848,7 +555,12 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/caseId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '204':
           description: 删除成功
@@ -862,7 +574,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: projectId
+        - name: project_id
           in: query
           required: true
           schema:
@@ -872,16 +584,20 @@ paths:
           in: query
           schema:
             $ref: '#/components/schemas/PlanStatus'
-        - name: page
+        - name: keywords
+          in: query
+          schema:
+            type: string
+        - name: offset
           in: query
           schema:
             type: integer
-            default: 1
-        - name: pageSize
+            default: 0
+        - name: limit
           in: query
           schema:
             type: integer
-            default: 20
+            default: 10
       responses:
         '200':
           description: 成功
@@ -909,7 +625,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TestPlan'
 
-  /plans/{planId}:
+  /plans/{id}:
     get:
       tags: [TestPlans]
       summary: 获取测试计划详情
@@ -917,14 +633,25 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/planId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestPlan'
+                $ref: '#/components/schemas/PlanDetail'
+        '404':
+          description: 测试计划不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     put:
       tags: [TestPlans]
       summary: 更新测试计划
@@ -932,7 +659,12 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/planId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -946,16 +678,97 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestPlan'
-
-  /plans/{planId}/cases:
-    get:
+    delete:
       tags: [TestPlans]
-      summary: 获取计划关联的用例
-      operationId: getPlanCases
+      summary: 删除测试计划
+      operationId: deleteTestPlan
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/planId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: 删除成功
+
+  /plans/{id}/cases:
+    post:
+      tags: [TestPlans]
+      summary: 关联用例到计划
+      operationId: addCasesToPlan
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 测试计划 ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - case_ids
+              properties:
+                case_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: 关联成功
+
+  /plans/{id}/cases/{caseId}:
+    delete:
+      tags: [TestPlans]
+      summary: 从计划中移除用例
+      operationId: removeCaseFromPlan
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 测试计划 ID
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 测试用例 ID
+      responses:
+        '204':
+          description: 移除成功
+
+  /plans/{id}/results:
+    get:
+      tags: [TestPlans]
+      summary: 获取计划执行结果
+      operationId: getPlanResults
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 测试计划 ID
       responses:
         '200':
           description: 成功
@@ -964,41 +777,21 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TestCase'
+                  $ref: '#/components/schemas/TestResult'
     post:
       tags: [TestPlans]
-      summary: 关联用例到计划
-      operationId: addCasesToPlan
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/planId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - caseIds
-              properties:
-                caseIds:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-      responses:
-        '204':
-          description: 关联成功
-
-  # ==================== 测试结果 ====================
-  /results:
-    post:
-      tags: [TestResults]
       summary: 录入测试结果
       operationId: recordResult
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 测试计划 ID
       requestBody:
         required: true
         content:
@@ -1013,32 +806,332 @@ paths:
               schema:
                 $ref: '#/components/schemas/TestResult'
 
-  /cases/{caseId}/results:
+  # ==================== AI 生成 ====================
+  /generation/tasks:
+    post:
+      tags: [Generation]
+      summary: 创建生成任务
+      description: 发起 AI 用例生成任务
+      operationId: createGenerationTask
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGenerationTaskRequest'
+      responses:
+        '201':
+          description: 任务创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerationTask'
+
+  /generation/tasks/{id}:
     get:
-      tags: [TestResults]
-      summary: 获取用例执行历史
-      operationId: getCaseResults
+      tags: [Generation]
+      summary: 获取生成任务详情
+      operationId: getGenerationTask
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/caseId'
-        - name: page
-          in: query
+        - name: id
+          in: path
+          required: true
           schema:
-            type: integer
-            default: 1
-        - name: pageSize
-          in: query
-          schema:
-            type: integer
-            default: 20
+            type: string
+            format: uuid
       responses:
         '200':
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestResultListResponse'
+                $ref: '#/components/schemas/GenerationTask'
+        '404':
+          description: 任务不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /generation/tasks/{id}/drafts:
+    get:
+      tags: [Generation]
+      summary: 获取任务的草稿列表
+      operationId: getTaskDrafts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 生成任务 ID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CaseDraft'
+
+  /generation/drafts/{id}/confirm:
+    post:
+      tags: [Generation]
+      summary: 确认草稿
+      description: 确认草稿并将其转为正式测试用例
+      operationId: confirmDraft
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 草稿 ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - module_id
+              properties:
+                module_id:
+                  type: string
+                  format: uuid
+                  description: 关联的模块 ID
+      responses:
+        '201':
+          description: 确认成功，返回创建的测试用例
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestCase'
+        '409':
+          description: 草稿已确认或已拒绝
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /generation/drafts/{id}/reject:
+    post:
+      tags: [Generation]
+      summary: 拒绝草稿
+      operationId: rejectDraft
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 草稿 ID
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  enum: [duplicate, irrelevant, low_quality, other]
+                  description: 拒绝原因类型
+                feedback:
+                  type: string
+                  description: 拒绝原因反馈
+      responses:
+        '200':
+          description: 拒绝成功
+        '409':
+          description: 草稿已确认或已拒绝
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /generation/drafts/batch-confirm:
+    post:
+      tags: [Generation]
+      summary: 批量确认草稿
+      operationId: batchConfirmDrafts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - draft_ids
+                - module_id
+              properties:
+                draft_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  minItems: 1
+                  maxItems: 50
+                module_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: 批量确认结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchConfirmResult'
+
+  # ==================== 知识库文档 ====================
+  /knowledge/documents:
+    get:
+      tags: [Documents]
+      summary: 获取文档列表
+      operationId: listDocuments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/DocumentType'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/DocumentStatus'
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListResponse'
+    post:
+      tags: [Documents]
+      summary: 上传文档
+      operationId: uploadDocument
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadDocumentRequest'
+      responses:
+        '201':
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '400':
+          description: 无效的文档类型
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /knowledge/documents/{id}:
+    get:
+      tags: [Documents]
+      summary: 获取文档详情
+      operationId: getDocument
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetail'
+        '404':
+          description: 文档不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Documents]
+      summary: 删除文档
+      operationId: deleteDocument
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: 删除成功
+
+  /knowledge/documents/{id}/chunks:
+    get:
+      tags: [Documents]
+      summary: 获取文档分块列表
+      operationId: getDocumentChunks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 文档 ID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChunkInfo'
 
 components:
   securitySchemes:
@@ -1046,64 +1139,6 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
-  parameters:
-    projectId:
-      name: projectId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: 项目 ID
-    moduleId:
-      name: moduleId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: 模块 ID
-    documentId:
-      name: documentId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: 文档 ID
-    taskId:
-      name: taskId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: 生成任务 ID
-    draftId:
-      name: draftId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: 草稿 ID
-    caseId:
-      name: caseId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: 测试用例 ID
-    planId:
-      name: planId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: 测试计划 ID
 
   schemas:
     # ==================== 枚举 ====================
@@ -1130,7 +1165,10 @@ components:
       enum: [pending, confirmed, rejected]
     DocumentType:
       type: string
-      enum: [prd, figma, api_spec]
+      enum: [prd, figma, api_spec, swagger, markdown]
+    DocumentStatus:
+      type: string
+      enum: [pending, processing, completed, failed]
     UserRole:
       type: string
       enum: [super_admin, admin, normal]
@@ -1138,34 +1176,16 @@ components:
     # ==================== 基础模型 ====================
     ErrorResponse:
       type: object
-      required: [code, message]
+      required: [error]
       properties:
-        code:
-          type: integer
-          description: 业务错误码
-        message:
+        error:
           type: string
           description: 错误信息
-        traceId:
-          type: string
-          description: 追踪 ID
-
-    PaginationMeta:
-      type: object
-      properties:
-        page:
-          type: integer
-        pageSize:
-          type: integer
-        total:
-          type: integer
-        totalPages:
-          type: integer
 
     # ==================== 认证 ====================
     RegisterRequest:
       type: object
-      required: [username, email, password]
+      required: [username, email, password, role]
       properties:
         username:
           type: string
@@ -1177,6 +1197,9 @@ components:
         password:
           type: string
           minLength: 8
+        role:
+          type: string
+          enum: [super_admin, admin, normal]
 
     LoginRequest:
       type: object
@@ -1188,18 +1211,24 @@ components:
         password:
           type: string
 
-    TokenResponse:
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    LoginResponse:
       type: object
       properties:
-        accessToken:
+        access_token:
           type: string
-        refreshToken:
+        refresh_token:
           type: string
-        expiresIn:
-          type: integer
-          description: 过期时间（秒）
+        user:
+          $ref: '#/components/schemas/UserJSON'
 
-    User:
+    UserJSON:
       type: object
       properties:
         id:
@@ -1210,7 +1239,8 @@ components:
         email:
           type: string
         role:
-          $ref: '#/components/schemas/UserRole'
+          type: string
+          enum: [super_admin, admin, normal]
         createdAt:
           type: string
           format: date-time
@@ -1239,6 +1269,34 @@ components:
           type: string
           format: date-time
 
+    ProjectDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        prefix:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        module_count:
+          type: integer
+          description: 模块总数
+        case_count:
+          type: integer
+          description: 用例总数
+        document_count:
+          type: integer
+          description: 文档总数
+
     ProjectListResponse:
       type: object
       properties:
@@ -1246,8 +1304,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Project'
-        meta:
-          $ref: '#/components/schemas/PaginationMeta'
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
 
     CreateProjectRequest:
       type: object
@@ -1255,6 +1317,7 @@ components:
       properties:
         name:
           type: string
+          minLength: 2
           maxLength: 255
         prefix:
           type: string
@@ -1270,13 +1333,8 @@ components:
       properties:
         name:
           type: string
-          maxLength: 255
-        prefix:
-          type: string
           minLength: 2
-          maxLength: 4
-          pattern: '^[A-Z]+$'
-          description: 项目前缀，2-4位大写字母
+          maxLength: 255
         description:
           type: string
 
@@ -1297,6 +1355,15 @@ components:
           description: 模块缩写，用于用例编号生成
         description:
           type: string
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     CreateModuleRequest:
       type: object
@@ -1304,6 +1371,7 @@ components:
       properties:
         name:
           type: string
+          minLength: 2
           maxLength: 255
         abbreviation:
           type: string
@@ -1311,21 +1379,6 @@ components:
           maxLength: 4
           pattern: '^[A-Z]+$'
           description: 模块缩写，2-4位大写字母，项目内唯一
-        description:
-          type: string
-
-    UpdateModuleRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 255
-        abbreviation:
-          type: string
-          minLength: 2
-          maxLength: 4
-          pattern: '^[A-Z]+$'
-          description: 模块缩写，2-4位大写字母
         description:
           type: string
 
@@ -1344,250 +1397,12 @@ components:
         value:
           type: object
           description: JSON 值
-        description:
-          type: string
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
-
-    ProjectStats:
-      type: object
-      description: 项目仪表盘统计数据
-      properties:
-        totalCases:
-          type: integer
-          description: 用例总数
-        passRate:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 100
-          description: 通过率（百分比）
-        coverageRate:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 100
-          description: 需求覆盖率（百分比）
-        aiGeneratedCount:
-          type: integer
-          description: AI 生成用例数
-        recentTasks:
-          type: array
-          items:
-            $ref: '#/components/schemas/GenerationTask'
-          description: 最近生成任务列表
-        passRateTrend:
-          type: array
-          items:
-            type: object
-            properties:
-              date:
-                type: string
-                format: date
-              rate:
-                type: number
-                format: double
-          description: 通过率趋势（最近30天）
-
-    UpsertProjectConfigRequest:
-      type: object
-      required: [key, value]
-      properties:
-        key:
-          type: string
-          maxLength: 255
-        value:
-          type: object
-          description: JSON 值
-        description:
-          type: string
-
-    # ==================== 文档 ====================
-    Document:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        projectId:
-          type: string
-          format: uuid
-        name:
-          type: string
-        type:
-          $ref: '#/components/schemas/DocumentType'
-        status:
-          $ref: '#/components/schemas/DocumentStatus'
-        url:
-          type: string
-        metadata:
-          type: object
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    DocumentStatus:
-      type: string
-      enum: [pending, processing, completed, failed]
-      description: |
-        文档处理状态：
-        - pending: 等待处理
-        - processing: 正在解析
-        - completed: 处理完成
-        - failed: 处理失败
-
-    DocumentChunk:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        documentId:
-          type: string
-          format: uuid
-        chunkIndex:
-          type: integer
-        content:
-          type: string
-        metadata:
-          type: object
-
-    # ==================== 生成任务 ====================
-    CreateGenerationTaskRequest:
-      type: object
-      required: [moduleId, prompt]
-      properties:
-        moduleId:
-          type: string
-          format: uuid
-          description: 目标模块（必选）
-        prompt:
-          type: string
-          minLength: 20
-          description: 需求描述（必填，最少20字）
-        documentScope:
-          type: string
-          enum: [all, prd_only, figma_only]
-          default: all
-          description: 文档范围
-        caseCount:
-          type: integer
-          minimum: 1
-          maximum: 20
-          default: 5
-          description: 期望生成的用例数量
-        sceneTypes:
-          type: array
-          items:
-            type: string
-            enum: [positive, negative, boundary]
-          default: [positive, negative, boundary]
-          description: 场景类型（正向/异常/边界）
-        priorityPreference:
-          $ref: '#/components/schemas/Priority'
-        generationMode:
-          type: string
-          enum: [normal, deep]
-          default: normal
-          description: 生成模式（常规/深度覆盖）
-        documentIds:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: 指定参考文档（可选，默认使用全部）
-
-    GenerationTask:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        projectId:
-          type: string
-          format: uuid
-        status:
-          $ref: '#/components/schemas/TaskStatus'
-        prompt:
-          type: string
-        resultSummary:
-          type: object
-          properties:
-            totalDrafts:
-              type: integer
-            confirmedCount:
-              type: integer
-            rejectedCount:
-              type: integer
-        errorMsg:
-          type: string
-        drafts:
-          type: array
-          items:
-            $ref: '#/components/schemas/CaseDraft'
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    CaseDraft:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        taskId:
-          type: string
-          format: uuid
-        moduleId:
-          type: string
-          format: uuid
-        title:
-          type: string
-        preconditions:
-          type: array
-          items:
-            type: string
-        steps:
-          type: array
-          items:
-            type: string
-        expected:
-          type: object
-        caseType:
-          $ref: '#/components/schemas/CaseType'
-        priority:
-          $ref: '#/components/schemas/Priority'
-        confidence:
-          $ref: '#/components/schemas/Confidence'
-        status:
-          $ref: '#/components/schemas/DraftStatus'
-        feedback:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    Confidence:
-      type: string
-      enum: [high, medium, low]
-      description: |
-        AI 生成置信度：
-        - high: 检索到 ≥2 个相关文档块，语义相似度 > 0.8
-        - medium: 检索到 1 个相关文档块，语义相似度 0.5-0.8
-        - low: 无匹配文档块，纯 LLM 生成
 
     # ==================== 测试用例 ====================
     TestCase:
@@ -1597,6 +1412,9 @@ components:
           type: string
           format: uuid
         moduleId:
+          type: string
+          format: uuid
+        userId:
           type: string
           format: uuid
         number:
@@ -1622,17 +1440,16 @@ components:
           $ref: '#/components/schemas/CaseStatus'
         aiMetadata:
           type: object
-          description: AI 生成元数据，记录用例来源和置信度
+          description: AI 生成元数据
           properties:
             generationTaskId:
               type: string
               format: uuid
-              description: 关联的生成任务 ID
             confidence:
-              $ref: '#/components/schemas/Confidence'
+              type: string
+              enum: [high, medium, low]
             referencedChunks:
               type: array
-              description: 引用的文档块列表
               items:
                 type: object
                 properties:
@@ -1647,21 +1464,71 @@ components:
                   similarityScore:
                     type: number
                     format: double
-                    minimum: 0
-                    maximum: 1
             modelVersion:
               type: string
-              description: 使用的模型版本
             generatedAt:
               type: string
               format: date-time
-              description: 生成时间
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
+
+    CaseDetail:
+      type: object
+      description: 测试用例详情（含关联信息）
+      properties:
+        id:
+          type: string
+          format: uuid
+        moduleId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        number:
+          type: string
+        title:
+          type: string
+        preconditions:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          items:
+            type: string
+        expected:
+          type: object
+        caseType:
+          $ref: '#/components/schemas/CaseType'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        status:
+          $ref: '#/components/schemas/CaseStatus'
+        aiMetadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        module_name:
+          type: string
+          description: 所属模块名称
+        project_name:
+          type: string
+          description: 所属项目名称
+        project_prefix:
+          type: string
+          description: 所属项目前缀
+        created_by_name:
+          type: string
+          description: 创建者用户名
 
     TestCaseListResponse:
       type: object
@@ -1670,19 +1537,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TestCase'
-        meta:
-          $ref: '#/components/schemas/PaginationMeta'
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
 
     CreateTestCaseRequest:
       type: object
-      required: [moduleId, title, steps]
+      required: [module_id, title, steps, expected, case_type, priority]
       properties:
-        moduleId:
+        module_id:
           type: string
           format: uuid
         title:
           type: string
-          maxLength: 255
+          minLength: 2
+          maxLength: 500
         preconditions:
           type: array
           items:
@@ -1694,17 +1566,20 @@ components:
           minItems: 1
         expected:
           type: object
-        caseType:
-          $ref: '#/components/schemas/CaseType'
+        case_type:
+          type: string
+          enum: [functionality, performance, api, ui, security]
         priority:
-          $ref: '#/components/schemas/Priority'
+          type: string
+          enum: [P0, P1, P2, P3]
 
     UpdateTestCaseRequest:
       type: object
       properties:
         title:
           type: string
-          maxLength: 255
+          minLength: 2
+          maxLength: 500
         preconditions:
           type: array
           items:
@@ -1713,12 +1588,18 @@ components:
           type: array
           items:
             type: string
+          minItems: 1
         expected:
           type: object
-        caseType:
-          $ref: '#/components/schemas/CaseType'
+        case_type:
+          type: string
+          enum: [functionality, performance, api, ui, security]
         priority:
-          $ref: '#/components/schemas/Priority'
+          type: string
+          enum: [P0, P1, P2, P3]
+        status:
+          type: string
+          enum: [unexecuted, pass, fail, block]
 
     # ==================== 测试计划 ====================
     TestPlan:
@@ -1732,22 +1613,71 @@ components:
           format: uuid
         name:
           type: string
+        description:
+          type: string
         status:
           $ref: '#/components/schemas/PlanStatus'
-        extraConfig:
-          type: object
-        caseCount:
-          type: integer
-        executedCount:
-          type: integer
-        passedCount:
-          type: integer
+        createdBy:
+          type: string
+          format: uuid
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
+
+    PlanDetail:
+      type: object
+      description: 测试计划详情（含用例、结果和统计）
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/PlanStatus'
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestCase'
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestResult'
+        stats:
+          $ref: '#/components/schemas/PlanStatistics'
+
+    PlanStatistics:
+      type: object
+      properties:
+        total_cases:
+          type: integer
+        passed_cases:
+          type: integer
+        failed_cases:
+          type: integer
+        blocked_cases:
+          type: integer
+        skipped_cases:
+          type: integer
+        unexecuted:
+          type: integer
 
     TestPlanListResponse:
       type: object
@@ -1756,37 +1686,41 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TestPlan'
-        meta:
-          $ref: '#/components/schemas/PaginationMeta'
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
 
     CreateTestPlanRequest:
       type: object
-      required: [projectId, name]
+      required: [project_id, name]
       properties:
-        projectId:
+        project_id:
           type: string
           format: uuid
         name:
           type: string
+          minLength: 2
           maxLength: 255
-        caseIds:
+        description:
+          type: string
+        case_ids:
           type: array
           items:
             type: string
             format: uuid
-        extraConfig:
-          type: object
 
     UpdateTestPlanRequest:
       type: object
       properties:
         name:
           type: string
+          minLength: 2
           maxLength: 255
-        status:
-          $ref: '#/components/schemas/PlanStatus'
-        extraConfig:
-          type: object
+        description:
+          type: string
 
     # ==================== 测试结果 ====================
     TestResult:
@@ -1795,66 +1729,263 @@ components:
         id:
           type: string
           format: uuid
-        caseId:
-          type: string
-          format: uuid
         planId:
           type: string
           format: uuid
-        executorId:
+        caseId:
           type: string
           format: uuid
-        execute:
+        executedBy:
+          type: string
+          format: uuid
+        status:
           $ref: '#/components/schemas/ResultStatus'
-        resultDetails:
-          type: object
-          properties:
-            logs:
-              type: string
-            screenshots:
-              type: array
-              items:
-                type: string
-            assertions:
-              type: array
-              items:
-                type: object
+        note:
+          type: string
         executedAt:
           type: string
           format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
-    TestResultListResponse:
+    RecordResultRequest:
+      type: object
+      required: [plan_id, case_id, status]
+      properties:
+        plan_id:
+          type: string
+          format: uuid
+        case_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pass, fail, block, skip]
+        note:
+          type: string
+
+    # ==================== 生成任务 ====================
+    CreateGenerationTaskRequest:
+      type: object
+      required: [project_id, module_id, prompt]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        module_id:
+          type: string
+          format: uuid
+        prompt:
+          type: string
+          minLength: 10
+        case_count:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+          description: 期望生成的用例数量
+        scene_types:
+          type: array
+          items:
+            type: string
+            enum: [positive, negative, boundary]
+          description: 场景类型
+        priority:
+          type: string
+          enum: [P0, P1, P2, P3]
+        case_type:
+          type: string
+          enum: [functionality, performance, api, ui, security]
+
+    GenerationTask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        moduleId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        prompt:
+          type: string
+        result:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CaseDraft:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        preconditions:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          items:
+            type: string
+        expected:
+          type: object
+        caseType:
+          $ref: '#/components/schemas/CaseType'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        status:
+          $ref: '#/components/schemas/DraftStatus'
+        feedback:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BatchConfirmResult:
+      type: object
+      properties:
+        success_count:
+          type: integer
+        failed_count:
+          type: integer
+        success_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        failed_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        errors:
+          type: array
+          items:
+            type: string
+
+    # ==================== 文档 ====================
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/DocumentType'
+        url:
+          type: string
+        contentText:
+          type: string
+        status:
+          $ref: '#/components/schemas/DocumentStatus'
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DocumentDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/DocumentType'
+        url:
+          type: string
+        contentText:
+          type: string
+        status:
+          $ref: '#/components/schemas/DocumentStatus'
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        chunk_count:
+          type: integer
+          description: 文档分块数量
+
+    UploadDocumentRequest:
+      type: object
+      required: [project_id, name, type]
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+        type:
+          type: string
+          enum: [prd, figma, api_spec, swagger, markdown]
+
+    DocumentListResponse:
       type: object
       properties:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/TestResult'
-        meta:
-          $ref: '#/components/schemas/PaginationMeta'
+            $ref: '#/components/schemas/Document'
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
 
-    RecordResultRequest:
+    ChunkInfo:
       type: object
-      required: [caseId, planId, execute]
       properties:
-        caseId:
+        id:
           type: string
           format: uuid
-        planId:
+        document_id:
           type: string
           format: uuid
-        execute:
-          $ref: '#/components/schemas/ResultStatus'
-        resultDetails:
-          type: object
-          properties:
-            logs:
-              type: string
-            screenshots:
-              type: array
-              items:
-                type: string
-            assertions:
-              type: array
-              items:
-                type: object
+        chunk_index:
+          type: integer
+        content:
+          type: string
+        created_at:
+          type: integer
+          format: int64
+          description: 创建时间（Unix 时间戳）
