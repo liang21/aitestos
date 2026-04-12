@@ -62,7 +62,8 @@ create table users
     password   varchar(255)                                                 not null,
     role       user_role_enum              default 'normal'::user_role_enum not null,
     created_at timestamp(3) with time zone default CURRENT_TIMESTAMP,
-    updated_at timestamp(3) with time zone default CURRENT_TIMESTAMP
+    updated_at timestamp(3) with time zone default CURRENT_TIMESTAMP,
+    deleted_at timestamp(3) with time zone
 );
 
 alter table users

@@ -17,6 +17,7 @@ type User struct {
 	role      UserRole
 	createdAt time.Time
 	updatedAt time.Time
+	deletedAt *time.Time
 }
 
 // NewUser creates a new user with validated fields
@@ -48,6 +49,7 @@ func NewUser(username, email, rawPassword string, role UserRole) (*User, error) 
 		role:      role,
 		createdAt: now,
 		updatedAt: now,
+		deletedAt: nil,
 	}, nil
 }
 
@@ -68,6 +70,21 @@ func (u *User) CreatedAt() time.Time { return u.createdAt }
 
 // UpdatedAt returns the last update timestamp
 func (u *User) UpdatedAt() time.Time { return u.updatedAt }
+
+// DeletedAt returns the soft-delete timestamp (nil if active)
+func (u *User) DeletedAt() *time.Time { return u.deletedAt }
+
+// IsDeleted returns true if the user is soft-deleted
+func (u *User) IsDeleted() bool {
+	return u.deletedAt != nil
+}
+
+// SoftDelete marks the user as deleted
+func (u *User) SoftDelete() {
+	now := time.Now()
+	u.deletedAt = &now
+	u.updatedAt = now
+}
 
 // VerifyPassword checks if the provided password matches
 func (u *User) VerifyPassword(rawPassword string) bool {
@@ -109,12 +126,13 @@ func (u *User) UpdateRole(role UserRole) {
 
 // UserJSON is the JSON representation for API responses
 type UserJSON struct {
-	ID        uuid.UUID `json:"id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID        uuid.UUID  `json:"id"`
+	Username  string     `json:"username"`
+	Email     string     `json:"email"`
+	Role      string     `json:"role"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty"`
 }
 
 // ToJSON converts User to JSON format
@@ -126,18 +144,20 @@ func (u *User) ToJSON() *UserJSON {
 		Role:      string(u.role),
 		CreatedAt: u.createdAt,
 		UpdatedAt: u.updatedAt,
+		DeletedAt: u.deletedAt,
 	}
 }
 
 // UserRow is the database row structure
 type UserRow struct {
-	ID        uuid.UUID `db:"id"`
-	Username  string    `db:"username"`
-	Email     string    `db:"email"`
-	Password  string    `db:"password"`
-	Role      string    `db:"role"`
-	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"`
+	ID        uuid.UUID  `db:"id"`
+	Username  string     `db:"username"`
+	Email     string     `db:"email"`
+	Password  string     `db:"password"`
+	Role      string     `db:"role"`
+	CreatedAt time.Time  `db:"created_at"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	DeletedAt *time.Time `db:"deleted_at"`
 }
 
 // ToRow converts User to database row
@@ -150,6 +170,7 @@ func (u *User) ToRow() *UserRow {
 		Role:      string(u.role),
 		CreatedAt: u.createdAt,
 		UpdatedAt: u.updatedAt,
+		DeletedAt: u.deletedAt,
 	}
 }
 
@@ -168,6 +189,7 @@ func FromRow(row *UserRow) (*User, error) {
 		role:      role,
 		createdAt: row.CreatedAt,
 		updatedAt: row.UpdatedAt,
+		deletedAt: row.DeletedAt,
 	}, nil
 }
 

@@ -47,7 +47,7 @@ func (r *UserRepository) Save(ctx context.Context, user *identity.User) error {
 func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*identity.User, error) {
 	var row identity.UserRow
 	query := `
-		SELECT id, username, email, password, role, created_at, updated_at
+		SELECT id, username, email, password, role, created_at, updated_at, deleted_at
 		FROM users
 		WHERE id = $1 AND deleted_at IS NULL
 	`
@@ -65,7 +65,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*identity.
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*identity.User, error) {
 	var row identity.UserRow
 	query := `
-		SELECT id, username, email, password, role, created_at, updated_at
+		SELECT id, username, email, password, role, created_at, updated_at, deleted_at
 		FROM users
 		WHERE email = $1 AND deleted_at IS NULL
 	`
@@ -83,7 +83,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*identi
 func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*identity.User, error) {
 	var row identity.UserRow
 	query := `
-		SELECT id, username, email, password, role, created_at, updated_at
+		SELECT id, username, email, password, role, created_at, updated_at, deleted_at
 		FROM users
 		WHERE username = $1 AND deleted_at IS NULL
 	`
@@ -181,7 +181,7 @@ func (r *UserRepository) List(ctx context.Context, opts identity.QueryOptions) (
 
 	// Query users
 	query := `
-		SELECT id, username, email, password, role, created_at, updated_at
+		SELECT id, username, email, password, role, created_at, updated_at, deleted_at
 		FROM users
 		WHERE deleted_at IS NULL
 	`

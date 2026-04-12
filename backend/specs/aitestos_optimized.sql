@@ -78,7 +78,8 @@ CREATE TABLE users (
     password   varchar(255)                                                 NOT NULL,
     role       user_role_enum              DEFAULT 'normal'::user_role_enum NOT NULL,
     created_at timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp(3) with time zone
 );
 
 -- -----------------------------------------------------------
@@ -208,6 +209,7 @@ CREATE INDEX idx_project_config_key ON project_config(key);
 -- users 索引
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_deleted_at ON users(deleted_at) WHERE deleted_at IS NOT NULL;
 
 -- module 索引
 CREATE INDEX idx_module_project_id ON module(project_id);
