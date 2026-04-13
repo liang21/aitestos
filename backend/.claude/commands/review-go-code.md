@@ -17,6 +17,12 @@ allowed-tools: [Read, Grep, Glob, Bash]
 
 # 评审维度（严格按优先级排序）：
 
+### 0. Spec 契约合规 (Spec Compliance) - [致命项]
+- **输出格式对齐**：对比 `specs/` 下的响应示例，验证实际 HTTP 响应的 JSON 结构是否严格一致。重点检查成功响应、错误响应、列表响应的 envelope 格式。
+- **错误码复用**：检查 transport 层是否使用了 `internal/ierrors` 已定义的错误码和 `ErrorResponse`，禁止自行构造响应格式（如 `{"error": "msg"}`）。
+- **跨层基础设施复用**：检查新代码是否 import 并复用了同仓库中已实现的基础设施包（如 `ierrors`、`config`、公共中间件），避免重复实现。
+- **提交体量预警**：单次变更超过 30 文件时，输出 ⚠️ 警告并建议拆分为更小的增量提交，确保 review 有效性。
+
 ### 1. 宪法遵从性 (Constitution Compliance) - [致命项]
 - **错误包装**：检查所有 `error` 返回路径。严禁丢弃错误，必须使用 `fmt.Errorf("...: %w", err)`。
 - **依赖注入**：严禁使用 `init()` 函数或全局变量传递状态。所有依赖（DB, Config）必须显式注入。
