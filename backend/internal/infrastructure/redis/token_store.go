@@ -148,12 +148,6 @@ func NewClient(addr, password string, db int) (*redis.Client, error) {
 	return client, nil
 }
 
-// EnsureIndices ensures any necessary Redis indices exist (for this implementation, none needed)
-func EnsureIndices(ctx context.Context, client *redis.Client) error {
-	// No indices needed for simple key-value storage
-	return nil
-}
-
 // MockTokenStore is an in-memory implementation for testing
 type MockTokenStore struct {
 	tokens map[string]*mockTokenInfo
