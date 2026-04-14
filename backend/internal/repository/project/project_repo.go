@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -265,4 +266,58 @@ func (r *ProjectRepository) Delete(ctx context.Context, id uuid.UUID) error {
 		return domainproject.ErrProjectNotFound
 	}
 	return nil
+}
+
+// GetStatistics retrieves aggregated project statistics
+func (r *ProjectRepository) GetStatistics(ctx context.Context, id uuid.UUID) (*domainproject.ProjectStatistics, error) {
+	var stats domainproject.ProjectStatistics
+
+	query := `
+		SELECT
+			(SELECT COUNT(*) FROM modules WHERE project_id = $1 AND deleted_at IS NULL) AS module_count,
+			(SELECT COUNT(*) FROM test_cases tc
+			 JOIN modules m ON tc.module_id = m.id
+				WHERE m.project_id = $1 AND tc.deleted_at IS NULL) AS case_count,
+			(SELECT COUNT(*) FROM documents WHERE project_id = $1 AND deleted_at IS NULL) AS document_count,
+			COALESCE(
+				(SELECT COUNT(*) * 100.0 / NULLIF(
+					(SELECT COUNT(*) FROM test_cases tc
+					 JOIN modules m ON tc.module_id = m.id
+						WHERE m.project_id = $1 AND tc.deleted_at IS NULL AND tc.status != 'unexecuted'), 0)
+					FROM test_cases tc
+					JOIN modules m ON tc.module_id = m.id
+					WHERE m.project_id = $1 AND tc.status = 'pass' AND tc.deleted_at IS NULL), 0) AS pass_rate,
+			(SELECT COUNT(*) FROM test_cases tc
+				JOIN modules m ON tc.module_id = m.id
+				WHERE m.project_id = $1
+					AND tc.ai_metadata->>'generation_task_id' IS NOT NULL
+					AND tc.deleted_at IS NULL) AS ai_generated_count
+	`
+
+	row := r.db.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&stats.ModuleCount,
+		&stats.CaseCount,
+		&stats.DocumentCount,
+		&stats.PassRate,
+		&stats.AIGeneratedCount,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("get project statistics: %w", err)
+	}
+
+	// Calculate coverage rate (cases per module)
+	stats.CoverageRate = calculateCoverageRate(stats.CaseCount, stats.ModuleCount)
+	stats.UpdatedAt = time.Now()
+
+	return &stats, nil
+}
+
+// calculateCoverageRate calculates coverage rate as cases per module
+func calculateCoverageRate(caseCount, moduleCount int64) float64 {
+	if moduleCount == 0 {
+		return 0
+	}
+	// Average cases per module as a simple coverage metric
+	return float64(caseCount) / float64(moduleCount)
 }

@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	"github.com/liang21/aitestos/internal/domain/knowledge"
+	"github.com/stretchr/testify/require"
 )
 
 // MockDocumentRepository implements knowledge.DocumentRepository for testing
@@ -113,10 +113,10 @@ func (m *MockDocumentRepository) UpdateContentText(ctx context.Context, id uuid.
 
 // MockDocumentChunkRepository implements knowledge.DocumentChunkRepository for testing
 type MockDocumentChunkRepository struct {
-	chunks       map[uuid.UUID]*knowledge.DocumentChunk
-	docIndex     map[uuid.UUID][]*knowledge.DocumentChunk
-	saveErr      error
-	findErr      error
+	chunks   map[uuid.UUID]*knowledge.DocumentChunk
+	docIndex map[uuid.UUID][]*knowledge.DocumentChunk
+	saveErr  error
+	findErr  error
 }
 
 func NewMockDocumentChunkRepository() *MockDocumentChunkRepository {

@@ -188,3 +188,66 @@ func (r *ProjectConfigRepository) Update(ctx context.Context, config *domainproj
 	}
 	return nil
 }
+
+// BatchUpsert batch upserts configurations
+func (r *ProjectConfigRepository) BatchUpsert(ctx context.Context, configs []*domainproject.ProjectConfig) error {
+	if len(configs) == 0 {
+		return nil
+	}
+
+	query := `
+		INSERT INTO project_configs (id, project_id, key, value, description, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+		ON CONFLICT (project_id, key)
+		DO UPDATE SET value = EXCLUDED.value, description = EXCLUDED.description, updated_at = NOW()
+	`
+
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.PreparexContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	for _, config := range configs {
+		valueJSON, err := toJSON(config.Value())
+		if err != nil {
+			return fmt.Errorf("serialize config value: %w", err)
+		}
+
+		_, err = stmt.ExecContext(ctx, config.ID(), config.ProjectID(), config.Key(), valueJSON, config.Description())
+		if err != nil {
+			return fmt.Errorf("batch upsert config [%s]: %w", config.Key(), err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+// ExportConfigs exports all configs for a project as JSON-compatible format
+func (r *ProjectConfigRepository) ExportConfigs(ctx context.Context, projectID uuid.UUID) ([]map[string]any, error) {
+	configs, err := r.FindByProjectID(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]map[string]any, len(configs))
+	for i, config := range configs {
+		result[i] = map[string]any{
+			"key":         config.Key(),
+			"value":       config.Value(),
+			"description": config.Description(),
+		}
+	}
+
+	return result, nil
+}

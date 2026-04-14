@@ -29,6 +29,9 @@ type ProjectRepository interface {
 
 	// Delete removes a project
 	Delete(ctx context.Context, id uuid.UUID) error
+
+	// GetStatistics retrieves aggregated project statistics
+	GetStatistics(ctx context.Context, id uuid.UUID) (*ProjectStatistics, error)
 }
 
 // ModuleRepository defines the interface for module persistence
@@ -65,6 +68,12 @@ type ProjectConfigRepository interface {
 
 	// Update updates an existing configuration
 	Update(ctx context.Context, config *ProjectConfig) error
+
+	// BatchUpsert batch inserts or updates configurations
+	BatchUpsert(ctx context.Context, configs []*ProjectConfig) error
+
+	// ExportConfigs exports all configurations for a project
+	ExportConfigs(ctx context.Context, projectID uuid.UUID) ([]map[string]any, error)
 }
 
 // QueryOptions holds pagination and filtering options

@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	_ "github.com/lib/pq"
 )
 
 // PostgresContainer 封装 PostgreSQL 容器配置

@@ -15,9 +15,9 @@ import (
 
 // MockTestPlanRepository implements testplan.TestPlanRepository for testing
 type MockTestPlanRepository struct {
-	plans    map[uuid.UUID]*testplan.TestPlan
-	saveErr  error
-	findErr  error
+	plans   map[uuid.UUID]*testplan.TestPlan
+	saveErr error
+	findErr error
 }
 
 func NewMockTestPlanRepository() *MockTestPlanRepository {
@@ -712,10 +712,10 @@ func TestPlanService_UpdatePlanStatus(t *testing.T) {
 	planRepo.plans[archivedPlan.ID()] = archivedPlan
 
 	tests := []struct {
-		name       string
-		planID     uuid.UUID
-		newStatus  string
-		wantErr    error
+		name      string
+		planID    uuid.UUID
+		newStatus string
+		wantErr   error
 	}{
 		{
 			name:      "draft to active",

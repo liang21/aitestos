@@ -87,9 +87,12 @@ func NewRouterWithMiddleware(handlers *Handlers, jwtSecret string, logger zerolo
 						r.Get("/", http.HandlerFunc(handlers.Project.GetProject))
 						r.Put("/", http.HandlerFunc(handlers.Project.UpdateProject))
 						r.Delete("/", http.HandlerFunc(handlers.Project.DeleteProject))
+						r.Get("/stats", http.HandlerFunc(handlers.Project.GetProjectStatistics))
 						r.Get("/modules", http.HandlerFunc(handlers.Project.ListModules))
 						r.Post("/modules", http.HandlerFunc(handlers.Project.CreateModule))
 						r.Get("/configs", http.HandlerFunc(handlers.Project.ListConfigs))
+						r.Post("/configs/import", http.HandlerFunc(handlers.Project.ImportConfigs))
+						r.Get("/configs/export", http.HandlerFunc(handlers.Project.ExportConfigs))
 						r.Put("/configs/{key}", http.HandlerFunc(handlers.Project.SetConfig))
 					})
 				} else {

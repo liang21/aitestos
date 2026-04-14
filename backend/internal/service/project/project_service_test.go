@@ -12,11 +12,11 @@ import (
 
 // MockProjectRepository implements project.ProjectRepository for testing
 type MockProjectRepository struct {
-	projects   map[uuid.UUID]*project.Project
-	nameIndex  map[string]*project.Project
+	projects    map[uuid.UUID]*project.Project
+	nameIndex   map[string]*project.Project
 	prefixIndex map[string]*project.Project
-	saveErr    error
-	findErr    error
+	saveErr     error
+	findErr     error
 }
 
 func NewMockProjectRepository() *MockProjectRepository {
@@ -164,6 +164,25 @@ func (m *MockProjectRepository) Delete(ctx context.Context, id uuid.UUID) error 
 	return nil
 }
 
+func (m *MockProjectRepository) GetStatistics(ctx context.Context, id uuid.UUID) (*project.ProjectStatistics, error) {
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
+	_, ok := m.projects[id]
+	if !ok {
+		return nil, project.ErrProjectNotFound
+	}
+	// Return mock statistics
+	return &project.ProjectStatistics{
+		ModuleCount:      0,
+		CaseCount:        0,
+		DocumentCount:    0,
+		PassRate:         0,
+		CoverageRate:     0,
+		AIGeneratedCount: 0,
+	}, nil
+}
+
 // MockModuleRepository implements project.ModuleRepository for testing
 type MockModuleRepository struct {
 	modules    map[uuid.UUID]*project.Module
@@ -235,9 +254,9 @@ func (m *MockModuleRepository) Delete(ctx context.Context, id uuid.UUID) error {
 
 // MockProjectConfigRepository implements project.ProjectConfigRepository for testing
 type MockProjectConfigRepository struct {
-	configs  map[string]*project.ProjectConfig // projectID:key -> config
-	saveErr  error
-	findErr  error
+	configs map[string]*project.ProjectConfig // projectID:key -> config
+	saveErr error
+	findErr error
 }
 
 func NewMockProjectConfigRepository() *MockProjectConfigRepository {
@@ -295,6 +314,36 @@ func (m *MockProjectConfigRepository) Update(ctx context.Context, cfg *project.P
 	key := cfg.ProjectID().String() + ":" + cfg.Key()
 	m.configs[key] = cfg
 	return nil
+}
+
+func (m *MockProjectConfigRepository) BatchUpsert(ctx context.Context, configs []*project.ProjectConfig) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	for _, cfg := range configs {
+		key := cfg.ProjectID().String() + ":" + cfg.Key()
+		m.configs[key] = cfg
+	}
+	return nil
+}
+
+func (m *MockProjectConfigRepository) ExportConfigs(ctx context.Context, projectID uuid.UUID) ([]map[string]any, error) {
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
+	configs, err := m.FindByProjectID(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]map[string]any, len(configs))
+	for i, cfg := range configs {
+		result[i] = map[string]any{
+			"key":         cfg.Key(),
+			"value":       cfg.Value(),
+			"description": cfg.Description(),
+		}
+	}
+	return result, nil
 }
 
 // TestProjectService_CreateProject tests project creation

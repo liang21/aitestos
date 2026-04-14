@@ -69,16 +69,16 @@ func TestProjectConfigRepository_Delete(t *testing.T) {
 
 // MockProjectConfigRepository for testing without database
 type MockProjectConfigRepository struct {
-	configs       map[uuid.UUID]*domainproject.ProjectConfig
+	configs          map[uuid.UUID]*domainproject.ProjectConfig
 	configsByProject map[uuid.UUID][]*domainproject.ProjectConfig
-	configsByKey   map[string]*domainproject.ProjectConfig // key: "projectID:key"
+	configsByKey     map[string]*domainproject.ProjectConfig // key: "projectID:key"
 }
 
 func NewMockProjectConfigRepository() *MockProjectConfigRepository {
 	return &MockProjectConfigRepository{
-		configs:         make(map[uuid.UUID]*domainproject.ProjectConfig),
+		configs:          make(map[uuid.UUID]*domainproject.ProjectConfig),
 		configsByProject: make(map[uuid.UUID][]*domainproject.ProjectConfig),
-		configsByKey:    make(map[string]*domainproject.ProjectConfig),
+		configsByKey:     make(map[string]*domainproject.ProjectConfig),
 	}
 }
 

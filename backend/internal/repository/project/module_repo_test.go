@@ -75,13 +75,13 @@ func TestModuleRepository_Delete(t *testing.T) {
 
 // MockModuleRepository for testing without database
 type MockModuleRepository struct {
-	modules       map[uuid.UUID]*domainproject.Module
+	modules          map[uuid.UUID]*domainproject.Module
 	modulesByProject map[uuid.UUID][]*domainproject.Module
 }
 
 func NewMockModuleRepository() *MockModuleRepository {
 	return &MockModuleRepository{
-		modules:        make(map[uuid.UUID]*domainproject.Module),
+		modules:          make(map[uuid.UUID]*domainproject.Module),
 		modulesByProject: make(map[uuid.UUID][]*domainproject.Module),
 	}
 }

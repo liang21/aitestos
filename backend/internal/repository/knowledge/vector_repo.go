@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/milvus-io/milvus-sdk-go/v2/client"
-	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	domainknowledge "github.com/liang21/aitestos/internal/domain/knowledge"
 	"github.com/liang21/aitestos/internal/infrastructure/milvus"
+	"github.com/milvus-io/milvus-sdk-go/v2/client"
+	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 )
 
 // MilvusClient defines the interface for Milvus operations we need

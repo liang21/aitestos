@@ -65,6 +65,25 @@ paths:
                 type: string
                 example: "OK"
 
+  /metrics:
+    get:
+      tags: [System]
+      summary: Prometheus 指标
+      operationId: metrics
+      description: Prometheus 格式的监控指标
+      security: []
+      responses:
+        '200':
+          description: 返回 Prometheus 格式的指标
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: |
+                # HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
+                # TYPE go_gc_duration_seconds summary
+                go_gc_duration_seconds{quantile="0"} 1.234e-05
+
   # ==================== 认证 ====================
   /auth/register:
     post:
@@ -412,6 +431,124 @@ paths:
       responses:
         '200':
           description: 设置成功
+
+  /projects/{id}/configs/import:
+    post:
+      tags: [ProjectConfig]
+      summary: 批量导入配置
+      operationId: importProjectConfigs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 项目 ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - configs
+              properties:
+                configs:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - key
+                      - value
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: object
+                        additionalProperties: true
+                      description:
+                        type: string
+      responses:
+        '200':
+          description: 导入成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imported:
+                    type: integer
+                  failed:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+  /projects/{id}/configs/export:
+    get:
+      tags: [ProjectConfig]
+      summary: 导出项目配置
+      operationId: exportProjectConfigs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 项目 ID
+      responses:
+        '200':
+          description: 导出成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    key:
+                      type: string
+                    value:
+                      type: object
+                      additionalProperties: true
+                    description:
+                      type: string
+
+  /projects/{id}/stats:
+    get:
+      tags: [Projects]
+      summary: 获取项目统计信息
+      operationId: getProjectStatistics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 项目 ID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectStatistics'
+        '404':
+          description: 项目不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ==================== 测试用例 ====================
   /testcases:
@@ -1989,3 +2126,77 @@ components:
           type: integer
           format: int64
           description: 创建时间（Unix 时间戳）
+
+    # ==================== 项目统计 ====================
+    ProjectStatistics:
+      type: object
+      properties:
+        module_count:
+          type: integer
+          description: 模块总数
+        case_count:
+          type: integer
+          description: 用例总数
+        document_count:
+          type: integer
+          description: 文档总数
+        pass_rate:
+          type: number
+          format: double
+          description: 通过率（百分比）
+        coverage_rate:
+          type: number
+          format: double
+          description: 覆盖率（用例数/模块数）
+        ai_generated_count:
+          type: integer
+          description: AI 生成的用例数
+        recent_tasks:
+          type: array
+          description: 最近生成任务摘要
+          items:
+            $ref: '#/components/schemas/TaskSummary'
+        pass_rate_trend:
+          type: array
+          description: 通过率趋势
+          items:
+            $ref: '#/components/schemas/TrendData'
+        updated_at:
+          type: string
+          format: date-time
+          description: 统计更新时间
+
+    TaskSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        result_summary:
+          $ref: '#/components/schemas/TaskResultSummary'
+        created_at:
+          type: string
+          format: date-time
+
+    TaskResultSummary:
+      type: object
+      properties:
+        total_drafts:
+          type: integer
+        confirmed_count:
+          type: integer
+        rejected_count:
+          type: integer
+
+    TrendData:
+      type: object
+      properties:
+        date:
+          type: string
+          description: 日期（YYYY-MM-DD 格式）
+        rate:
+          type: number
+          format: double
+          description: 通过率（百分比）

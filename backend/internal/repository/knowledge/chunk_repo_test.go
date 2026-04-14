@@ -69,13 +69,13 @@ func TestDocumentChunkRepository_CountByDocumentID(t *testing.T) {
 
 // MockDocumentChunkRepository for testing without database
 type MockDocumentChunkRepository struct {
-	chunks       map[uuid.UUID]*domainknowledge.DocumentChunk
+	chunks      map[uuid.UUID]*domainknowledge.DocumentChunk
 	chunksByDoc map[uuid.UUID][]*domainknowledge.DocumentChunk
 }
 
 func NewMockDocumentChunkRepository() *MockDocumentChunkRepository {
 	return &MockDocumentChunkRepository{
-		chunks:    make(map[uuid.UUID]*domainknowledge.DocumentChunk),
+		chunks:      make(map[uuid.UUID]*domainknowledge.DocumentChunk),
 		chunksByDoc: make(map[uuid.UUID][]*domainknowledge.DocumentChunk),
 	}
 }

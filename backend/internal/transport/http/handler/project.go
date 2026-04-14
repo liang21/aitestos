@@ -229,3 +229,60 @@ func (h *ProjectHandler) ListConfigs(w http.ResponseWriter, r *http.Request) {
 
 	respondWithJSON(w, http.StatusOK, configs)
 }
+
+// GetProjectStatistics handles project statistics requests
+func (h *ProjectHandler) GetProjectStatistics(w http.ResponseWriter, r *http.Request) {
+	projectID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid project ID")
+		return
+	}
+
+	stats, err := h.projectService.GetProjectStatistics(r.Context(), projectID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, stats)
+}
+
+// ImportConfigs handles batch config import requests
+func (h *ProjectHandler) ImportConfigs(w http.ResponseWriter, r *http.Request) {
+	projectID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid project ID")
+		return
+	}
+
+	var req projectservice.ImportConfigsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	result, err := h.projectService.ImportConfigs(r.Context(), projectID, &req)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, result)
+}
+
+// ExportConfigs handles config export requests
+func (h *ProjectHandler) ExportConfigs(w http.ResponseWriter, r *http.Request) {
+	projectID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid project ID")
+		return
+	}
+
+	configs, err := h.projectService.ExportConfigs(r.Context(), projectID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, configs)
+}

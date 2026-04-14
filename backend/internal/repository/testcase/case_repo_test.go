@@ -120,14 +120,14 @@ func TestTestCaseRepository_CountByDate(t *testing.T) {
 
 // MockTestCaseRepository for testing without database
 type MockTestCaseRepository struct {
-	cases       map[uuid.UUID]*domaintestcase.TestCase
+	cases         map[uuid.UUID]*domaintestcase.TestCase
 	casesByNumber map[string]*domaintestcase.TestCase
 	casesByModule map[uuid.UUID][]*domaintestcase.TestCase
 }
 
 func NewMockTestCaseRepository() *MockTestCaseRepository {
 	return &MockTestCaseRepository{
-		cases:        make(map[uuid.UUID]*domaintestcase.TestCase),
+		cases:         make(map[uuid.UUID]*domaintestcase.TestCase),
 		casesByNumber: make(map[string]*domaintestcase.TestCase),
 		casesByModule: make(map[uuid.UUID][]*domaintestcase.TestCase),
 	}

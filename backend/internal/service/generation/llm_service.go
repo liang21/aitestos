@@ -12,12 +12,12 @@ import (
 // GenerateCasesRequest contains test case generation parameters
 type GenerateCasesRequest struct {
 	Prompt       string   `json:"prompt" validate:"required,min=10"`
-	Context      string   `json:"context"`        // Retrieved document context
-	CaseCount    int      `json:"case_count"`     // Number of cases to generate (1-20)
-	SceneTypes   []string `json:"scene_types"`    // positive, negative, boundary
-	Priority     string   `json:"priority"`       // P0-P3
-	CaseType     string   `json:"case_type"`      // functionality, api, etc.
-	ModelVersion string   `json:"model_version"`  // LLM model to use
+	Context      string   `json:"context"`       // Retrieved document context
+	CaseCount    int      `json:"case_count"`    // Number of cases to generate (1-20)
+	SceneTypes   []string `json:"scene_types"`   // positive, negative, boundary
+	Priority     string   `json:"priority"`      // P0-P3
+	CaseType     string   `json:"case_type"`     // functionality, api, etc.
+	ModelVersion string   `json:"model_version"` // LLM model to use
 }
 
 // GeneratedCase represents a single generated test case
@@ -132,9 +132,9 @@ func (s *LLMServiceImpl) GenerateCases(ctx context.Context, req *GenerateCasesRe
 			Preconditions: []string{"System is running", "User is logged in"},
 			Steps:         []string{"Step 1", "Step 2", "Step 3"},
 			Expected:      map[string]any{"status": "success"},
-			CaseType:       req.CaseType,
-			Priority:       req.Priority,
-			Reasoning:      "Generated based on context",
+			CaseType:      req.CaseType,
+			Priority:      req.Priority,
+			Reasoning:     "Generated based on context",
 		})
 	}
 

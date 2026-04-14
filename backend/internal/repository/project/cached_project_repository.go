@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/liang21/aitestos/internal/infrastructure/cache"
 	domainproject "github.com/liang21/aitestos/internal/domain/project"
+	"github.com/liang21/aitestos/internal/infrastructure/cache"
 )
 
 // CachedProjectRepository wraps a ProjectRepository with caching functionality
@@ -139,4 +139,10 @@ func (c *CachedProjectRepository) Delete(ctx context.Context, id uuid.UUID) erro
 	_ = c.cache.Delete(ctx, cache.KeyProjectList)
 
 	return nil
+}
+
+// GetStatistics retrieves project statistics (bypasses cache for real-time data)
+func (c *CachedProjectRepository) GetStatistics(ctx context.Context, id uuid.UUID) (*domainproject.ProjectStatistics, error) {
+	// Statistics should always be fresh from database
+	return c.repo.GetStatistics(ctx, id)
 }

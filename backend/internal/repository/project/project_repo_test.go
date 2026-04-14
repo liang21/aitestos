@@ -96,8 +96,8 @@ func TestProjectRepository_Delete(t *testing.T) {
 
 // MockProjectRepository for testing without database
 type MockProjectRepository struct {
-	projects       map[uuid.UUID]*domainproject.Project
-	projectsByName map[string]*domainproject.Project
+	projects         map[uuid.UUID]*domainproject.Project
+	projectsByName   map[string]*domainproject.Project
 	projectsByPrefix map[string]*domainproject.Project
 }
 

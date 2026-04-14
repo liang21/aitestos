@@ -44,16 +44,16 @@ func TestErrorResponse_ToJSON(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-		got := tt.response.ToJSON()
-		if len(got) == 0 {
-			t.Error("ToJSON() returned empty bytes")
-		}
+			got := tt.response.ToJSON()
+			if len(got) == 0 {
+				t.Error("ToJSON() returned empty bytes")
+			}
 
-		// Verify it's valid JSON
-		var parsed ierrors.ErrorResponse
-		if err := json.Unmarshal(got, &parsed); (err != nil) != tt.wantErr {
-			t.Errorf("ToJSON() produced invalid JSON: %v", err)
-		}
+			// Verify it's valid JSON
+			var parsed ierrors.ErrorResponse
+			if err := json.Unmarshal(got, &parsed); (err != nil) != tt.wantErr {
+				t.Errorf("ToJSON() produced invalid JSON: %v", err)
+			}
 		})
 	}
 }

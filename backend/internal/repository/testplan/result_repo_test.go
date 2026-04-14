@@ -102,7 +102,7 @@ type MockTestResultRepository struct {
 
 func NewMockTestResultRepository() *MockTestResultRepository {
 	return &MockTestResultRepository{
-		results:      make(map[uuid.UUID]*domaintestplan.TestResult),
+		results:       make(map[uuid.UUID]*domaintestplan.TestResult),
 		resultsByPlan: make(map[uuid.UUID][]*domaintestplan.TestResult),
 		resultsByCase: make(map[uuid.UUID][]*domaintestplan.TestResult),
 	}

@@ -290,12 +290,12 @@ func TestCaseService_CreateCase(t *testing.T) {
 		{
 			name: "module not found",
 			req: &CreateCaseRequest{
-				ModuleID:      uuid.New(),
-				Title:         "Orphan case",
-				Steps:         []string{"Step 1"},
-				Expected:      map[string]any{},
-				CaseType:      "functionality",
-				Priority:      "P1",
+				ModuleID: uuid.New(),
+				Title:    "Orphan case",
+				Steps:    []string{"Step 1"},
+				Expected: map[string]any{},
+				CaseType: "functionality",
+				Priority: "P1",
 			},
 			setup:   func() {},
 			wantErr: errors.New("module not found"),
@@ -303,12 +303,12 @@ func TestCaseService_CreateCase(t *testing.T) {
 		{
 			name: "empty title",
 			req: &CreateCaseRequest{
-				ModuleID:      testModule.ID(),
-				Title:         "",
-				Steps:         []string{"Step 1"},
-				Expected:      map[string]any{},
-				CaseType:      "functionality",
-				Priority:      "P1",
+				ModuleID: testModule.ID(),
+				Title:    "",
+				Steps:    []string{"Step 1"},
+				Expected: map[string]any{},
+				CaseType: "functionality",
+				Priority: "P1",
 			},
 			setup:   func() {},
 			wantErr: errors.New("create test case: title cannot be empty"),
@@ -555,11 +555,11 @@ func TestCaseService_GenerateCaseNumber(t *testing.T) {
 	projectRepo.AddProject(testProjectWrapper{testProject}) // Add project to repo
 
 	tests := []struct {
-		name        string
-		moduleID    uuid.UUID
-		dateCount   int64
-		wantPrefix  string
-		wantErr     error
+		name       string
+		moduleID   uuid.UUID
+		dateCount  int64
+		wantPrefix string
+		wantErr    error
 	}{
 		{
 			name:       "first case of the day",

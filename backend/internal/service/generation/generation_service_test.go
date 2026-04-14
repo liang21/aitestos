@@ -1019,11 +1019,11 @@ func (m *MockLLMService) GenerateCases(ctx context.Context, req *GenerateCasesRe
 }
 
 func (m *MockLLMService) GenerateEmbedding(ctx context.Context, req *GenerateEmbeddingRequest) (*GenerateEmbeddingResponse, error) {
-	 embedding := make([]byte, 12)
-    for i := 0; i < 12; i++ {
-        embedding[i] = byte(i % 256)
-    }
-    return &GenerateEmbeddingResponse{Embedding: embedding}, nil
+	embedding := make([]byte, 12)
+	for i := 0; i < 12; i++ {
+		embedding[i] = byte(i % 256)
+	}
+	return &GenerateEmbeddingResponse{Embedding: embedding}, nil
 }
 
 func (m *MockLLMService) GetModelVersion() string {

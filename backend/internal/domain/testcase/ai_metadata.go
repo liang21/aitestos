@@ -39,11 +39,11 @@ func NewReferencedChunk(chunkID, documentID uuid.UUID, title string, score float
 
 // AiMetadata represents metadata about AI-generated test cases
 type AiMetadata struct {
-	GenerationTaskID uuid.UUID         `json:"generation_task_id"`
-	Confidence       Confidence        `json:"confidence"`
+	GenerationTaskID uuid.UUID          `json:"generation_task_id"`
+	Confidence       Confidence         `json:"confidence"`
 	ReferencedChunks []*ReferencedChunk `json:"referenced_chunks"`
-	ModelVersion     string            `json:"model_version"`
-	GeneratedAt      time.Time         `json:"generated_at"`
+	ModelVersion     string             `json:"model_version"`
+	GeneratedAt      time.Time          `json:"generated_at"`
 }
 
 // NewAiMetadata creates new AI metadata

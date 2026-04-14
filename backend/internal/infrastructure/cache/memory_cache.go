@@ -17,10 +17,10 @@ type memoryItem struct {
 
 // MemoryCache implements Cache interface using in-memory storage
 type MemoryCache struct {
-	items   map[string]*memoryItem
-	mu      sync.RWMutex
-	closed  bool
-	stopCh  chan struct{}
+	items  map[string]*memoryItem
+	mu     sync.RWMutex
+	closed bool
+	stopCh chan struct{}
 }
 
 // NewMemoryCache creates a new in-memory cache instance

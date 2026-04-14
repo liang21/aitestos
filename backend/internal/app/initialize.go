@@ -27,9 +27,9 @@ import (
 	testplanRepo "github.com/liang21/aitestos/internal/repository/testplan"
 
 	// Service imports
+	identitydomain "github.com/liang21/aitestos/internal/domain/identity"
 	generationSvc "github.com/liang21/aitestos/internal/service/generation"
 	identitySvc "github.com/liang21/aitestos/internal/service/identity"
-	identitydomain "github.com/liang21/aitestos/internal/domain/identity"
 	knowledgeSvc "github.com/liang21/aitestos/internal/service/knowledge"
 	projectSvc "github.com/liang21/aitestos/internal/service/project"
 	testcaseSvc "github.com/liang21/aitestos/internal/service/testcase"
@@ -42,11 +42,11 @@ import (
 	domaintestcase "github.com/liang21/aitestos/internal/domain/testcase"
 
 	// Infrastructure imports
-	"github.com/liang21/aitestos/internal/infrastructure/llm"
 	"github.com/liang21/aitestos/internal/infrastructure/cache"
-	redispkg "github.com/liang21/aitestos/internal/infrastructure/redis"
+	"github.com/liang21/aitestos/internal/infrastructure/llm"
 	"github.com/liang21/aitestos/internal/infrastructure/milvus"
 	"github.com/liang21/aitestos/internal/infrastructure/rag"
+	redispkg "github.com/liang21/aitestos/internal/infrastructure/redis"
 	"github.com/liang21/aitestos/internal/infrastructure/vector"
 )
 

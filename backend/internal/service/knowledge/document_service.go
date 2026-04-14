@@ -144,8 +144,8 @@ func (s *DocumentServiceImpl) GetDocument(ctx context.Context, id uuid.UUID) (*D
 	}
 
 	return &DocumentDetail{
-		Document:    doc,
-		ChunkCount:  chunkCount,
+		Document:   doc,
+		ChunkCount: chunkCount,
 	}, nil
 }
 

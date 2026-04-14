@@ -22,11 +22,11 @@ func TestLLMService_GenerateCases(t *testing.T) {
 		{
 			name: "successful generation - multiple cases",
 			req: &GenerateCasesRequest{
-				Prompt:    "Generate test cases for user login functionality",
-				Context:   "The user login feature allows users to authenticate using email and password. It includes password validation, rate limiting, and session management.",
-				CaseCount: 3,
+				Prompt:     "Generate test cases for user login functionality",
+				Context:    "The user login feature allows users to authenticate using email and password. It includes password validation, rate limiting, and session management.",
+				CaseCount:  3,
 				SceneTypes: []string{"positive", "negative"},
-				Priority:  "P1",
+				Priority:   "P1",
 			},
 			wantErr: nil,
 			check: func(resp *GenerateCasesResponse) error {
@@ -47,11 +47,11 @@ func TestLLMService_GenerateCases(t *testing.T) {
 		{
 			name: "successful generation - single case",
 			req: &GenerateCasesRequest{
-				Prompt:    "Generate test case for password reset",
-				Context:   "Users can reset their password via email verification",
-				CaseCount: 1,
+				Prompt:     "Generate test case for password reset",
+				Context:    "Users can reset their password via email verification",
+				CaseCount:  1,
 				SceneTypes: []string{"positive"},
-				Priority:  "P0",
+				Priority:   "P0",
 			},
 			wantErr: nil,
 			check: func(resp *GenerateCasesResponse) error {

@@ -54,6 +54,9 @@ type ProjectService interface {
 	UpdateProject(ctx context.Context, id uuid.UUID, req *UpdateProjectRequest) (*project.Project, error)
 	DeleteProject(ctx context.Context, id uuid.UUID) error
 
+	// Statistics
+	GetProjectStatistics(ctx context.Context, id uuid.UUID) (*project.ProjectStatistics, error)
+
 	// Module management
 	CreateModule(ctx context.Context, projectID uuid.UUID, req *CreateModuleRequest, userID uuid.UUID) (*project.Module, error)
 	ListModules(ctx context.Context, projectID uuid.UUID) ([]*project.Module, error)
@@ -64,13 +67,15 @@ type ProjectService interface {
 	SetConfig(ctx context.Context, projectID uuid.UUID, key string, value map[string]any) error
 	GetConfig(ctx context.Context, projectID uuid.UUID, key string) (*project.ProjectConfig, error)
 	ListConfigs(ctx context.Context, projectID uuid.UUID) ([]*project.ProjectConfig, error)
+	ImportConfigs(ctx context.Context, projectID uuid.UUID, req *ImportConfigsRequest) (*ImportConfigsResult, error)
+	ExportConfigs(ctx context.Context, projectID uuid.UUID) ([]map[string]any, error)
 }
 
 // ProjectServiceImpl implements ProjectService
 type ProjectServiceImpl struct {
 	projectRepo project.ProjectRepository
 	moduleRepo  project.ModuleRepository
-	configRepo project.ProjectConfigRepository
+	configRepo  project.ProjectConfigRepository
 }
 
 // NewProjectService creates a new ProjectService instance
@@ -135,7 +140,7 @@ func (s *ProjectServiceImpl) GetProject(ctx context.Context, id uuid.UUID) (*Pro
 	}
 
 	return &ProjectDetail{
-		Project:      proj,
+		Project:       proj,
 		ModuleCount:   moduleCount,
 		CaseCount:     0, // Will be populated by testcase service integration
 		DocumentCount: 0, // Will be populated by knowledge service integration
@@ -316,4 +321,74 @@ func (s *ProjectServiceImpl) ListConfigs(ctx context.Context, projectID uuid.UUI
 		return nil, fmt.Errorf("list configs: %w", err)
 	}
 	return configs, nil
+}
+
+// ImportConfigsRequest represents batch import request
+type ImportConfigsRequest struct {
+	Configs []struct {
+		Key         string                 `json:"key" validate:"required"`
+		Value       map[string]interface{} `json:"value" validate:"required"`
+		Description string                 `json:"description"`
+	} `json:"configs" validate:"required"`
+}
+
+// ImportConfigsResult represents import result
+type ImportConfigsResult struct {
+	Imported int      `json:"imported"`
+	Failed   int      `json:"failed"`
+	Errors   []string `json:"errors,omitempty"`
+}
+
+// ImportConfigs imports configurations from JSON array
+func (s *ProjectServiceImpl) ImportConfigs(ctx context.Context, projectID uuid.UUID, req *ImportConfigsRequest) (*ImportConfigsResult, error) {
+	// Validate project exists
+	_, err := s.projectRepo.FindByID(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to domain objects
+	configs := make([]*project.ProjectConfig, len(req.Configs))
+	for i, cfg := range req.Configs {
+		config, err := project.NewProjectConfig(projectID, cfg.Key, cfg.Value, cfg.Description)
+		if err != nil {
+			return nil, fmt.Errorf("invalid config %s: %w", cfg.Key, err)
+		}
+		configs[i] = config
+	}
+
+	// Batch save
+	if err := s.configRepo.BatchUpsert(ctx, configs); err != nil {
+		return nil, fmt.Errorf("batch upsert configs: %w", err)
+	}
+
+	return &ImportConfigsResult{Imported: len(req.Configs)}, nil
+}
+
+// ExportConfigs exports project configurations as JSON array
+func (s *ProjectServiceImpl) ExportConfigs(ctx context.Context, projectID uuid.UUID) ([]map[string]any, error) {
+	// Validate project exists
+	_, err := s.projectRepo.FindByID(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.configRepo.ExportConfigs(ctx, projectID)
+}
+
+// GetProjectStatistics retrieves project statistics
+func (s *ProjectServiceImpl) GetProjectStatistics(ctx context.Context, id uuid.UUID) (*project.ProjectStatistics, error) {
+	// Validate project exists
+	_, err := s.projectRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get statistics from repository
+	stats, err := s.projectRepo.GetStatistics(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("get project statistics: %w", err)
+	}
+
+	return stats, nil
 }

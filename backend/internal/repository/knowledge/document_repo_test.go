@@ -95,7 +95,7 @@ func TestDocumentRepository_CountByProjectID(t *testing.T) {
 
 // MockDocumentRepository for testing without database
 type MockDocumentRepository struct {
-	documents       map[uuid.UUID]*domainknowledge.Document
+	documents     map[uuid.UUID]*domainknowledge.Document
 	docsByProject map[uuid.UUID][]*domainknowledge.Document
 }
 

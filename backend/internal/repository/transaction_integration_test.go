@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/liang21/aitestos/internal/domain/identity"
-	identityrepo "github.com/liang21/aitestos/internal/repository/identity"
 	"github.com/liang21/aitestos/internal/repository"
+	identityrepo "github.com/liang21/aitestos/internal/repository/identity"
 	"github.com/liang21/aitestos/internal/repository/testsetup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

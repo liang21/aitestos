@@ -75,13 +75,13 @@ func TestTestPlanRepository_Delete(t *testing.T) {
 
 // MockTestPlanRepository for testing without database
 type MockTestPlanRepository struct {
-	plans       map[uuid.UUID]*domaintestplan.TestPlan
+	plans          map[uuid.UUID]*domaintestplan.TestPlan
 	plansByProject map[uuid.UUID][]*domaintestplan.TestPlan
 }
 
 func NewMockTestPlanRepository() *MockTestPlanRepository {
 	return &MockTestPlanRepository{
-		plans:        make(map[uuid.UUID]*domaintestplan.TestPlan),
+		plans:          make(map[uuid.UUID]*domaintestplan.TestPlan),
 		plansByProject: make(map[uuid.UUID][]*domaintestplan.TestPlan),
 	}
 }

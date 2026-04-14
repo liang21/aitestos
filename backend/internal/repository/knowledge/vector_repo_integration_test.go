@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/liang21/aitestos/internal/config"
 	domainknowledge "github.com/liang21/aitestos/internal/domain/knowledge"
 	"github.com/liang21/aitestos/internal/infrastructure/milvus"
 	"github.com/liang21/aitestos/internal/repository/knowledge"
-	"github.com/liang21/aitestos/internal/config"
 )
 
 // Helper function to create test chunk with embedding for integration tests

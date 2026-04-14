@@ -181,7 +181,7 @@ func TestVectorRepository_Upsert(t *testing.T) {
 					createTestChunkWithEmbeddingUnit(t, docID, projectID, 0, "test content", embedding),
 				}
 			}(),
-			setup: func(m *MockMilvusClient) {},
+			setup:   func(m *MockMilvusClient) {},
 			wantErr: true,
 			errMsg:  "invalid embedding",
 		},
@@ -357,12 +357,12 @@ func TestVectorRepository_CountByProjectID(t *testing.T) {
 	projectID := uuid.New()
 
 	tests := []struct {
-		name        string
-		projectID   uuid.UUID
-		setup       func(*MockMilvusClient)
-		wantCount   int64
-		wantErr     bool
-		errMsg      string
+		name      string
+		projectID uuid.UUID
+		setup     func(*MockMilvusClient)
+		wantCount int64
+		wantErr   bool
+		errMsg    string
 	}{
 		{
 			name:      "successful count",

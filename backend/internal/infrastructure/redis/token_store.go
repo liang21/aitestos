@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 // TokenStore implements identity.TokenStore using Redis
@@ -24,8 +24,8 @@ func NewTokenStore(client *redis.Client) *TokenStore {
 
 // tokenInfo represents the data stored for each refresh token
 type tokenInfo struct {
-	UserID    string    `json:"user_id"`
-	ExpiresAt int64     `json:"expires_at"` // Unix timestamp
+	UserID    string `json:"user_id"`
+	ExpiresAt int64  `json:"expires_at"` // Unix timestamp
 }
 
 // Store saves a refresh token with its expiration time
@@ -151,7 +151,7 @@ func NewClient(addr, password string, db int) (*redis.Client, error) {
 // MockTokenStore is an in-memory implementation for testing
 type MockTokenStore struct {
 	tokens map[string]*mockTokenInfo
-	mu      sync.RWMutex
+	mu     sync.RWMutex
 }
 
 type mockTokenInfo struct {

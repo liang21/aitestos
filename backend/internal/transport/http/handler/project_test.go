@@ -101,6 +101,30 @@ func (m *MockProjectService) ListConfigs(ctx context.Context, projectID uuid.UUI
 	return args.Get(0).([]*project.ProjectConfig), args.Error(1)
 }
 
+func (m *MockProjectService) GetProjectStatistics(ctx context.Context, id uuid.UUID) (*project.ProjectStatistics, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*project.ProjectStatistics), args.Error(1)
+}
+
+func (m *MockProjectService) ImportConfigs(ctx context.Context, projectID uuid.UUID, req *projectservice.ImportConfigsRequest) (*projectservice.ImportConfigsResult, error) {
+	args := m.Called(ctx, projectID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*projectservice.ImportConfigsResult), args.Error(1)
+}
+
+func (m *MockProjectService) ExportConfigs(ctx context.Context, projectID uuid.UUID) ([]map[string]any, error) {
+	args := m.Called(ctx, projectID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]map[string]any), args.Error(1)
+}
+
 func TestCreateProjectHandler(t *testing.T) {
 	t.Parallel()
 

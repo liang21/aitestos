@@ -320,12 +320,12 @@ func (b *TestPlanBuilder) Build() (*testplan.TestPlan, error) {
 
 // TestResultBuilder 测试结果构建器
 type TestResultBuilder struct {
-	caseID      uuid.UUID
-	planID      uuid.UUID
-	executorID  uuid.UUID
-	result      testplan.ResultStatus
-	details     map[string]any
-	executedAt  time.Time
+	caseID     uuid.UUID
+	planID     uuid.UUID
+	executorID uuid.UUID
+	result     testplan.ResultStatus
+	details    map[string]any
+	executedAt time.Time
 }
 
 // NewTestResultBuilder 创建测试结果构建器
@@ -512,8 +512,8 @@ type CaseDraftBuilder struct {
 func NewCaseDraftBuilder(taskID uuid.UUID) *CaseDraftBuilder {
 	uid := uuid.New().String()[:8]
 	return &CaseDraftBuilder{
-		taskID:   taskID,
-		title:    "Generated Case " + uid,
+		taskID: taskID,
+		title:  "Generated Case " + uid,
 		preconditions: testcase.Preconditions{
 			"用户已登录",
 		},

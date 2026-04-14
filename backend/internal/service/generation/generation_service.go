@@ -14,13 +14,13 @@ import (
 
 // CreateTaskRequest contains generation task creation data
 type CreateTaskRequest struct {
-	ProjectID uuid.UUID `json:"project_id" validate:"required"`
-	ModuleID  uuid.UUID `json:"module_id" validate:"required"`
-	Prompt    string    `json:"prompt" validate:"required,min=10"`
-	CaseCount int       `json:"case_count"`   // default 5, max 20
-	SceneTypes []string `json:"scene_types"`  // positive, negative, boundary
-	Priority   string   `json:"priority"`     // P0-P3
-	CaseType   string   `json:"case_type"`    // functionality, performance, api, ui, security
+	ProjectID  uuid.UUID `json:"project_id" validate:"required"`
+	ModuleID   uuid.UUID `json:"module_id" validate:"required"`
+	Prompt     string    `json:"prompt" validate:"required,min=10"`
+	CaseCount  int       `json:"case_count"`  // default 5, max 20
+	SceneTypes []string  `json:"scene_types"` // positive, negative, boundary
+	Priority   string    `json:"priority"`    // P0-P3
+	CaseType   string    `json:"case_type"`   // functionality, performance, api, ui, security
 }
 
 // ListTaskOptions contains options for listing generation tasks
@@ -39,9 +39,9 @@ type ConfirmDraftRequest struct {
 
 // RejectDraftRequest contains draft rejection data
 type RejectDraftRequest struct {
-	DraftID  uuid.UUID              `json:"draft_id" validate:"required"`
+	DraftID  uuid.UUID                  `json:"draft_id" validate:"required"`
 	Reason   generation.RejectionReason `json:"reason" validate:"required"`
-	Feedback string                `json:"feedback"`
+	Feedback string                     `json:"feedback"`
 }
 
 // BatchConfirmRequest contains batch confirmation data
@@ -88,13 +88,13 @@ type GenerationService interface {
 
 // GenerationServiceImpl implements GenerationService
 type GenerationServiceImpl struct {
-	taskRepo   generation.GenerationTaskRepository
-	draftRepo  generation.CaseDraftRepository
-	ragService RAGService
-	llmService LLMService
-	moduleRepo ModuleRepository
+	taskRepo    generation.GenerationTaskRepository
+	draftRepo   generation.CaseDraftRepository
+	ragService  RAGService
+	llmService  LLMService
+	moduleRepo  ModuleRepository
 	projectRepo ProjectRepository
-	caseRepo   testcase.TestCaseRepository
+	caseRepo    testcase.TestCaseRepository
 }
 
 // ModuleRepository interface for generation service
@@ -303,10 +303,10 @@ func (s *GenerationServiceImpl) RejectDraft(ctx context.Context, req *RejectDraf
 
 	// Validate rejection reason
 	validReasons := map[generation.RejectionReason]bool{
-		generation.ReasonDuplicate:   true,
-		generation.ReasonIrrelevant:  true,
-		generation.ReasonLowQuality:  true,
-		generation.ReasonOther:       true,
+		generation.ReasonDuplicate:  true,
+		generation.ReasonIrrelevant: true,
+		generation.ReasonLowQuality: true,
+		generation.ReasonOther:      true,
 	}
 	if !validReasons[req.Reason] {
 		return errors.New("invalid rejection reason")

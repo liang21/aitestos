@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	"github.com/liang21/aitestos/internal/domain/knowledge"
 	"github.com/liang21/aitestos/internal/domain/testcase"
+	"github.com/stretchr/testify/require"
 )
 
 // MockVectorRepository for RAG testing
@@ -370,7 +370,7 @@ func TestRAGService_CalculateConfidence(t *testing.T) {
 			wantLevel: testcase.ConfidenceLow,
 		},
 		{
-			name: "low confidence - no chunks",
+			name:      "low confidence - no chunks",
 			chunks:    []*RetrievedChunk{},
 			wantLevel: testcase.ConfidenceLow,
 		},

@@ -13,13 +13,13 @@ import (
 
 // CreateCaseRequest contains test case creation data
 type CreateCaseRequest struct {
-	ModuleID      uuid.UUID   `json:"module_id" validate:"required"`
-	Title         string      `json:"title" validate:"required,min=2,max=500"`
-	Preconditions []string    `json:"preconditions"`
-	Steps         []string    `json:"steps" validate:"required,min=1"`
+	ModuleID      uuid.UUID      `json:"module_id" validate:"required"`
+	Title         string         `json:"title" validate:"required,min=2,max=500"`
+	Preconditions []string       `json:"preconditions"`
+	Steps         []string       `json:"steps" validate:"required,min=1"`
 	Expected      map[string]any `json:"expected" validate:"required"`
-	CaseType      string      `json:"case_type" validate:"required,oneof=functionality performance api ui security"`
-	Priority      string      `json:"priority" validate:"required,oneof=P0 P1 P2 P3"`
+	CaseType      string         `json:"case_type" validate:"required,oneof=functionality performance api ui security"`
+	Priority      string         `json:"priority" validate:"required,oneof=P0 P1 P2 P3"`
 }
 
 // UpdateCaseRequest contains test case update data
@@ -83,8 +83,8 @@ type CaseService interface {
 
 // CaseServiceImpl implements CaseService
 type CaseServiceImpl struct {
-	caseRepo   domaintestcase.TestCaseRepository
-	moduleRepo ModuleRepository
+	caseRepo    domaintestcase.TestCaseRepository
+	moduleRepo  ModuleRepository
 	projectRepo ProjectRepository
 }
 
