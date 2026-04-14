@@ -206,7 +206,7 @@ func (r *ProjectConfigRepository) BatchUpsert(ctx context.Context, configs []*do
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	stmt, err := tx.PreparexContext(ctx, query)
 	if err != nil {
