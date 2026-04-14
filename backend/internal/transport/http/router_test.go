@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,14 +14,14 @@ import (
 func TestNewRouter(t *testing.T) {
 	t.Parallel()
 
-	router := NewRouter(nil)
+	router := NewRouter(nil, zerolog.Nop(), nil)
 	assert.NotNil(t, router)
 }
 
 func TestRouterRoutes(t *testing.T) {
 	t.Parallel()
 
-	router := NewRouter(nil)
+	router := NewRouter(nil, zerolog.Nop(), nil)
 	require.NotNil(t, router)
 
 	tests := []struct {
@@ -100,7 +101,7 @@ func TestRouterRoutes(t *testing.T) {
 func TestRouterHealthCheck(t *testing.T) {
 	t.Parallel()
 
-	router := NewRouter(nil)
+	router := NewRouter(nil, zerolog.Nop(), nil)
 	require.NotNil(t, router)
 
 	req := httptest.NewRequest("GET", "/health", nil)
@@ -113,7 +114,7 @@ func TestRouterHealthCheck(t *testing.T) {
 func TestRouterNotFound(t *testing.T) {
 	t.Parallel()
 
-	router := NewRouter(nil)
+	router := NewRouter(nil, zerolog.Nop(), nil)
 	require.NotNil(t, router)
 
 	req := httptest.NewRequest("GET", "/nonexistent-path", nil)
@@ -126,7 +127,7 @@ func TestRouterNotFound(t *testing.T) {
 func TestRouterMethodNotAllowed(t *testing.T) {
 	t.Parallel()
 
-	router := NewRouter(nil)
+	router := NewRouter(nil, zerolog.Nop(), nil)
 	require.NotNil(t, router)
 
 	// Try GET on a POST-only route

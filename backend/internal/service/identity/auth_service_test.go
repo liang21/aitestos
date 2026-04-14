@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/liang21/aitestos/internal/domain/identity"
+	redispkg "github.com/liang21/aitestos/internal/infrastructure/redis"
 )
 
 // MockUserRepository implements identity.UserRepository for testing
@@ -103,7 +104,7 @@ func (m *MockUserRepository) List(ctx context.Context, opts identity.QueryOption
 func TestAuthService_Register(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := NewMockUserRepository()
-	service := NewAuthService(mockRepo, "test-secret-key")
+	service := NewAuthService(mockRepo, "test-secret-key", redispkg.NewMockTokenStore())
 
 	tests := []struct {
 		name    string
@@ -231,7 +232,7 @@ func TestAuthService_Register(t *testing.T) {
 func TestAuthService_Login(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := NewMockUserRepository()
-	service := NewAuthService(mockRepo, "test-secret-key")
+	service := NewAuthService(mockRepo, "test-secret-key", redispkg.NewMockTokenStore())
 
 	// Create a test user
 	testUser, _ := identity.NewUser("loginuser", "login@example.com", "correctpassword", identity.RoleNormal)
@@ -311,7 +312,7 @@ func TestAuthService_Login(t *testing.T) {
 func TestAuthService_ValidateToken(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := NewMockUserRepository()
-	service := NewAuthService(mockRepo, "test-secret-key")
+	service := NewAuthService(mockRepo, "test-secret-key", redispkg.NewMockTokenStore())
 
 	// Create a test user
 	testUser, _ := identity.NewUser("tokenuser", "token@example.com", "password123", identity.RoleNormal)
@@ -401,7 +402,7 @@ func TestAuthService_ValidateToken(t *testing.T) {
 func TestAuthService_RefreshToken(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := NewMockUserRepository()
-	service := NewAuthService(mockRepo, "test-secret-key")
+	service := NewAuthService(mockRepo, "test-secret-key", redispkg.NewMockTokenStore())
 
 	// Create a test user
 	testUser, _ := identity.NewUser("refreshuser", "refresh@example.com", "password123", identity.RoleNormal)

@@ -154,7 +154,7 @@ func (s *AuthServiceImpl) Login(ctx context.Context, req *LoginRequest) (*LoginR
 		return nil, fmt.Errorf("generate access token: %w", err)
 	}
 
-	refreshToken, err := s.generateRefreshToken(user)
+	refreshToken, err := s.generateRefreshToken(ctx, user)
 	if err != nil {
 		return nil, fmt.Errorf("generate refresh token: %w", err)
 	}
@@ -215,7 +215,7 @@ func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string)
 	}
 
 	// Verify token exists in store (not revoked)
-	userID, expiresAt, found, err := s.tokenStore.Get(context.Background(), refreshToken)
+	userID, expiresAt, found, err := s.tokenStore.Get(ctx, refreshToken)
 	if err != nil {
 		return nil, fmt.Errorf("get token from store: %w", err)
 	}
@@ -223,12 +223,14 @@ func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string)
 		return nil, identity.ErrTokenRevoked
 	}
 	if time.Now().After(expiresAt) {
-		_ = s.tokenStore.Delete(context.Background(), refreshToken)
+		if delErr := s.tokenStore.Delete(ctx, refreshToken); delErr != nil {
+			return nil, fmt.Errorf("delete expired token: %w", delErr)
+		}
 		return nil, identity.ErrTokenExpired
 	}
 
 	// Invalidate old refresh token
-	if err := s.tokenStore.Delete(context.Background(), refreshToken); err != nil {
+	if err := s.tokenStore.Delete(ctx, refreshToken); err != nil {
 		return nil, fmt.Errorf("delete old token: %w", err)
 	}
 
@@ -245,7 +247,7 @@ func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string)
 	}
 
 	// Generate new refresh token
-	newRefreshToken, err := s.generateRefreshToken(user)
+	newRefreshToken, err := s.generateRefreshToken(ctx, user)
 	if err != nil {
 		return nil, fmt.Errorf("generate refresh token: %w", err)
 	}
@@ -276,7 +278,7 @@ func (s *AuthServiceImpl) generateAccessToken(user *identity.User) (string, erro
 }
 
 // generateRefreshToken generates a new refresh token for a user
-func (s *AuthServiceImpl) generateRefreshToken(user *identity.User) (string, error) {
+func (s *AuthServiceImpl) generateRefreshToken(ctx context.Context, user *identity.User) (string, error) {
 	now := time.Now()
 	claims := &TokenClaims{
 		UserID:   user.ID(),
@@ -296,8 +298,8 @@ func (s *AuthServiceImpl) generateRefreshToken(user *identity.User) (string, err
 		return "", err
 	}
 
-	// Store refresh token info (in production, use Redis)
-	if err := s.tokenStore.Store(context.Background(), signedToken, user.ID(), now.Add(refreshTokenExpiry)); err != nil {
+	// Store refresh token info
+	if err := s.tokenStore.Store(ctx, signedToken, user.ID(), now.Add(refreshTokenExpiry)); err != nil {
 		return "", fmt.Errorf("store refresh token: %w", err)
 	}
 

@@ -41,13 +41,22 @@ func (s *TokenStore) Store(ctx context.Context, token string, userID uuid.UUID, 
 		return fmt.Errorf("marshal token info: %w", err)
 	}
 
-	// Store with expiration time matching the token expiration
 	ttl := time.Until(expiresAt)
 	if ttl < 0 {
 		ttl = time.Hour // Default TTL if token has expired
 	}
 
-	return s.client.Set(ctx, key, data, ttl).Err()
+	pipe := s.client.Pipeline()
+	pipe.Set(ctx, key, data, ttl)
+	pipe.SAdd(ctx, s.userTokensKey(userID), key)
+	// Set TTL on the user tokens set to the max refresh token expiry (7 days)
+	pipe.Expire(ctx, s.userTokensKey(userID), 7*24*time.Hour+time.Hour)
+
+	if _, err := pipe.Exec(ctx); err != nil {
+		return fmt.Errorf("store refresh token: %w", err)
+	}
+
+	return nil
 }
 
 // Get retrieves the user ID and expiration for a token
@@ -78,22 +87,36 @@ func (s *TokenStore) Get(ctx context.Context, token string) (uuid.UUID, time.Tim
 // Delete removes a token from the store
 func (s *TokenStore) Delete(ctx context.Context, token string) error {
 	key := s.tokenKey(token)
+	// Best-effort removal from user set — we read userID from the stored data first
+	data, err := s.client.Get(ctx, key).Bytes()
+	if err == nil {
+		var info tokenInfo
+		if json.Unmarshal(data, &info) == nil {
+			if uid, parseErr := uuid.Parse(info.UserID); parseErr == nil {
+				s.client.SRem(ctx, s.userTokensKey(uid), key)
+			}
+		}
+	}
 	return s.client.Del(ctx, key).Err()
 }
 
 // DeleteAllByUser removes all tokens for a specific user
 func (s *TokenStore) DeleteAllByUser(ctx context.Context, userID uuid.UUID) error {
-	// Use Keys command to find all keys for this user, then delete them
-	pattern := "auth:refresh_token:*:" + userID.String()
-	keys, err := s.client.Keys(ctx, pattern).Result()
+	setKey := s.userTokensKey(userID)
+	keys, err := s.client.SMembers(ctx, setKey).Result()
 	if err != nil {
 		return fmt.Errorf("find user tokens: %w", err)
 	}
 	if len(keys) == 0 {
 		return nil
 	}
-	// Delete all found keys
-	return s.client.Del(ctx, keys...).Err()
+	pipe := s.client.Pipeline()
+	pipe.Del(ctx, keys...)
+	pipe.Del(ctx, setKey)
+	if _, err := pipe.Exec(ctx); err != nil {
+		return fmt.Errorf("delete user tokens: %w", err)
+	}
+	return nil
 }
 
 // tokenKey generates the Redis key for a token
@@ -101,9 +124,9 @@ func (s *TokenStore) tokenKey(token string) string {
 	return "auth:refresh_token:" + token
 }
 
-// userTokenPattern generates the Redis key pattern for scanning user tokens (not used directly, kept for reference)
-func (s *TokenStore) userTokenPattern(userID uuid.UUID) string {
-	return "auth:refresh_token:*:" + userID.String()
+// userTokensKey generates the Redis set key for a user's tokens
+func (s *TokenStore) userTokensKey(userID uuid.UUID) string {
+	return "auth:user_tokens:" + userID.String()
 }
 
 // NewClient creates a new Redis client from configuration
