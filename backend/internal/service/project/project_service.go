@@ -344,7 +344,7 @@ func (s *ProjectServiceImpl) ImportConfigs(ctx context.Context, projectID uuid.U
 	// Validate project exists
 	_, err := s.projectRepo.FindByID(ctx, projectID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("validate project exists: %w", err)
 	}
 
 	// Convert to domain objects
@@ -370,7 +370,7 @@ func (s *ProjectServiceImpl) ExportConfigs(ctx context.Context, projectID uuid.U
 	// Validate project exists
 	_, err := s.projectRepo.FindByID(ctx, projectID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("validate project exists: %w", err)
 	}
 
 	return s.configRepo.ExportConfigs(ctx, projectID)
@@ -381,7 +381,7 @@ func (s *ProjectServiceImpl) GetProjectStatistics(ctx context.Context, id uuid.U
 	// Validate project exists
 	_, err := s.projectRepo.FindByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("validate project exists: %w", err)
 	}
 
 	// Get statistics from repository

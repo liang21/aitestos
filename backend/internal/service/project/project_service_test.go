@@ -8,6 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/liang21/aitestos/internal/domain/project"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // MockProjectRepository implements project.ProjectRepository for testing
@@ -918,6 +920,272 @@ func TestProjectService_SetConfig(t *testing.T) {
 			}
 			if cfg.Key() != tt.key {
 				t.Errorf("GetConfig() key = %v, want %v", cfg.Key(), tt.key)
+			}
+		})
+	}
+}
+
+func TestProjectService_GetProjectStatistics(t *testing.T) {
+	ctx := context.Background()
+	projectRepo := NewMockProjectRepository()
+	moduleRepo := NewMockModuleRepository()
+	configRepo := NewMockProjectConfigRepository()
+	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+
+	// Create a test project
+	proj, err := project.NewProject("Test Project", "TEST", "A test project")
+	require.NoError(t, err)
+	projectRepo.projects[proj.ID()] = proj
+	projectRepo.nameIndex["Test Project"] = proj
+	projectRepo.prefixIndex["TEST"] = proj
+
+	tests := []struct {
+		name      string
+		projectID uuid.UUID
+		setup     func()
+		wantErr   error
+		validate  func(*testing.T, *project.ProjectStatistics)
+	}{
+		{
+			name:      "successful statistics retrieval",
+			projectID: proj.ID(),
+			setup:     func() {},
+			wantErr:   nil,
+			validate: func(t *testing.T, stats *project.ProjectStatistics) {
+				assert.NotNil(t, stats)
+				assert.Equal(t, int64(0), stats.ModuleCount)
+				assert.Equal(t, int64(0), stats.CaseCount)
+				assert.Equal(t, int64(0), stats.DocumentCount)
+			},
+		},
+		{
+			name:      "project not found",
+			projectID: uuid.New(),
+			setup:     func() {},
+			wantErr:   project.ErrProjectNotFound,
+			validate:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			stats, err := service.GetProjectStatistics(ctx, tt.projectID)
+
+			if tt.wantErr != nil {
+				if err == nil {
+					t.Errorf("GetProjectStatistics() expected error %v, got nil", tt.wantErr)
+					return
+				}
+				if !errors.Is(err, tt.wantErr) {
+					t.Errorf("GetProjectStatistics() error = %v, want %v", err, tt.wantErr)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("GetProjectStatistics() unexpected error: %v", err)
+				return
+			}
+
+			if tt.validate != nil {
+				tt.validate(t, stats)
+			}
+		})
+	}
+}
+
+func TestProjectService_ImportConfigs(t *testing.T) {
+	ctx := context.Background()
+	projectRepo := NewMockProjectRepository()
+	moduleRepo := NewMockModuleRepository()
+	configRepo := NewMockProjectConfigRepository()
+	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+
+	// Create a test project
+	proj, err := project.NewProject("Test Project", "TEST", "A test project")
+	require.NoError(t, err)
+	projectRepo.projects[proj.ID()] = proj
+	projectRepo.nameIndex["Test Project"] = proj
+	projectRepo.prefixIndex["TEST"] = proj
+
+	tests := []struct {
+		name      string
+		projectID uuid.UUID
+		req       *ImportConfigsRequest
+		wantErr   error
+		validate  func(*testing.T, *ImportConfigsResult)
+	}{
+		{
+			name:      "successful import",
+			projectID: proj.ID(),
+			req: &ImportConfigsRequest{
+				Configs: []struct {
+					Key         string                 `json:"key" validate:"required"`
+					Value       map[string]interface{} `json:"value" validate:"required"`
+					Description string                 `json:"description"`
+				}{
+					{
+						Key:         "llm_config",
+						Value:       map[string]interface{}{"model": "deepseek-chat"},
+						Description: "LLM configuration",
+					},
+					{
+						Key:         "rag_config",
+						Value:       map[string]interface{}{"enabled": true},
+						Description: "RAG configuration",
+					},
+				},
+			},
+			wantErr: nil,
+			validate: func(t *testing.T, result *ImportConfigsResult) {
+				assert.NotNil(t, result)
+				assert.Equal(t, 2, result.Imported)
+				assert.Equal(t, 0, result.Failed)
+			},
+		},
+		{
+			name:      "empty configs",
+			projectID: proj.ID(),
+			req: &ImportConfigsRequest{
+				Configs: []struct {
+					Key         string                 `json:"key" validate:"required"`
+					Value       map[string]interface{} `json:"value" validate:"required"`
+					Description string                 `json:"description"`
+				}{},
+			},
+			wantErr: nil,
+			validate: func(t *testing.T, result *ImportConfigsResult) {
+				assert.NotNil(t, result)
+				assert.Equal(t, 0, result.Imported)
+			},
+		},
+		{
+			name:      "project not found",
+			projectID: uuid.New(),
+			req: &ImportConfigsRequest{
+				Configs: []struct {
+					Key         string                 `json:"key" validate:"required"`
+					Value       map[string]interface{} `json:"value" validate:"required"`
+					Description string                 `json:"description"`
+				}{
+					{
+						Key:   "test_config",
+						Value: map[string]interface{}{"test": true},
+					},
+				},
+			},
+			wantErr:  project.ErrProjectNotFound,
+			validate: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := service.ImportConfigs(ctx, tt.projectID, tt.req)
+
+			if tt.wantErr != nil {
+				if err == nil {
+					t.Errorf("ImportConfigs() expected error %v, got nil", tt.wantErr)
+					return
+				}
+				if !errors.Is(err, tt.wantErr) {
+					t.Errorf("ImportConfigs() error = %v, want %v", err, tt.wantErr)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("ImportConfigs() unexpected error: %v", err)
+				return
+			}
+
+			if tt.validate != nil {
+				tt.validate(t, result)
+			}
+		})
+	}
+}
+
+func TestProjectService_ExportConfigs(t *testing.T) {
+	ctx := context.Background()
+	projectRepo := NewMockProjectRepository()
+	moduleRepo := NewMockModuleRepository()
+	configRepo := NewMockProjectConfigRepository()
+	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+
+	// Create a test project
+	proj, err := project.NewProject("Test Project", "TEST", "A test project")
+	require.NoError(t, err)
+	projectRepo.projects[proj.ID()] = proj
+	projectRepo.nameIndex["Test Project"] = proj
+	projectRepo.prefixIndex["TEST"] = proj
+
+	// Add some test configs
+	cfg1, err := project.NewProjectConfig(proj.ID(), "llm_config", map[string]any{"model": "deepseek-chat"}, "LLM config")
+	require.NoError(t, err)
+	configRepo.configs[proj.ID().String()+":llm_config"] = cfg1
+
+	cfg2, err := project.NewProjectConfig(proj.ID(), "rag_config", map[string]any{"enabled": true}, "RAG config")
+	require.NoError(t, err)
+	configRepo.configs[proj.ID().String()+":rag_config"] = cfg2
+
+	tests := []struct {
+		name      string
+		projectID uuid.UUID
+		wantErr   error
+		validate  func(*testing.T, []map[string]any)
+	}{
+		{
+			name:      "successful export",
+			projectID: proj.ID(),
+			wantErr:   nil,
+			validate: func(t *testing.T, configs []map[string]any) {
+				assert.NotNil(t, configs)
+				assert.Len(t, configs, 2)
+
+				// Verify configs are exported correctly
+				configKeys := make([]string, len(configs))
+				for i, cfg := range configs {
+					configKeys[i] = cfg["key"].(string)
+					assert.Contains(t, cfg, "key")
+					assert.Contains(t, cfg, "value")
+					assert.Contains(t, cfg, "description")
+				}
+				assert.Contains(t, configKeys, "llm_config")
+				assert.Contains(t, configKeys, "rag_config")
+			},
+		},
+		{
+			name:      "project not found",
+			projectID: uuid.New(),
+			wantErr:   project.ErrProjectNotFound,
+			validate:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			configs, err := service.ExportConfigs(ctx, tt.projectID)
+
+			if tt.wantErr != nil {
+				if err == nil {
+					t.Errorf("ExportConfigs() expected error %v, got nil", tt.wantErr)
+					return
+				}
+				if !errors.Is(err, tt.wantErr) {
+					t.Errorf("ExportConfigs() error = %v, want %v", err, tt.wantErr)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("ExportConfigs() unexpected error: %v", err)
+				return
+			}
+
+			if tt.validate != nil {
+				tt.validate(t, configs)
 			}
 		})
 	}

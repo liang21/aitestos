@@ -342,3 +342,254 @@ func TestSetConfigHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }
+
+func TestGetProjectStatisticsHandler(t *testing.T) {
+	t.Parallel()
+
+	t.Run("successful get", func(t *testing.T) {
+		t.Parallel()
+
+		mockSvc := new(MockProjectService)
+		projectID := uuid.New()
+		mockSvc.On("GetProjectStatistics", mock.Anything, projectID).Return(&project.ProjectStatistics{}, nil)
+
+		handler := NewProjectHandler(mockSvc)
+
+		req := httptest.NewRequest("GET", "/api/v1/projects/"+projectID.String()+"/stats", nil)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", projectID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		handler.GetProjectStatistics(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		// Verify response is valid JSON
+		var stats project.ProjectStatistics
+		err := json.Unmarshal(w.Body.Bytes(), &stats)
+		assert.NoError(t, err)
+	})
+
+	t.Run("project not found", func(t *testing.T) {
+		t.Parallel()
+
+		mockSvc := new(MockProjectService)
+		projectID := uuid.New()
+		mockSvc.On("GetProjectStatistics", mock.Anything, projectID).Return(nil, project.ErrProjectNotFound)
+
+		handler := NewProjectHandler(mockSvc)
+
+		req := httptest.NewRequest("GET", "/api/v1/projects/"+projectID.String()+"/stats", nil)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", projectID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		handler.GetProjectStatistics(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("invalid project ID", func(t *testing.T) {
+		t.Parallel()
+
+		mockSvc := new(MockProjectService)
+		handler := NewProjectHandler(mockSvc)
+
+		req := httptest.NewRequest("GET", "/api/v1/projects/invalid-uuid/stats", nil)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "invalid-uuid")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		handler.GetProjectStatistics(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+}
+
+func TestImportConfigsHandler(t *testing.T) {
+	t.Parallel()
+
+	t.Run("successful import", func(t *testing.T) {
+		t.Parallel()
+
+		mockSvc := new(MockProjectService)
+		projectID := uuid.New()
+		result := &projectservice.ImportConfigsResult{Imported: 2, Failed: 0}
+		mockSvc.On("ImportConfigs", mock.Anything, projectID, mock.Anything).Return(result, nil)
+
+		handler := NewProjectHandler(mockSvc)
+
+		body := map[string]interface{}{
+			"configs": []map[string]interface{}{
+				{
+					"key":         "llm_config",
+					"value":       map[string]interface{}{"model": "deepseek-chat"},
+					"description": "LLM configuration",
+				},
+				{
+					"key":         "rag_config",
+					"value":       map[string]interface{}{"enabled": true},
+					"description": "RAG configuration",
+				},
+			},
+		}
+		jsonBody, _ := json.Marshal(body)
+
+		req := httptest.NewRequest("POST", "/api/v1/projects/"+projectID.String()+"/configs/import", bytes.NewReader(jsonBody))
+		req.Header.Set("Content-Type", "application/json")
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", projectID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		handler.ImportConfigs(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		// Verify response is valid JSON
+		var resp projectservice.ImportConfigsResult
+		err := json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.NoError(t, err)
+		assert.Equal(t, 2, resp.Imported)
+	})
+
+	t.Run("project not found", func(t *testing.T) {
+		t.Parallel()
+
+		mockSvc := new(MockProjectService)
+		projectID := uuid.New()
+		mockSvc.On("ImportConfigs", mock.Anything, projectID, mock.Anything).Return(nil, project.ErrProjectNotFound)
+
+		handler := NewProjectHandler(mockSvc)
+
+		body := map[string]interface{}{
+			"configs": []map[string]interface{}{
+				{
+					"key":   "test_config",
+					"value": map[string]interface{}{"test": true},
+				},
+			},
+		}
+		jsonBody, _ := json.Marshal(body)
+
+		req := httptest.NewRequest("POST", "/api/v1/projects/"+projectID.String()+"/configs/import", bytes.NewReader(jsonBody))
+		req.Header.Set("Content-Type", "application/json")
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", projectID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		handler.ImportConfigs(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("invalid request body", func(t *testing.T) {
+		t.Parallel()
+
+		mockSvc := new(MockProjectService)
+		handler := NewProjectHandler(mockSvc)
+
+		req := httptest.NewRequest("POST", "/api/v1/projects/"+uuid.New().String()+"/configs/import", bytes.NewReader([]byte("invalid json")))
+		req.Header.Set("Content-Type", "application/json")
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", uuid.New().String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		handler.ImportConfigs(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+}
+
+func TestExportConfigsHandler(t *testing.T) {
+	t.Parallel()
+
+	t.Run("successful export", func(t *testing.T) {
+		t.Parallel()
+
+		mockSvc := new(MockProjectService)
+		projectID := uuid.New()
+		configs := []map[string]any{
+			{
+				"key":         "llm_config",
+				"value":       map[string]any{"model": "deepseek-chat"},
+				"description": "LLM configuration",
+			},
+			{
+				"key":         "rag_config",
+				"value":       map[string]any{"enabled": true},
+				"description": "RAG configuration",
+			},
+		}
+		mockSvc.On("ExportConfigs", mock.Anything, projectID).Return(configs, nil)
+
+		handler := NewProjectHandler(mockSvc)
+
+		req := httptest.NewRequest("GET", "/api/v1/projects/"+projectID.String()+"/configs/export", nil)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", projectID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		handler.ExportConfigs(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		// Verify response is valid JSON array
+		var resp []map[string]any
+		err := json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.NoError(t, err)
+		assert.Len(t, resp, 2)
+	})
+
+	t.Run("project not found", func(t *testing.T) {
+		t.Parallel()
+
+		mockSvc := new(MockProjectService)
+		projectID := uuid.New()
+		mockSvc.On("ExportConfigs", mock.Anything, projectID).Return(nil, project.ErrProjectNotFound)
+
+		handler := NewProjectHandler(mockSvc)
+
+		req := httptest.NewRequest("GET", "/api/v1/projects/"+projectID.String()+"/configs/export", nil)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", projectID.String())
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		handler.ExportConfigs(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("invalid project ID", func(t *testing.T) {
+		t.Parallel()
+
+		mockSvc := new(MockProjectService)
+		handler := NewProjectHandler(mockSvc)
+
+		req := httptest.NewRequest("GET", "/api/v1/projects/invalid-uuid/configs/export", nil)
+		// Set chi URL parameters
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "invalid-uuid")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		handler.ExportConfigs(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+}
