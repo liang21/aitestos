@@ -4,6 +4,7 @@ package ierrors
 import (
 	"errors"
 
+	"github.com/liang21/aitestos/internal/domain/cache"
 	"github.com/liang21/aitestos/internal/domain/generation"
 	"github.com/liang21/aitestos/internal/domain/identity"
 	"github.com/liang21/aitestos/internal/domain/knowledge"
@@ -132,6 +133,20 @@ func MapError(err error) int {
 		return CodeLLMTimeout
 	case errors.Is(err, generation.ErrGenerationQueueFull):
 		return CodeGenerationQueueFull
+	}
+
+	// Cache Context
+	switch {
+	case errors.Is(err, cache.ErrCacheNotFound):
+		return CodeCacheNotFound
+	case errors.Is(err, cache.ErrCacheWriteFailed):
+		return CodeCacheWriteFailed
+	case errors.Is(err, cache.ErrCacheExpired):
+		return CodeCacheExpired
+	case errors.Is(err, cache.ErrCacheConnFailed):
+		return CodeCacheConnFailed
+	case errors.Is(err, cache.ErrCacheTimeout):
+		return CodeCacheTimeout
 	}
 
 	// Unknown error

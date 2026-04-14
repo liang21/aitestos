@@ -76,4 +76,11 @@ const (
 	CodeValidationError = 90003
 	CodeUnauthorized    = 90004
 	CodeRateLimited     = 90005
+
+	// ============ Cache Context (8xxxx) ============
+	CodeCacheNotFound    = 80001
+	CodeCacheWriteFailed = 80002
+	CodeCacheExpired     = 80003
+	CodeCacheConnFailed  = 80004
+	CodeCacheTimeout     = 80005
 )

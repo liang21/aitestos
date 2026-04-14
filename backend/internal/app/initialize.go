@@ -43,6 +43,7 @@ import (
 
 	// Infrastructure imports
 	"github.com/liang21/aitestos/internal/infrastructure/llm"
+	"github.com/liang21/aitestos/internal/infrastructure/cache"
 	redispkg "github.com/liang21/aitestos/internal/infrastructure/redis"
 	"github.com/liang21/aitestos/internal/infrastructure/milvus"
 	"github.com/liang21/aitestos/internal/infrastructure/rag"
@@ -81,9 +82,28 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 		redisClient = redispkg.NewMockTokenStore()
 	}
 
+	// 1.6. Initialize cache client
+	var cacheClient cache.Cache
+	logger := zerolog.New(os.Stdout).With().Str("service_name", "aitestos").Logger()
+	if cfg.Redis.Host != "" {
+		redisAddr := fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port)
+		redisCacheClient, err := redispkg.NewClient(redisAddr, cfg.Redis.Password, cfg.Redis.DB)
+		if err != nil {
+			log.Warn().Err(err).Msg("Failed to connect to Redis for caching, using in-memory cache")
+			cacheClient = cache.NewMemoryCache()
+		} else {
+			cacheClient = cache.NewRedisCache(redisCacheClient, &logger)
+			log.Info().Msg("Redis cache initialized successfully")
+		}
+	} else {
+		log.Info().Msg("Redis not configured, using in-memory cache")
+		cacheClient = cache.NewMemoryCache()
+	}
+
 	// 2. Initialize Repositories
 	userRepo := identityRepo.NewUserRepository(db)
-	projectRepository := projectRepo.NewProjectRepository(db)
+	baseProjectRepository := projectRepo.NewProjectRepository(db)
+	projectRepository := projectRepo.NewCachedProjectRepository(baseProjectRepository, cacheClient)
 	moduleRepo := projectRepo.NewModuleRepository(db)
 	configRepo := projectRepo.NewProjectConfigRepository(db)
 	caseRepo := testcaseRepo.NewTestCaseRepository(db)
@@ -99,11 +119,11 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 
 	// 3. Create repository adapters for services
 	moduleRepoAdapter := &moduleRepoAdapterImpl{repo: moduleRepo}
-	projectRepoAdapter := &projectRepoAdapterImpl{repo: projectRepository}
+	projectRepoAdapter := &projectRepoAdapterImpl{repo: baseProjectRepository}
 
 	// For generation service, use direct repositories (they match the expected interface)
 	genModuleRepoAdapter := &genModuleRepoAdapterImpl{repo: moduleRepo}
-	genProjectRepoAdapter := &genProjectRepoAdapterImpl{repo: projectRepository}
+	genProjectRepoAdapter := &genProjectRepoAdapterImpl{repo: baseProjectRepository}
 
 	// 4. Initialize external infrastructure services
 	// NOTE: These are placeholder implementations that return "not yet implemented" errors.
@@ -202,7 +222,7 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 	}
 
 	// 8. Create observability middleware
-	logger := zerolog.New(os.Stdout).With().
+	logger = zerolog.New(os.Stdout).With().
 		Str("service_name", "aitestos").
 		Logger()
 	logger = logger.With().Timestamp().Logger()

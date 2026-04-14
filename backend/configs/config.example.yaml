@@ -23,6 +23,12 @@ redis:
   password: "${REDIS_PASSWORD}"  # Use environment variable
   db: 0
 
+# Cache configuration (uses Redis backend)
+cache:
+  enabled: true
+  default_ttl: 300      # Default TTL in seconds (5 minutes)
+  stats_ttl: 900        # Statistics TTL in seconds (15 minutes)
+
 llm:
   provider: "deepseek"
   api_key: "${DEEPSEEK_API_KEY}"  # Use environment variable
