@@ -1,0 +1,188 @@
+// Package redis provides Redis client implementations
+package redis
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/redis/go-redis/v9"
+	"github.com/google/uuid"
+)
+
+// TokenStore implements identity.TokenStore using Redis
+type TokenStore struct {
+	client *redis.Client
+}
+
+// NewTokenStore creates a new Redis-based token store
+func NewTokenStore(client *redis.Client) *TokenStore {
+	return &TokenStore{client: client}
+}
+
+// tokenInfo represents the data stored for each refresh token
+type tokenInfo struct {
+	UserID    string    `json:"user_id"`
+	ExpiresAt int64     `json:"expires_at"` // Unix timestamp
+}
+
+// Store saves a refresh token with its expiration time
+func (s *TokenStore) Store(ctx context.Context, token string, userID uuid.UUID, expiresAt time.Time) error {
+	key := s.tokenKey(token)
+	info := tokenInfo{
+		UserID:    userID.String(),
+		ExpiresAt: expiresAt.Unix(),
+	}
+
+	data, err := json.Marshal(info)
+	if err != nil {
+		return fmt.Errorf("marshal token info: %w", err)
+	}
+
+	// Store with expiration time matching the token expiration
+	ttl := time.Until(expiresAt)
+	if ttl < 0 {
+		ttl = time.Hour // Default TTL if token has expired
+	}
+
+	return s.client.Set(ctx, key, data, ttl).Err()
+}
+
+// Get retrieves the user ID and expiration for a token
+func (s *TokenStore) Get(ctx context.Context, token string) (uuid.UUID, time.Time, bool, error) {
+	key := s.tokenKey(token)
+	data, err := s.client.Get(ctx, key).Bytes()
+	if err != nil {
+		if err == redis.Nil {
+			return uuid.Nil, time.Time{}, false, nil
+		}
+		return uuid.Nil, time.Time{}, false, fmt.Errorf("get token: %w", err)
+	}
+
+	var info tokenInfo
+	if err := json.Unmarshal(data, &info); err != nil {
+		return uuid.Nil, time.Time{}, false, fmt.Errorf("unmarshal token info: %w", err)
+	}
+
+	userID, err := uuid.Parse(info.UserID)
+	if err != nil {
+		return uuid.Nil, time.Time{}, false, fmt.Errorf("parse user ID: %w", err)
+	}
+
+	expiresAt := time.Unix(info.ExpiresAt, 0)
+	return userID, expiresAt, true, nil
+}
+
+// Delete removes a token from the store
+func (s *TokenStore) Delete(ctx context.Context, token string) error {
+	key := s.tokenKey(token)
+	return s.client.Del(ctx, key).Err()
+}
+
+// DeleteAllByUser removes all tokens for a specific user
+func (s *TokenStore) DeleteAllByUser(ctx context.Context, userID uuid.UUID) error {
+	// Use Keys command to find all keys for this user, then delete them
+	pattern := "auth:refresh_token:*:" + userID.String()
+	keys, err := s.client.Keys(ctx, pattern).Result()
+	if err != nil {
+		return fmt.Errorf("find user tokens: %w", err)
+	}
+	if len(keys) == 0 {
+		return nil
+	}
+	// Delete all found keys
+	return s.client.Del(ctx, keys...).Err()
+}
+
+// tokenKey generates the Redis key for a token
+func (s *TokenStore) tokenKey(token string) string {
+	return "auth:refresh_token:" + token
+}
+
+// userTokenPattern generates the Redis key pattern for scanning user tokens (not used directly, kept for reference)
+func (s *TokenStore) userTokenPattern(userID uuid.UUID) string {
+	return "auth:refresh_token:*:" + userID.String()
+}
+
+// NewClient creates a new Redis client from configuration
+func NewClient(addr, password string, db int) (*redis.Client, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: password,
+		DB:       db,
+	})
+
+	// Test connection
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := client.Ping(ctx).Err(); err != nil {
+		return nil, fmt.Errorf("redis ping failed: %w", err)
+	}
+
+	return client, nil
+}
+
+// EnsureIndices ensures any necessary Redis indices exist (for this implementation, none needed)
+func EnsureIndices(ctx context.Context, client *redis.Client) error {
+	// No indices needed for simple key-value storage
+	return nil
+}
+
+// MockTokenStore is an in-memory implementation for testing
+type MockTokenStore struct {
+	tokens map[string]*mockTokenInfo
+	mu      sync.RWMutex
+}
+
+type mockTokenInfo struct {
+	UserID    uuid.UUID
+	ExpiresAt time.Time
+}
+
+// NewMockTokenStore creates a new mock token store
+func NewMockTokenStore() *MockTokenStore {
+	return &MockTokenStore{
+		tokens: make(map[string]*mockTokenInfo),
+	}
+}
+
+func (m *MockTokenStore) Store(ctx context.Context, token string, userID uuid.UUID, expiresAt time.Time) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.tokens[token] = &mockTokenInfo{
+		UserID:    userID,
+		ExpiresAt: expiresAt,
+	}
+	return nil
+}
+
+func (m *MockTokenStore) Get(ctx context.Context, token string) (uuid.UUID, time.Time, bool, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	info, ok := m.tokens[token]
+	if !ok {
+		return uuid.Nil, time.Time{}, false, nil
+	}
+	return info.UserID, info.ExpiresAt, true, nil
+}
+
+func (m *MockTokenStore) Delete(ctx context.Context, token string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.tokens, token)
+	return nil
+}
+
+func (m *MockTokenStore) DeleteAllByUser(ctx context.Context, userID uuid.UUID) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for token, info := range m.tokens {
+		if info.UserID == userID {
+			delete(m.tokens, token)
+		}
+	}
+	return nil
+}

@@ -8,6 +8,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/liang21/aitestos/internal/transport/http/handler"
 	httpMiddleware "github.com/liang21/aitestos/internal/transport/http/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog"
 )
 
 // Handlers holds all HTTP handlers
@@ -21,19 +23,22 @@ type Handlers struct {
 }
 
 // NewRouter creates a new HTTP router with all routes registered (without auth)
-func NewRouter(handlers *Handlers) http.Handler {
-	return NewRouterWithMiddleware(handlers, "")
+func NewRouter(handlers *Handlers, logger zerolog.Logger, metrics *httpMiddleware.Metrics) http.Handler {
+	return NewRouterWithMiddleware(handlers, "", logger, metrics)
 }
 
 // NewRouterWithMiddleware creates a new HTTP router with authentication middleware
-func NewRouterWithMiddleware(handlers *Handlers, jwtSecret string) http.Handler {
+func NewRouterWithMiddleware(handlers *Handlers, jwtSecret string, logger zerolog.Logger, metrics *httpMiddleware.Metrics) http.Handler {
 	r := chi.NewRouter()
 
-	// Add base middleware
+	// Add base middleware - use our custom implementations
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Logger)
+	r.Use(httpMiddleware.Recovery())
+	r.Use(httpMiddleware.Logging(logger))
+	if metrics != nil {
+		r.Use(httpMiddleware.MetricsMiddleware(metrics))
+	}
 	r.Use(middleware.StripSlashes)
 
 	// Health check endpoint (public)
@@ -42,6 +47,9 @@ func NewRouterWithMiddleware(handlers *Handlers, jwtSecret string) http.Handler 
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("OK"))
 	})
+
+	// Metrics endpoint (public) - Prometheus scraping
+	r.Get("/metrics", promhttp.Handler().ServeHTTP)
 
 	// noOpHandler is used when handlers is nil (for testing route registration)
 	noOpHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -71,19 +70,15 @@ type AuthService interface {
 type AuthServiceImpl struct {
 	userRepo   identity.UserRepository
 	jwtSecret  []byte
-	tokenStore sync.Map // map[string]*refreshTokenInfo; In production, use Redis
-}
-
-type refreshTokenInfo struct {
-	userID    uuid.UUID
-	expiresAt time.Time
+	tokenStore identity.TokenStore
 }
 
 // NewAuthService creates a new AuthService instance
-func NewAuthService(userRepo identity.UserRepository, jwtSecret string) AuthService {
+func NewAuthService(userRepo identity.UserRepository, jwtSecret string, tokenStore identity.TokenStore) AuthService {
 	return &AuthServiceImpl{
-		userRepo:  userRepo,
-		jwtSecret: []byte(jwtSecret),
+		userRepo:   userRepo,
+		jwtSecret:  []byte(jwtSecret),
+		tokenStore: tokenStore,
 	}
 }
 
@@ -220,21 +215,25 @@ func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string)
 	}
 
 	// Verify token exists in store (not revoked)
-	info, ok := s.tokenStore.Load(refreshToken)
-	if !ok {
+	userID, expiresAt, found, err := s.tokenStore.Get(context.Background(), refreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("get token from store: %w", err)
+	}
+	if !found {
 		return nil, identity.ErrTokenRevoked
 	}
-	tokenInfo, ok := info.(*refreshTokenInfo)
-	if !ok || time.Now().After(tokenInfo.expiresAt) {
-		s.tokenStore.Delete(refreshToken)
+	if time.Now().After(expiresAt) {
+		_ = s.tokenStore.Delete(context.Background(), refreshToken)
 		return nil, identity.ErrTokenExpired
 	}
 
 	// Invalidate old refresh token
-	s.tokenStore.Delete(refreshToken)
+	if err := s.tokenStore.Delete(context.Background(), refreshToken); err != nil {
+		return nil, fmt.Errorf("delete old token: %w", err)
+	}
 
 	// Get user
-	user, err := s.userRepo.FindByID(ctx, claims.UserID)
+	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("find user: %w", err)
 	}
@@ -298,10 +297,9 @@ func (s *AuthServiceImpl) generateRefreshToken(user *identity.User) (string, err
 	}
 
 	// Store refresh token info (in production, use Redis)
-	s.tokenStore.Store(signedToken, &refreshTokenInfo{
-		userID:    user.ID(),
-		expiresAt: now.Add(refreshTokenExpiry),
-	})
+	if err := s.tokenStore.Store(context.Background(), signedToken, user.ID(), now.Add(refreshTokenExpiry)); err != nil {
+		return "", fmt.Errorf("store refresh token: %w", err)
+	}
 
 	return signedToken, nil
 }

@@ -5,14 +5,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/liang21/aitestos/internal/config"
 	httptransport "github.com/liang21/aitestos/internal/transport/http"
 	"github.com/liang21/aitestos/internal/transport/http/handler"
+	httpmiddleware "github.com/liang21/aitestos/internal/transport/http/middleware"
 
 	// Repository imports
 	generationRepo "github.com/liang21/aitestos/internal/repository/generation"
@@ -25,6 +29,7 @@ import (
 	// Service imports
 	generationSvc "github.com/liang21/aitestos/internal/service/generation"
 	identitySvc "github.com/liang21/aitestos/internal/service/identity"
+	identitydomain "github.com/liang21/aitestos/internal/domain/identity"
 	knowledgeSvc "github.com/liang21/aitestos/internal/service/knowledge"
 	projectSvc "github.com/liang21/aitestos/internal/service/project"
 	testcaseSvc "github.com/liang21/aitestos/internal/service/testcase"
@@ -38,6 +43,7 @@ import (
 
 	// Infrastructure imports
 	"github.com/liang21/aitestos/internal/infrastructure/llm"
+	redispkg "github.com/liang21/aitestos/internal/infrastructure/redis"
 	"github.com/liang21/aitestos/internal/infrastructure/milvus"
 	"github.com/liang21/aitestos/internal/infrastructure/rag"
 	"github.com/liang21/aitestos/internal/infrastructure/vector"
@@ -56,6 +62,24 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 		return nil, nil, fmt.Errorf("ping database: %w", err)
 	}
 	log.Info().Msg("Database connected successfully")
+
+	// 1.5. Connect to Redis (for refresh token storage)
+	var redisClient identitydomain.TokenStore
+	if cfg.Redis.Host != "" {
+		redisAddr := fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port)
+		client, err := redispkg.NewClient(redisAddr, cfg.Redis.Password, cfg.Redis.DB)
+		if err != nil {
+			log.Warn().Err(err).Msg("Failed to connect to Redis, refresh tokens will be stored in-memory")
+			// Fall back to mock store
+			redisClient = redispkg.NewMockTokenStore()
+		} else {
+			redisClient = redispkg.NewTokenStore(client)
+			log.Info().Msg("Redis connected successfully")
+		}
+	} else {
+		log.Info().Msg("Redis not configured, using in-memory token store")
+		redisClient = redispkg.NewMockTokenStore()
+	}
 
 	// 2. Initialize Repositories
 	userRepo := identityRepo.NewUserRepository(db)
@@ -135,7 +159,7 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 	}
 
 	// 5. Initialize Services
-	authService := identitySvc.NewAuthService(userRepo, cfg.JWT.Secret)
+	authService := identitySvc.NewAuthService(userRepo, cfg.JWT.Secret, redisClient)
 	projectService := projectSvc.NewProjectService(projectRepository, moduleRepo, configRepo)
 	caseService := testcaseSvc.NewCaseService(caseRepo, moduleRepoAdapter, projectRepoAdapter)
 	planService := testplanSvc.NewPlanService(planRepo, resultRepo, caseRepo)
@@ -177,23 +201,32 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 		Knowledge:  knowledgeHandler,
 	}
 
-	// 8. Create router with authentication middleware
-	router := httptransport.NewRouterWithMiddleware(handlers, cfg.JWT.Secret)
+	// 8. Create observability middleware
+	logger := zerolog.New(os.Stdout).With().
+		Str("service_name", "aitestos").
+		Logger()
+	logger = logger.With().Timestamp().Logger()
 
-	// 9. Create HTTP server
+	metrics := httpmiddleware.NewMetrics("aitestos")
+	prometheus.MustRegister(metrics.RequestsTotal, metrics.RequestDuration)
+
+	// 9. Create router with authentication middleware
+	router := httptransport.NewRouterWithMiddleware(handlers, cfg.JWT.Secret, logger, metrics)
+
+	// 10. Create HTTP server
 	httpServer := NewHTTPServerFromConfig(cfg, router)
 
-	// 10. Create shutdown manager and register closers
+	// 11. Create shutdown manager and register closers
 	shutdownMgr := NewShutdownManagerWithTimeout(cfg.Server.ShutdownTimeout)
 	shutdownMgr.Register(dbCloser)
 	if milvusClient != nil {
 		shutdownMgr.Register(&milvusCloser{client: milvusClient})
 	}
 
-	// 11. Create application
+	// 12. Create application
 	app := New(cfg, httpServer, shutdownMgr)
 
-	// 12. Return cleanup function
+	// 13. Return cleanup function
 	cleanup := func() {
 		log.Info().Msg("Running cleanup...")
 	}
