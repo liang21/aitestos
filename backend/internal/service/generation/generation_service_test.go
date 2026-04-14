@@ -286,6 +286,14 @@ func (m *MockCaseRepo) CountByDate(ctx context.Context, moduleID uuid.UUID, date
 	return 0, nil
 }
 
+func (m *MockCaseRepo) CountByModuleID(ctx context.Context, moduleID uuid.UUID) (int64, error) {
+	return 0, nil
+}
+
+func (m *MockCaseRepo) CountByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error) {
+	return 0, nil
+}
+
 // TestGenerationService_CreateTask tests task creation
 func TestGenerationService_CreateTask(t *testing.T) {
 	ctx := context.Background()

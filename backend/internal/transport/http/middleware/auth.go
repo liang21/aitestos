@@ -17,6 +17,13 @@ type contextKey string
 // userContextKey is the context key for user ID
 const userContextKey contextKey = "user_id"
 
+// respondWithError sends an error response
+func respondWithError(w http.ResponseWriter, httpStatus int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(httpStatus)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
+}
+
 // Auth creates an authentication middleware with optional role checking
 func Auth(secret string, allowedRoles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -97,14 +104,4 @@ func Auth(secret string, allowedRoles ...string) func(http.Handler) http.Handler
 func UserIDFromContext(ctx context.Context) (uuid.UUID, bool) {
 	userID, ok := ctx.Value(userContextKey).(uuid.UUID)
 	return userID, ok
-}
-
-// respondWithError sends an error response
-func respondWithError(w http.ResponseWriter, httpStatus int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(httpStatus)
-	response := map[string]interface{}{
-		"error": message,
-	}
-	_ = json.NewEncoder(w).Encode(response)
 }

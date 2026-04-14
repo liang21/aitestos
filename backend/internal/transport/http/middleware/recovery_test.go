@@ -33,7 +33,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Contains(t, response, "code")
+		assert.Contains(t, response, "error")
 	})
 
 	t.Run("recovers from panic with error", func(t *testing.T) {

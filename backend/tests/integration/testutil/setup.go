@@ -219,8 +219,17 @@ func (a *moduleRepoAdapter) FindByID(ctx context.Context, id uuid.UUID) (testcas
 	if err != nil {
 		return nil, err
 	}
-	return testcaseSvc.ModuleWrapper{Module: m}, nil
+	return &moduleWrapper{Module: m}, nil
 }
+
+type moduleWrapper struct {
+	*domainProject.Module
+}
+
+func (w *moduleWrapper) ID() uuid.UUID        { return w.Module.ID() }
+func (w *moduleWrapper) ProjectID() uuid.UUID { return w.Module.ProjectID() }
+func (w *moduleWrapper) Name() string         { return w.Module.Name() }
+func (w *moduleWrapper) Abbreviation() string { return w.Module.Abbreviation().String() }
 
 type projectRepoAdapter struct {
 	repo *projectRepo.ProjectRepository
@@ -231,8 +240,16 @@ func (a *projectRepoAdapter) FindByID(ctx context.Context, id uuid.UUID) (testca
 	if err != nil {
 		return nil, err
 	}
-	return testcaseSvc.ProjectWrapper{Project: p}, nil
+	return &projectWrapper{Project: p}, nil
 }
+
+type projectWrapper struct {
+	*domainProject.Project
+}
+
+func (w *projectWrapper) ID() uuid.UUID  { return w.Project.ID() }
+func (w *projectWrapper) Name() string   { return w.Project.Name() }
+func (w *projectWrapper) Prefix() string { return w.Project.Prefix().String() }
 
 // Test Data Builders
 

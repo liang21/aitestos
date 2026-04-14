@@ -3,11 +3,10 @@ package middleware
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"runtime/debug"
 
-	"github.com/liang21/aitestos/internal/ierrors"
+	"github.com/rs/zerolog/log"
 )
 
 // Recovery creates a panic recovery middleware
@@ -19,22 +18,20 @@ func Recovery() func(http.Handler) http.Handler {
 					// Get trace ID from header if exists
 					traceID := r.Header.Get("X-Trace-ID")
 
-					// Log the panic
+					// Log the panic using zerolog
 					stack := debug.Stack()
-					fmt.Printf("PANIC: %v\n%s\n", rvr, string(stack))
+					log.Error().
+						Str("trace_id", traceID).
+						Str("service_name", "aitestos").
+						Interface("panic", rvr).
+						Str("stack", string(stack)).
+						Msg("panic recovered")
 
 					// Send error response
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusInternalServerError)
 
-					response := map[string]interface{}{
-						"code":    ierrors.CodeInternalError,
-						"message": "Internal server error",
-					}
-					if traceID != "" {
-						response["traceId"] = traceID
-					}
-
+					response := map[string]string{"error": "internal server error"}
 					_ = json.NewEncoder(w).Encode(response)
 				}
 			}()

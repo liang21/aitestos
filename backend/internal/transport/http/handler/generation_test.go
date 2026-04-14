@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -157,7 +156,7 @@ func TestCreateTaskHandler(t *testing.T) {
 
 		mockSvc := new(MockGenerationService)
 		// Set mock expectation - service should return validation error for short prompt
-		mockSvc.On("CreateTask", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("invalid request: prompt too short"))
+		mockSvc.On("CreateTask", mock.Anything, mock.Anything, mock.Anything).Return(nil, testcase.ErrEmptySteps)
 
 		handler := NewGenerationHandler(mockSvc)
 

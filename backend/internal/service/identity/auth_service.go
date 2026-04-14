@@ -102,7 +102,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, req *RegisterRequest) (*
 	// Validate role
 	role, err := identity.ParseUserRole(req.Role)
 	if err != nil {
-		return nil, errors.New("invalid user role")
+		return nil, identity.ErrInvalidRole
 	}
 
 	// Check if email already exists
@@ -174,29 +174,26 @@ func (s *AuthServiceImpl) Login(ctx context.Context, req *LoginRequest) (*LoginR
 // ValidateToken validates JWT token and returns claims
 func (s *AuthServiceImpl) ValidateToken(ctx context.Context, token string) (*TokenClaims, error) {
 	if token == "" {
-		return nil, errors.New("token is required")
+		return nil, identity.ErrTokenInvalid
 	}
 
 	claims := &TokenClaims{}
 	parsedToken, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("invalid signing method")
+			return nil, identity.ErrTokenInvalid
 		}
 		return s.jwtSecret, nil
 	})
 
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			return nil, errors.New("token expired")
+			return nil, identity.ErrTokenExpired
 		}
-		if errors.Is(err, jwt.ErrTokenMalformed) {
-			return nil, errors.New("invalid token format")
-		}
-		return nil, errors.New("invalid token")
+		return nil, identity.ErrTokenInvalid
 	}
 
 	if !parsedToken.Valid {
-		return nil, errors.New("invalid token")
+		return nil, identity.ErrTokenInvalid
 	}
 
 	return claims, nil
@@ -206,31 +203,31 @@ func (s *AuthServiceImpl) ValidateToken(ctx context.Context, token string) (*Tok
 func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string) (*LoginResponse, error) {
 	// Validate refresh token format
 	if refreshToken == "" {
-		return nil, errors.New("refresh token is required")
+		return nil, identity.ErrTokenInvalid
 	}
 
 	// Parse and validate refresh token
 	claims := &TokenClaims{}
 	parsedToken, err := jwt.ParseWithClaims(refreshToken, claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("invalid signing method")
+			return nil, identity.ErrTokenInvalid
 		}
 		return s.jwtSecret, nil
 	})
 
 	if err != nil || !parsedToken.Valid {
-		return nil, errors.New("invalid refresh token")
+		return nil, identity.ErrTokenInvalid
 	}
 
 	// Verify token exists in store (not revoked)
 	info, ok := s.tokenStore.Load(refreshToken)
 	if !ok {
-		return nil, errors.New("refresh token has been revoked")
+		return nil, identity.ErrTokenRevoked
 	}
 	tokenInfo, ok := info.(*refreshTokenInfo)
 	if !ok || time.Now().After(tokenInfo.expiresAt) {
 		s.tokenStore.Delete(refreshToken)
-		return nil, errors.New("refresh token has expired")
+		return nil, identity.ErrTokenExpired
 	}
 
 	// Invalidate old refresh token

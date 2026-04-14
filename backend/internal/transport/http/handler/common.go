@@ -7,7 +7,6 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -60,7 +59,11 @@ func handleServiceError(w http.ResponseWriter, err error) {
 	// 401 Unauthorized
 	switch {
 	case errors.Is(err, domainIdentity.ErrUserNotFound),
-		errors.Is(err, domainIdentity.ErrPasswordMismatch):
+		errors.Is(err, domainIdentity.ErrPasswordMismatch),
+		errors.Is(err, domainIdentity.ErrTokenInvalid),
+		errors.Is(err, domainIdentity.ErrTokenExpired),
+		errors.Is(err, domainIdentity.ErrTokenRevoked),
+		errors.Is(err, domainIdentity.ErrTokenMissing):
 		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
@@ -107,6 +110,7 @@ func handleServiceError(w http.ResponseWriter, err error) {
 	case errors.Is(err, domainIdentity.ErrInvalidEmail),
 		errors.Is(err, domainIdentity.ErrPasswordTooShort),
 		errors.Is(err, domainIdentity.ErrInvalidUsername),
+		errors.Is(err, domainIdentity.ErrInvalidRole),
 		errors.Is(err, domainProject.ErrInvalidProjectPrefix),
 		errors.Is(err, domainProject.ErrInvalidModuleAbbrev),
 		errors.Is(err, domainTestcase.ErrInvalidCaseNumber),
@@ -118,26 +122,7 @@ func handleServiceError(w http.ResponseWriter, err error) {
 	}
 
 	// 500 Internal Server Error (fallback)
-	// Note: service-layer errors without domain sentinel values are matched by message pattern.
-	errMsg := err.Error()
-	switch {
-	case strings.Contains(errMsg, "invalid") && strings.Contains(errMsg, "token"),
-		strings.Contains(errMsg, "expired"),
-		strings.Contains(errMsg, "revoked"),
-		errMsg == "unauthorized":
-		respondWithError(w, http.StatusUnauthorized, errMsg)
-		return
-	case strings.Contains(errMsg, "invalid request"),
-		strings.Contains(errMsg, "invalid") && strings.Contains(errMsg, "status"),
-		strings.Contains(errMsg, "too short"):
-		respondWithError(w, http.StatusBadRequest, errMsg)
-		return
-	case strings.Contains(errMsg, "being processed"):
-		respondWithError(w, http.StatusConflict, errMsg)
-		return
-	}
-
-	respondWithError(w, http.StatusInternalServerError, errMsg)
+	respondWithError(w, http.StatusInternalServerError, err.Error())
 }
 
 // getIDFromURL extracts a UUID from URL parameters

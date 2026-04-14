@@ -186,6 +186,17 @@ func (r *TestCaseRepository) FindByModuleID(ctx context.Context, moduleID uuid.U
 	return r.toTestCases(rows)
 }
 
+// CountByModuleID counts total test cases for a module
+func (r *TestCaseRepository) CountByModuleID(ctx context.Context, moduleID uuid.UUID) (int64, error) {
+	var count int64
+	query := `SELECT COUNT(*) FROM test_case WHERE module_id = $1 AND deleted_at IS NULL`
+	err := r.db.GetContext(ctx, &count, query, moduleID)
+	if err != nil {
+		return 0, fmt.Errorf("count test cases by module id: %w", err)
+	}
+	return count, nil
+}
+
 // FindByProjectID retrieves all test cases for a project with pagination
 // Joins module table to filter by project_id
 func (r *TestCaseRepository) FindByProjectID(ctx context.Context, projectID uuid.UUID, opts domaintestcase.QueryOptions) ([]*domaintestcase.TestCase, error) {
@@ -210,6 +221,22 @@ func (r *TestCaseRepository) FindByProjectID(ctx context.Context, projectID uuid
 	}
 
 	return r.toTestCases(rows)
+}
+
+// CountByProjectID counts total test cases for a project
+func (r *TestCaseRepository) CountByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error) {
+	var count int64
+	query := `
+		SELECT COUNT(*)
+		FROM test_case tc
+		INNER JOIN module m ON tc.module_id = m.id
+		WHERE m.project_id = $1 AND tc.deleted_at IS NULL
+	`
+	err := r.db.GetContext(ctx, &count, query, projectID)
+	if err != nil {
+		return 0, fmt.Errorf("count test cases by project id: %w", err)
+	}
+	return count, nil
 }
 
 // Update updates an existing test case

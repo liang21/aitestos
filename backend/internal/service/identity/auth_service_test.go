@@ -341,12 +341,12 @@ func TestAuthService_ValidateToken(t *testing.T) {
 		{
 			name:    "invalid token format",
 			token:   "invalid-token",
-			wantErr: errors.New("invalid token format"),
+			wantErr: identity.ErrTokenInvalid,
 		},
 		{
 			name:    "empty token",
 			token:   "",
-			wantErr: errors.New("token is required"),
+			wantErr: identity.ErrTokenInvalid,
 		},
 		{
 			name:    "expired token",
@@ -427,7 +427,7 @@ func TestAuthService_RefreshToken(t *testing.T) {
 		{
 			name:    "invalid refresh token",
 			setup:   func() string { return "invalid-refresh-token" },
-			wantErr: errors.New("invalid refresh token"),
+			wantErr: identity.ErrTokenInvalid,
 		},
 	}
 

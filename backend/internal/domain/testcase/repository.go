@@ -22,8 +22,14 @@ type TestCaseRepository interface {
 	// FindByModuleID retrieves all test cases for a module with pagination
 	FindByModuleID(ctx context.Context, moduleID uuid.UUID, opts QueryOptions) ([]*TestCase, error)
 
+	// CountByModuleID counts total test cases for a module
+	CountByModuleID(ctx context.Context, moduleID uuid.UUID) (int64, error)
+
 	// FindByProjectID retrieves all test cases for a project with pagination
 	FindByProjectID(ctx context.Context, projectID uuid.UUID, opts QueryOptions) ([]*TestCase, error)
+
+	// CountByProjectID counts total test cases for a project
+	CountByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
 
 	// Update updates an existing test case
 	Update(ctx context.Context, tc *TestCase) error

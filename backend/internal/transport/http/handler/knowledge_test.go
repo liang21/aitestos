@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -316,7 +315,7 @@ func TestProcessDocumentHandler(t *testing.T) {
 
 		mockSvc := new(MockDocumentService)
 		docID := uuid.New()
-		mockSvc.On("ProcessDocument", mock.Anything, docID).Return(errors.New("document is being processed"))
+		mockSvc.On("ProcessDocument", mock.Anything, docID).Return(knowledge.ErrDocumentProcessing)
 
 		handler := NewKnowledgeHandler(mockSvc)
 

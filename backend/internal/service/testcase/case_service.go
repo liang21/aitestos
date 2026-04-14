@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	domainproject "github.com/liang21/aitestos/internal/domain/project"
 	domaintestcase "github.com/liang21/aitestos/internal/domain/testcase"
 )
 
@@ -114,26 +113,6 @@ type Project interface {
 	Prefix() string
 }
 
-// ModuleWrapper wraps *domainproject.Module to implement Module interface
-type ModuleWrapper struct {
-	*domainproject.Module
-}
-
-// Abbreviation implements Module interface by converting ModuleAbbreviation to string
-func (w ModuleWrapper) Abbreviation() string {
-	return string(w.Module.Abbreviation())
-}
-
-// ProjectWrapper wraps *domainproject.Project to implement Project interface
-type ProjectWrapper struct {
-	*domainproject.Project
-}
-
-// Prefix implements Project interface by converting ProjectPrefix to string
-func (w ProjectWrapper) Prefix() string {
-	return string(w.Project.Prefix())
-}
-
 // NewCaseService creates a new CaseService instance
 func NewCaseService(
 	caseRepo domaintestcase.TestCaseRepository,
@@ -154,19 +133,13 @@ func (s *CaseServiceImpl) CreateCase(ctx context.Context, req *CreateCaseRequest
 		return nil, domaintestcase.ErrEmptySteps
 	}
 
-	// Get module
-	module, err := s.moduleRepo.FindByID(ctx, req.ModuleID)
+	// Get module (validates module exists)
+	_, err := s.moduleRepo.FindByID(ctx, req.ModuleID)
 	if err != nil {
 		return nil, errors.New("module not found")
 	}
 
-	// Get project
-	project, err := s.projectRepo.FindByID(ctx, module.ProjectID())
-	if err != nil {
-		return nil, errors.New("project not found")
-	}
-
-	// Generate case number
+	// Generate case number (also validates project exists)
 	caseNumber, err := s.GenerateCaseNumber(ctx, req.ModuleID)
 	if err != nil {
 		return nil, fmt.Errorf("generate case number: %w", err)
@@ -192,8 +165,6 @@ func (s *CaseServiceImpl) CreateCase(ctx context.Context, req *CreateCaseRequest
 	if err := s.caseRepo.Save(ctx, tc); err != nil {
 		return nil, fmt.Errorf("save test case: %w", err)
 	}
-
-	_ = project // Used for future reference
 
 	return tc, nil
 }
@@ -238,20 +209,24 @@ func (s *CaseServiceImpl) GetCaseDetail(ctx context.Context, id uuid.UUID) (*Cas
 		return nil, fmt.Errorf("find test case: %w", err)
 	}
 
-	// Get module and project info
-	module, _ := s.moduleRepo.FindByID(ctx, tc.ModuleID())
-	detail := &CaseDetail{
-		TestCase: tc,
+	// Get module info
+	module, err := s.moduleRepo.FindByID(ctx, tc.ModuleID())
+	if err != nil {
+		return nil, fmt.Errorf("find module for test case: %w", err)
 	}
 
-	if module != nil {
-		detail.ModuleName = module.Name()
-		project, _ := s.projectRepo.FindByID(ctx, module.ProjectID())
-		if project != nil {
-			detail.ProjectName = project.Name()
-			detail.ProjectPrefix = project.Prefix()
-		}
+	detail := &CaseDetail{
+		TestCase:   tc,
+		ModuleName: module.Name(),
 	}
+
+	// Get project info
+	project, err := s.projectRepo.FindByID(ctx, module.ProjectID())
+	if err != nil {
+		return nil, fmt.Errorf("find project for test case: %w", err)
+	}
+	detail.ProjectName = project.Name()
+	detail.ProjectPrefix = project.Prefix()
 
 	return detail, nil
 }
@@ -282,7 +257,12 @@ func (s *CaseServiceImpl) ListByModule(ctx context.Context, moduleID uuid.UUID, 
 		return nil, 0, fmt.Errorf("list cases by module: %w", err)
 	}
 
-	return cases, int64(len(cases)), nil
+	total, err := s.caseRepo.CountByModuleID(ctx, moduleID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("count cases by module: %w", err)
+	}
+
+	return cases, total, nil
 }
 
 // ListByProject lists test cases by project with pagination
@@ -301,7 +281,12 @@ func (s *CaseServiceImpl) ListByProject(ctx context.Context, projectID uuid.UUID
 		return nil, 0, fmt.Errorf("list cases by project: %w", err)
 	}
 
-	return cases, int64(len(cases)), nil
+	total, err := s.caseRepo.CountByProjectID(ctx, projectID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("count cases by project: %w", err)
+	}
+
+	return cases, total, nil
 }
 
 // DeleteCase soft deletes a test case

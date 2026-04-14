@@ -302,6 +302,20 @@ func (m *MockTestCaseRepository) CountByDate(ctx context.Context, moduleID uuid.
 	return 0, nil
 }
 
+func (m *MockTestCaseRepository) CountByModuleID(ctx context.Context, moduleID uuid.UUID) (int64, error) {
+	count := int64(0)
+	for _, tc := range m.cases {
+		if tc.ModuleID() == moduleID {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (m *MockTestCaseRepository) CountByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error) {
+	return 0, nil
+}
+
 // TestPlanService_CreatePlan tests plan creation
 func TestPlanService_CreatePlan(t *testing.T) {
 	ctx := context.Background()

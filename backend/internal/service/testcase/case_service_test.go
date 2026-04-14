@@ -118,6 +118,24 @@ func (m *MockTestCaseRepository) CountByDate(ctx context.Context, moduleID uuid.
 	return count, nil
 }
 
+func (m *MockTestCaseRepository) CountByModuleID(ctx context.Context, moduleID uuid.UUID) (int64, error) {
+	if m.findErr != nil {
+		return 0, m.findErr
+	}
+	cases, ok := m.moduleIndex[moduleID]
+	if !ok {
+		return 0, nil
+	}
+	return int64(len(cases)), nil
+}
+
+func (m *MockTestCaseRepository) CountByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error) {
+	if m.findErr != nil {
+		return 0, m.findErr
+	}
+	return int64(len(m.cases)), nil
+}
+
 // SetDateCount sets the count for a specific module and date (for testing)
 func (m *MockTestCaseRepository) SetDateCount(moduleID uuid.UUID, date time.Time, count int64) {
 	key := moduleID.String() + ":" + date.Format("2006-01-02")
@@ -200,6 +218,25 @@ func (m *MockProjectRepoForCase) AddProject(proj Project) {
 	m.projects[proj.ID()] = proj
 }
 
+// testModuleWrapper adapts *project.Module to Module interface for testing
+type testModuleWrapper struct {
+	*project.Module
+}
+
+func (w testModuleWrapper) ID() uuid.UUID        { return w.Module.ID() }
+func (w testModuleWrapper) ProjectID() uuid.UUID { return w.Module.ProjectID() }
+func (w testModuleWrapper) Name() string         { return w.Module.Name() }
+func (w testModuleWrapper) Abbreviation() string { return string(w.Module.Abbreviation()) }
+
+// testProjectWrapper adapts *project.Project to Project interface for testing
+type testProjectWrapper struct {
+	*project.Project
+}
+
+func (w testProjectWrapper) ID() uuid.UUID  { return w.Project.ID() }
+func (w testProjectWrapper) Name() string   { return w.Project.Name() }
+func (w testProjectWrapper) Prefix() string { return string(w.Project.Prefix()) }
+
 // TestCaseService_CreateCase tests test case creation
 func TestCaseService_CreateCase(t *testing.T) {
 	ctx := context.Background()
@@ -211,8 +248,8 @@ func TestCaseService_CreateCase(t *testing.T) {
 	// Create test project and module
 	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
 	testModule, _ := project.NewModule(testProject.ID(), "User Module", "USER", "User management", uuid.New())
-	moduleRepo.AddModule(ModuleWrapper{testModule})
-	projectRepo.AddProject(ProjectWrapper{testProject})
+	moduleRepo.AddModule(testModuleWrapper{testModule})
+	projectRepo.AddProject(testProjectWrapper{testProject})
 
 	userID := uuid.New()
 
@@ -333,7 +370,7 @@ func TestCaseService_UpdateCase(t *testing.T) {
 	// Create test project and module
 	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
 	testModule, _ := project.NewModule(testProject.ID(), "User Module", "USER", "User management", uuid.New())
-	moduleRepo.AddModule(ModuleWrapper{testModule})
+	moduleRepo.AddModule(testModuleWrapper{testModule})
 
 	// Create existing test case
 	caseNumber := testcase.GenerateCaseNumber("TEST", "USER", 1)
@@ -436,7 +473,8 @@ func TestCaseService_GetCaseDetail(t *testing.T) {
 	// Create test project and module
 	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
 	testModule, _ := project.NewModule(testProject.ID(), "User Module", "USER", "User management", uuid.New())
-	moduleRepo.AddModule(ModuleWrapper{testModule})
+	moduleRepo.AddModule(testModuleWrapper{testModule})
+	projectRepo.AddProject(testProjectWrapper{testProject})
 
 	// Create existing test case
 	caseNumber := testcase.GenerateCaseNumber("TEST", "USER", 1)
@@ -513,8 +551,8 @@ func TestCaseService_GenerateCaseNumber(t *testing.T) {
 	// Create test project and module
 	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
 	testModule, _ := project.NewModule(testProject.ID(), "User Module", "USER", "User management", uuid.New())
-	moduleRepo.AddModule(ModuleWrapper{testModule})
-	projectRepo.AddProject(ProjectWrapper{testProject}) // Add project to repo
+	moduleRepo.AddModule(testModuleWrapper{testModule})
+	projectRepo.AddProject(testProjectWrapper{testProject}) // Add project to repo
 
 	tests := []struct {
 		name        string
@@ -603,7 +641,7 @@ func TestCaseService_DeleteCase(t *testing.T) {
 	// Create test project and module
 	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
 	testModule, _ := project.NewModule(testProject.ID(), "User Module", "USER", "User management", uuid.New())
-	moduleRepo.AddModule(ModuleWrapper{testModule})
+	moduleRepo.AddModule(testModuleWrapper{testModule})
 
 	// Create existing test case
 	caseNumber := testcase.GenerateCaseNumber("TEST", "USER", 1)

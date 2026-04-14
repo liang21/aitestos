@@ -20,4 +20,16 @@ var (
 	ErrPasswordTooShort = errors.New("password must be at least 8 characters")
 	// ErrPermissionDenied indicates user lacks required permissions
 	ErrPermissionDenied = errors.New("permission denied")
+
+	// Token/Auth errors
+	// ErrTokenMissing indicates authorization header is missing
+	ErrTokenMissing = errors.New("missing authorization header")
+	// ErrTokenInvalid indicates token is invalid or malformed
+	ErrTokenInvalid = errors.New("invalid token")
+	// ErrTokenExpired indicates token has expired
+	ErrTokenExpired = errors.New("token expired")
+	// ErrTokenRevoked indicates refresh token has been revoked
+	ErrTokenRevoked = errors.New("refresh token has been revoked")
+	// ErrInvalidRole indicates user role is invalid
+	ErrInvalidRole = errors.New("invalid user role")
 )

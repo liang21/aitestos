@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -240,7 +239,7 @@ func TestRefreshTokenHandler(t *testing.T) {
 		t.Parallel()
 
 		mockSvc := new(MockAuthService)
-		mockSvc.On("RefreshToken", mock.Anything, "invalid_token").Return(nil, errors.New("invalid refresh token"))
+		mockSvc.On("RefreshToken", mock.Anything, "invalid_token").Return(nil, identity.ErrTokenInvalid)
 
 		handler := NewIdentityHandler(mockSvc)
 

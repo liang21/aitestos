@@ -5,13 +5,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/liang21/aitestos/internal/domain/testcase"
 	"github.com/liang21/aitestos/internal/domain/testplan"
 	planservice "github.com/liang21/aitestos/internal/service/testplan"
 	"github.com/stretchr/testify/assert"
@@ -265,7 +265,7 @@ func TestRecordResultHandler(t *testing.T) {
 		mockSvc := new(MockPlanService)
 		planID := uuid.New()
 		// Set mock expectation - service should return validation error
-		mockSvc.On("RecordResult", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("invalid result status"))
+		mockSvc.On("RecordResult", mock.Anything, mock.Anything, mock.Anything).Return(nil, testcase.ErrInvalidPriority)
 
 		handler := NewTestPlanHandler(mockSvc)
 
