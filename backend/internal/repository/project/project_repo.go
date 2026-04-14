@@ -313,6 +313,13 @@ func (r *ProjectRepository) GetStatistics(ctx context.Context, id uuid.UUID) (*d
 	return &stats, nil
 }
 
+// SetStatistics stores statistics in cache (no-op for base repository)
+// This method is implemented by CachedProjectRepository for cache warming
+func (r *ProjectRepository) SetStatistics(ctx context.Context, id uuid.UUID, stats *domainproject.ProjectStatistics) error {
+	// Base repository doesn't support caching, return nil (no-op)
+	return nil
+}
+
 // calculateCoverageRate calculates coverage rate as cases per module
 func calculateCoverageRate(caseCount, moduleCount int64) float64 {
 	if moduleCount == 0 {

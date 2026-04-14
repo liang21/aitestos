@@ -67,7 +67,7 @@ func NewIntegrationTestSuite(db *sqlx.DB) *IntegrationTestSuite {
 	// Initialize services
 	// testcase service defines its own ModuleRepository/ProjectRepository interfaces
 	// We use adapter wrappers to bridge domain repos to service interfaces
-	projectSvc_ := projectSvc.NewProjectService(projectRepository, moduleRepo, configRepo)
+	projectSvc_ := projectSvc.NewProjectService(projectRepository, moduleRepo, configRepo, nil)
 	caseSvc := testcaseSvc.NewCaseService(caseRepo, &moduleRepoAdapter{repo: moduleRepo}, &projectRepoAdapter{repo: projectRepository})
 	planSvc := testplanSvc.NewPlanService(planRepo, resultRepo, caseRepo)
 	documentSvc := knowledgeService.NewDocumentService(documentRepo, chunkRepo, vectorRepo)

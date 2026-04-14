@@ -146,3 +146,11 @@ func (c *CachedProjectRepository) GetStatistics(ctx context.Context, id uuid.UUI
 	// Statistics should always be fresh from database
 	return c.repo.GetStatistics(ctx, id)
 }
+
+// SetStatistics stores statistics in cache (used for warmup)
+func (c *CachedProjectRepository) SetStatistics(ctx context.Context, id uuid.UUID, stats *domainproject.ProjectStatistics) error {
+	cacheKey := cache.KeyProjectStats
+	key := fmt.Sprintf(cacheKey, id)
+
+	return c.cache.Set(ctx, key, stats, cache.TTLMedium)
+}

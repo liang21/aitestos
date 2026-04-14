@@ -32,6 +32,9 @@ type ProjectRepository interface {
 
 	// GetStatistics retrieves aggregated project statistics
 	GetStatistics(ctx context.Context, id uuid.UUID) (*ProjectStatistics, error)
+
+	// SetStatistics stores statistics in cache (for warmup)
+	SetStatistics(ctx context.Context, id uuid.UUID, stats *ProjectStatistics) error
 }
 
 // ModuleRepository defines the interface for module persistence

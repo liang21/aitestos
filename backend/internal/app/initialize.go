@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"time"
@@ -178,32 +179,69 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 		log.Warn().Msg("Vector repository not available, knowledge features limited to storage only")
 	}
 
-	// 5. Initialize Services
-	authService := identitySvc.NewAuthService(userRepo, cfg.JWT.Secret, redisClient)
-	projectService := projectSvc.NewProjectService(projectRepository, moduleRepo, configRepo)
-	caseService := testcaseSvc.NewCaseService(caseRepo, moduleRepoAdapter, projectRepoAdapter)
-	planService := testplanSvc.NewPlanService(planRepo, resultRepo, caseRepo)
-	documentService := knowledgeSvc.NewDocumentService(documentRepo, chunkRepo, vectorRepoAdapter)
+	// 5. Create observability middleware (must be before services that need metrics)
+	logger = zerolog.New(os.Stdout).With().
+		Str("service_name", "aitestos").
+		Logger()
+	logger = logger.With().Timestamp().Logger()
 
-	// Generation service requires LLM and RAG
+	metrics := httpmiddleware.NewMetrics("aitestos")
+	prometheus.MustRegister(metrics.RequestsTotal, metrics.RequestDuration)
+
+	projectMetrics := httpmiddleware.NewProjectMetrics("aitestos")
+	prometheus.MustRegister(projectMetrics.QueryDuration)
+
+	// 6. Initialize Services
+	// Identity service
+	authService := identitySvc.NewAuthService(userRepo, cfg.JWT.Secret, redisClient)
+
+	// Project service
+	projectService := projectSvc.NewProjectService(projectRepository, moduleRepo, configRepo, projectMetrics)
+
+	// Testcase service
+	caseService := testcaseSvc.NewCaseService(caseRepo, moduleRepoAdapter, projectRepoAdapter)
+
+	// Testplan service
+	planService := testplanSvc.NewPlanService(planRepo, resultRepo, caseRepo)
+
+	// Generation service (may be placeholder if LLM/RAG unavailable)
 	var generationService generationSvc.GenerationService
 	if llmClient != nil && ragSvc != nil {
-		generationService = generationSvc.NewGenerationService(
+		// Create adapter for LLM client to work with RAG service
+		var llmAdapter *ragLLMAdapter
+		if llmClient != nil {
+			llmAdapter = &ragLLMAdapter{client: llmClient}
+		}
+
+		// Wire LLM adapter to RAG service
+		if llmAdapter != nil {
+			ragSvc = ragSvc.WithLLMService(llmAdapter)
+		}
+
+		// Create RAG service adapter for generation service
+		ragAdapter := &ragServiceAdapter{service: ragSvc}
+
+		// Create LLM service adapter for generation service
+		llmSvcAdapter := &llmServiceAdapter{client: llmClient}
+
+		genSvc := generationSvc.NewGenerationService(
 			taskRepo,
 			draftRepo,
-			ragSvc,
-			llmClient,
+			ragAdapter,
+			llmSvcAdapter,
 			genModuleRepoAdapter,
 			genProjectRepoAdapter,
 			caseRepo,
 		)
+		generationService = genSvc
 	} else {
-		log.Warn().Msg("LLM or RAG service unavailable, generation features disabled")
-		// Create a placeholder service that returns proper errors
 		generationService = &placeholderGenerationService{}
 	}
 
-	// 6. Initialize Handlers
+	// Knowledge service
+	documentService := knowledgeSvc.NewDocumentService(documentRepo, chunkRepo, vectorRepoAdapter)
+
+	// 7. Initialize Handlers
 	identityHandler := handler.NewIdentityHandler(authService)
 	projectHandler := handler.NewProjectHandler(projectService)
 	caseHandler := handler.NewTestCaseHandler(caseService)
@@ -211,7 +249,7 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 	generationHandler := handler.NewGenerationHandler(generationService)
 	knowledgeHandler := handler.NewKnowledgeHandler(documentService)
 
-	// 7. Create HTTP handlers struct
+	// 8. Create HTTP handlers struct
 	handlers := &httptransport.Handlers{
 		Identity:   identityHandler,
 		Project:    projectHandler,
@@ -220,15 +258,6 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 		Generation: generationHandler,
 		Knowledge:  knowledgeHandler,
 	}
-
-	// 8. Create observability middleware
-	logger = zerolog.New(os.Stdout).With().
-		Str("service_name", "aitestos").
-		Logger()
-	logger = logger.With().Timestamp().Logger()
-
-	metrics := httpmiddleware.NewMetrics("aitestos")
-	prometheus.MustRegister(metrics.RequestsTotal, metrics.RequestDuration)
 
 	// 9. Create router with authentication middleware
 	router := httptransport.NewRouterWithMiddleware(handlers, cfg.JWT.Secret, logger, metrics)
@@ -246,7 +275,21 @@ func Initialize(cfg *config.Config) (*App, func(), error) {
 	// 12. Create application
 	app := New(cfg, httpServer, shutdownMgr)
 
-	// 13. Return cleanup function
+	// 13. Start background warmup (don't block startup)
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		// Wait a bit for server to be ready
+		time.Sleep(2 * time.Second)
+
+		// Use baseProjectRepository (non-cached) for warmup
+		if err := WarmupProjectStats(ctx, baseProjectRepository, cacheClient, 10); err != nil {
+			log.Warn().Err(err).Msg("Project statistics warmup failed")
+		}
+	}()
+
+	// 14. Return cleanup function
 	cleanup := func() {
 		log.Info().Msg("Running cleanup...")
 	}
@@ -418,4 +461,64 @@ func (s *placeholderGenerationService) BatchConfirm(ctx context.Context, req *ge
 
 func (s *placeholderGenerationService) ProcessTask(ctx context.Context, taskID uuid.UUID) error {
 	return fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
+}
+
+// ragLLMAdapter adapts llm.Client to the rag.LLMService interface
+type ragLLMAdapter struct {
+	client *llm.Client
+}
+
+func (a *ragLLMAdapter) GenerateEmbedding(ctx context.Context, text string) ([]float32, error) {
+	// Call the LLM client's GenerateEmbedding method
+	resp, err := a.client.GenerateEmbedding(ctx, &generationSvc.GenerateEmbeddingRequest{Text: text})
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert []byte to []float32
+	return bytesToFloat32Slice(resp.Embedding), nil
+}
+
+// bytesToFloat32Slice converts a byte slice to a float32 slice
+func bytesToFloat32Slice(data []byte) []float32 {
+	if len(data) == 0 {
+		return nil
+	}
+	result := make([]float32, len(data)/4)
+	for i := 0; i < len(result); i++ {
+		// Convert 4 bytes to float32 (little-endian)
+		bits := uint32(data[i*4]) | uint32(data[i*4+1])<<8 | uint32(data[i*4+2])<<16 | uint32(data[i*4+3])<<24
+		result[i] = math.Float32frombits(bits)
+	}
+	return result
+}
+
+// ragServiceAdapter adapts rag.Service to the generation.RAGService interface
+type ragServiceAdapter struct {
+	service *rag.Service
+}
+
+func (a *ragServiceAdapter) Retrieve(ctx context.Context, req *generationSvc.RetrieveRequest) (*generationSvc.RetrieveResult, error) {
+	return a.service.Retrieve(ctx, req)
+}
+
+func (a *ragServiceAdapter) CalculateConfidence(chunks []*generationSvc.RetrievedChunk) domaintestcase.Confidence {
+	return a.service.CalculateConfidence(chunks)
+}
+
+// llmServiceAdapter adapts llm.Client to the generation.LLMService interface
+type llmServiceAdapter struct {
+	client *llm.Client
+}
+
+func (a *llmServiceAdapter) GenerateCases(ctx context.Context, req *generationSvc.GenerateCasesRequest) (*generationSvc.GenerateCasesResponse, error) {
+	return a.client.GenerateCases(ctx, req)
+}
+
+func (a *llmServiceAdapter) GenerateEmbedding(ctx context.Context, req *generationSvc.GenerateEmbeddingRequest) (*generationSvc.GenerateEmbeddingResponse, error) {
+	return a.client.GenerateEmbedding(ctx, req)
+}
+
+func (a *llmServiceAdapter) GetModelVersion() string {
+	return a.client.GetModelVersion()
 }

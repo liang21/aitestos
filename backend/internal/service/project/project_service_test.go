@@ -185,6 +185,11 @@ func (m *MockProjectRepository) GetStatistics(ctx context.Context, id uuid.UUID)
 	}, nil
 }
 
+func (m *MockProjectRepository) SetStatistics(ctx context.Context, id uuid.UUID, stats *project.ProjectStatistics) error {
+	// Mock implementation - no-op for tests
+	return nil
+}
+
 // MockModuleRepository implements project.ModuleRepository for testing
 type MockModuleRepository struct {
 	modules    map[uuid.UUID]*project.Module
@@ -354,7 +359,7 @@ func TestProjectService_CreateProject(t *testing.T) {
 	projectRepo := NewMockProjectRepository()
 	moduleRepo := NewMockModuleRepository()
 	configRepo := NewMockProjectConfigRepository()
-	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	userID := uuid.New()
 
@@ -482,7 +487,7 @@ func TestProjectService_GetProject(t *testing.T) {
 	projectRepo := NewMockProjectRepository()
 	moduleRepo := NewMockModuleRepository()
 	configRepo := NewMockProjectConfigRepository()
-	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create test project
 	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
@@ -543,7 +548,7 @@ func TestProjectService_ListProjects(t *testing.T) {
 	projectRepo := NewMockProjectRepository()
 	moduleRepo := NewMockModuleRepository()
 	configRepo := NewMockProjectConfigRepository()
-	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create test projects
 	for i := 0; i < 5; i++ {
@@ -625,7 +630,7 @@ func TestProjectService_UpdateProject(t *testing.T) {
 	projectRepo := NewMockProjectRepository()
 	moduleRepo := NewMockModuleRepository()
 	configRepo := NewMockProjectConfigRepository()
-	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create test project
 	testProject, _ := project.NewProject("Original Name", "ORIG", "Original Description")
@@ -704,7 +709,7 @@ func TestProjectService_DeleteProject(t *testing.T) {
 	projectRepo := NewMockProjectRepository()
 	moduleRepo := NewMockModuleRepository()
 	configRepo := NewMockProjectConfigRepository()
-	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create test project
 	testProject, _ := project.NewProject("To Delete", "DEL", "Will be deleted")
@@ -756,7 +761,7 @@ func TestProjectService_CreateModule(t *testing.T) {
 	projectRepo := NewMockProjectRepository()
 	moduleRepo := NewMockModuleRepository()
 	configRepo := NewMockProjectConfigRepository()
-	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create test project
 	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
@@ -860,7 +865,7 @@ func TestProjectService_SetConfig(t *testing.T) {
 	projectRepo := NewMockProjectRepository()
 	moduleRepo := NewMockModuleRepository()
 	configRepo := NewMockProjectConfigRepository()
-	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create test project
 	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
@@ -930,7 +935,7 @@ func TestProjectService_GetProjectStatistics(t *testing.T) {
 	projectRepo := NewMockProjectRepository()
 	moduleRepo := NewMockModuleRepository()
 	configRepo := NewMockProjectConfigRepository()
-	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create a test project
 	proj, err := project.NewProject("Test Project", "TEST", "A test project")
@@ -1000,7 +1005,7 @@ func TestProjectService_ImportConfigs(t *testing.T) {
 	projectRepo := NewMockProjectRepository()
 	moduleRepo := NewMockModuleRepository()
 	configRepo := NewMockProjectConfigRepository()
-	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create a test project
 	proj, err := project.NewProject("Test Project", "TEST", "A test project")
@@ -1112,7 +1117,7 @@ func TestProjectService_ExportConfigs(t *testing.T) {
 	projectRepo := NewMockProjectRepository()
 	moduleRepo := NewMockModuleRepository()
 	configRepo := NewMockProjectConfigRepository()
-	service := NewProjectService(projectRepo, moduleRepo, configRepo)
+	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create a test project
 	proj, err := project.NewProject("Test Project", "TEST", "A test project")

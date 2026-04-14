@@ -5,9 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/liang21/aitestos/internal/domain/project"
+	httpmiddleware "github.com/liang21/aitestos/internal/transport/http/middleware"
+	"github.com/rs/zerolog/log"
 )
 
 // CreateProjectRequest contains project creation data
@@ -76,6 +79,7 @@ type ProjectServiceImpl struct {
 	projectRepo project.ProjectRepository
 	moduleRepo  project.ModuleRepository
 	configRepo  project.ProjectConfigRepository
+	metrics     *httpmiddleware.ProjectMetrics
 }
 
 // NewProjectService creates a new ProjectService instance
@@ -83,11 +87,13 @@ func NewProjectService(
 	projectRepo project.ProjectRepository,
 	moduleRepo project.ModuleRepository,
 	configRepo project.ProjectConfigRepository,
+	metrics *httpmiddleware.ProjectMetrics,
 ) ProjectService {
 	return &ProjectServiceImpl{
 		projectRepo: projectRepo,
 		moduleRepo:  moduleRepo,
 		configRepo:  configRepo,
+		metrics:     metrics,
 	}
 }
 
@@ -378,6 +384,9 @@ func (s *ProjectServiceImpl) ExportConfigs(ctx context.Context, projectID uuid.U
 
 // GetProjectStatistics retrieves project statistics
 func (s *ProjectServiceImpl) GetProjectStatistics(ctx context.Context, id uuid.UUID) (*project.ProjectStatistics, error) {
+	start := time.Now()
+	log.Debug().Str("project_id", id.String()).Msg("Fetching project statistics")
+
 	// Validate project exists
 	_, err := s.projectRepo.FindByID(ctx, id)
 	if err != nil {
@@ -387,7 +396,30 @@ func (s *ProjectServiceImpl) GetProjectStatistics(ctx context.Context, id uuid.U
 	// Get statistics from repository
 	stats, err := s.projectRepo.GetStatistics(ctx, id)
 	if err != nil {
+		if s.metrics != nil {
+			s.metrics.QueryDuration.WithLabelValues("error").Observe(time.Since(start).Seconds())
+		}
 		return nil, fmt.Errorf("get project statistics: %w", err)
+	}
+
+	duration := time.Since(start)
+
+	// Log based on duration threshold
+	if duration > 100*time.Millisecond {
+		log.Warn().
+			Str("project_id", id.String()).
+			Dur("duration", duration).
+			Msg("Project statistics query is slow")
+	} else {
+		log.Debug().
+			Str("project_id", id.String()).
+			Dur("duration", duration).
+			Msg("Project statistics query completed")
+	}
+
+	// Record metrics
+	if s.metrics != nil {
+		s.metrics.QueryDuration.WithLabelValues("success").Observe(duration.Seconds())
 	}
 
 	return stats, nil
