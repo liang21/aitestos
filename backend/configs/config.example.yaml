@@ -1,0 +1,66 @@
+# aitestos Configuration Example
+# Copy this file to config.yaml and update values as needed
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  shutdown_timeout: "30s"
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "${DB_PASSWORD}"  # Use environment variable
+  database: "aitestos"
+  ssl_mode: "disable"
+  max_open_conns: 25
+  max_idle_conns: 5
+  conn_max_lifetime: "5m"
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: "${REDIS_PASSWORD}"  # Use environment variable
+  db: 0
+
+# Cache configuration (uses Redis backend)
+cache:
+  enabled: true
+  default_ttl: 300      # Default TTL in seconds (5 minutes)
+  stats_ttl: 900        # Statistics TTL in seconds (15 minutes)
+
+llm:
+  provider: "deepseek"
+  api_key: "${DEEPSEEK_API_KEY}"  # Use environment variable
+  base_url: "https://api.deepseek.com"
+  model: "deepseek-chat"
+  embedding_model: "deepseek-embedding"
+  timeout: "60s"
+  max_retries: 3
+
+milvus:
+  host: "localhost"
+  port: 19530
+  database: "aitestos"
+  collection: "document_chunks"
+
+storage:
+  provider: "minio"
+  endpoint: "localhost:9000"
+  region: "us-east-1"
+  bucket: "aitestos"
+  access_key: "${MINIO_ACCESS_KEY}"
+  secret_key: "${MINIO_SECRET_KEY}"
+  use_ssl: false
+
+rabbitmq:
+  url: "amqp://guest:guest@localhost:5672/"
+  exchange: "aitestos.events"
+
+jwt:
+  secret: "${JWT_SECRET}"  # Must be at least 8 characters
+  expire_time: "2h"
+
+log:
+  level: "info"  # trace, debug, info, warn, error, fatal, panic
+  json: true

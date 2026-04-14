@@ -1,0 +1,19 @@
+# Environment
+.env
+
+# Build
+bin/
+server
+
+# Test
+coverage.out
+*.test
+repository.test
+
+# IDE
+.idea/
+
+# OS
+.DS_Store
+
+.claude/settings.local.json
