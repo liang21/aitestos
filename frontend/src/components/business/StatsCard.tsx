@@ -1,4 +1,4 @@
-import { Card, Statistic } from '@arco-design/web-react'
+import { Card, Statistic, Spin } from '@arco-design/web-react'
 import type { ReactNode } from 'react'
 import { TrendingDown, TrendingUp } from 'lucide-react'
 
@@ -21,6 +21,8 @@ export interface StatsCardProps {
   suffix?: string
   /** Value precision (decimal places) */
   precision?: number
+  /** Loading state */
+  loading?: boolean
 }
 
 /**
@@ -37,6 +39,7 @@ export function StatsCard({
   style,
   suffix,
   precision = 0,
+  loading,
 }: StatsCardProps) {
   const renderTrend = () => {
     if (trend === undefined || trendValue === undefined) return null
@@ -49,6 +52,16 @@ export function StatsCard({
         <TrendIcon className="w-4 h-4" />
         <span>{trendValue}%</span>
       </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <Card className={className} style={style} bordered={false}>
+        <div className="flex items-center justify-center h-24">
+          <Spin />
+        </div>
+      </Card>
     )
   }
 
