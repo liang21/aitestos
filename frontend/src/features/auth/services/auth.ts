@@ -33,10 +33,10 @@ export const authApi = {
     refresh_token: string
     user: UserJSON
   }> {
-    return post<LoginRequest, { access_token: string; refresh_token: string; user: UserJSON }>(
-      '/auth/login',
-      credentials
-    )
+    return post<
+      LoginRequest,
+      { access_token: string; refresh_token: string; user: UserJSON }
+    >('/auth/login', credentials)
   },
 
   /**
@@ -51,15 +51,13 @@ export const authApi = {
    * Refresh access token
    * POST /auth/refresh
    */
-  async refresh(
-    refreshToken: string
-  ): Promise<{
+  async refresh(refreshToken: string): Promise<{
     access_token: string
     refresh_token: string
   }> {
-    return post<{ refresh_token: string }, { access_token: string; refresh_token: string }>(
-      '/auth/refresh',
-      { refresh_token: refreshToken }
-    )
+    return post<
+      { refresh_token: string },
+      { access_token: string; refresh_token: string }
+    >('/auth/refresh', { refresh_token: refreshToken })
   },
 }

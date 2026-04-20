@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate, Route } from 'react-router-dom'
 import { RouteGuard } from './RouteGuard'
+import { AuthErrorBoundary } from '../components/ErrorBoundary'
 import { App } from '../app/App'
 
 /**
@@ -7,7 +8,7 @@ import { App } from '../app/App'
  *
  * Defines all application routes with lazy loading
  * Public routes: /login, /register
- * Protected routes: wrapped with RouteGuard
+ * Protected routes: wrapped with RouteGuard and AuthErrorBoundary
  */
 export const router = createBrowserRouter([
   {
@@ -18,25 +19,37 @@ export const router = createBrowserRouter([
         index: true,
         element: <Navigate to="/projects" replace />,
       },
-      // Public routes
+      // Public routes (also wrapped with error boundary)
       {
         path: '/login',
         lazy: () =>
           import('../features/auth/components/LoginPage').then((m) => ({
-            Component: m.LoginPage,
+            Component: () => (
+              <AuthErrorBoundary>
+                <m.LoginPage />
+              </AuthErrorBoundary>
+            ),
           })),
       },
       {
         path: '/register',
         lazy: () =>
           import('../features/auth/components/RegisterPage').then((m) => ({
-            Component: m.RegisterPage,
+            Component: () => (
+              <AuthErrorBoundary>
+                <m.RegisterPage />
+              </AuthErrorBoundary>
+            ),
           })),
       },
       // Protected routes (require authentication)
       {
         path: '/',
-        element: <RouteGuard />,
+        element: (
+          <AuthErrorBoundary>
+            <RouteGuard />
+          </AuthErrorBoundary>
+        ),
         children: [
           {
             path: 'projects',
@@ -55,11 +68,11 @@ export const router = createBrowserRouter([
       // 404 fallback
       {
         path: '*',
-        element: () => import('../components/NotFoundPage').then((m) => ({
-          Component: m.NotFoundPage,
-        })),
+        element: () =>
+          import('../components/NotFoundPage').then((m) => ({
+            Component: m.NotFoundPage,
+          })),
       },
     ],
   },
 ])
-

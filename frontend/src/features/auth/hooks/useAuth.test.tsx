@@ -13,7 +13,10 @@ describe('useAuth hooks', () => {
 
   beforeEach(() => {
     queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     })
     vi.clearAllMocks()
     // Reset store
@@ -27,9 +30,7 @@ describe('useAuth hooks', () => {
 
   function wrapper({ children }: { children: React.ReactNode }) {
     return (
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     )
   }
 
@@ -64,9 +65,7 @@ describe('useAuth hooks', () => {
     })
 
     it('should throw error on login failure', async () => {
-      vi.mocked(authApi.login).mockRejectedValue(
-        new Error('邮箱或密码错误')
-      )
+      vi.mocked(authApi.login).mockRejectedValue(new Error('邮箱或密码错误'))
 
       const { result } = renderHook(() => useLogin(), { wrapper })
 
@@ -121,9 +120,7 @@ describe('useAuth hooks', () => {
     })
 
     it('should throw error on registration failure', async () => {
-      vi.mocked(authApi.register).mockRejectedValue(
-        new Error('邮箱已存在')
-      )
+      vi.mocked(authApi.register).mockRejectedValue(new Error('邮箱已存在'))
 
       const { result } = renderHook(() => useRegister(), { wrapper })
 

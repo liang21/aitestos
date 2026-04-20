@@ -10,7 +10,10 @@ describe('LoginPage', () => {
 
   beforeEach(() => {
     queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     })
     vi.clearAllMocks()
     useAuthStore.getState().reset()
@@ -19,9 +22,7 @@ describe('LoginPage', () => {
   function renderWithRouter(ui: React.ReactElement) {
     return render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          {ui}
-        </MemoryRouter>
+        <MemoryRouter>{ui}</MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -32,9 +33,7 @@ describe('LoginPage', () => {
 
       expect(screen.getByText('邮箱')).toBeInTheDocument()
       expect(screen.getByText('密码')).toBeInTheDocument()
-      expect(
-        screen.getByRole('button', { name: '登录' })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '登录' })).toBeInTheDocument()
     })
 
     it('should show register link', () => {

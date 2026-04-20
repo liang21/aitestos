@@ -10,16 +10,16 @@ describe('RouteGuard', () => {
 
   beforeEach(() => {
     queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     })
     vi.clearAllMocks()
     useAuthStore.getState().reset()
   })
 
-  function renderWithRouter(
-    ui: React.ReactElement,
-    initialEntries = ['/']
-  ) {
+  function renderWithRouter(ui: React.ReactElement, initialEntries = ['/']) {
     return render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={initialEntries}>

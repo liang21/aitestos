@@ -9,7 +9,10 @@ describe('RegisterPage', () => {
 
   beforeEach(() => {
     queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     })
     vi.clearAllMocks()
   })
@@ -17,9 +20,7 @@ describe('RegisterPage', () => {
   function renderWithRouter(ui: React.ReactElement) {
     return render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          {ui}
-        </MemoryRouter>
+        <MemoryRouter>{ui}</MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -47,7 +48,9 @@ describe('RegisterPage', () => {
 
       expect(screen.getByPlaceholderText('请输入用户名')).toBeInTheDocument()
       expect(screen.getByPlaceholderText('请输入邮箱')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('请输入密码（至少 8 位字符）')).toBeInTheDocument()
+      expect(
+        screen.getByPlaceholderText('请输入密码（至少 8 位字符）')
+      ).toBeInTheDocument()
     })
 
     it('should display role options', () => {

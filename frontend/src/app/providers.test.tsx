@@ -1,8 +1,19 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { Providers } from './providers'
 
 describe('Providers component', () => {
+  beforeEach(() => {
+    // Mock localStorage for TokenValidator
+    const localStorageMock = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    }
+    vi.stubGlobal('localStorage', localStorageMock)
+  })
+
   it('should render children correctly', () => {
     render(
       <Providers>

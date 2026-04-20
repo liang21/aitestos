@@ -1,9 +1,18 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Form, Input, Button, Message, Card, Radio } from '@arco-design/web-react'
+import {
+  Form,
+  Input,
+  Button,
+  Message,
+  Card,
+  Radio,
+} from '@arco-design/web-react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useRegister } from '../hooks/useAuth'
+import { useRateLimit, RateLimitConfig } from '../../../lib/hooks/useRateLimit'
+import { RateLimiter } from '../../../components/RateLimiter'
 
 /**
  * Register schema validation
@@ -13,10 +22,7 @@ const registerSchema = z.object({
     .string()
     .min(3, '用户名至少为 3 个字符')
     .max(32, '用户名最多为 32 个字符'),
-  email: z
-    .string()
-    .min(1, '请输入邮箱')
-    .email('请输入有效的邮箱地址'),
+  email: z.string().min(1, '请输入邮箱').email('请输入有效的邮箱地址'),
   password: z
     .string()
     .min(8, '密码至少为 8 位字符')
@@ -31,11 +37,14 @@ type RegisterFormData = z.infer<typeof registerSchema>
 /**
  * RegisterPage Component
  *
- * Handles new user registration with form validation
+ * Handles new user registration with form validation and rate limiting
  */
 export function RegisterPage() {
   const navigate = useNavigate()
   const register = useRegister()
+
+  // Rate limiting
+  const rateLimit = useRateLimit(RateLimitConfig.REGISTER)
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -48,14 +57,28 @@ export function RegisterPage() {
   })
 
   const handleSubmit = async (data: RegisterFormData) => {
+    // Check rate limit before attempting registration
+    if (!rateLimit.canAttempt()) {
+      return
+    }
+
     try {
       await register.mutateAsync(data)
+      // Reset rate limit on successful registration
+      rateLimit.recordAttempt(true)
+
       Message.success('注册成功，请登录')
       navigate('/login')
     } catch (error) {
+      // Record failed attempt
+      rateLimit.recordAttempt(false)
+
       Message.error(error instanceof Error ? error.message : '注册失败')
     }
   }
+
+  const isDisabled =
+    register.isPending || register.isSuccess || rateLimit.isLocked
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -65,97 +88,109 @@ export function RegisterPage() {
           <p className="text-gray-500">创建您的账号</p>
         </div>
 
-        <Form onSubmit={form.handleSubmit(handleSubmit)} layout="vertical">
-          <Form.Item
-            field="username"
-            label="用户名"
-            required
-            rules={[
-              { required: true, message: '请输入用户名' },
-              {
-                minLength: 3,
-                message: '用户名至少为 3 个字符',
-              },
-              {
-                maxLength: 32,
-                message: '用户名最多为 32 个字符',
-              },
-            ]}
-          >
-            <Input
-              placeholder="请输入用户名"
-              size="large"
-              {...form.register('username')}
-            />
-          </Form.Item>
-
-          <Form.Item
-            field="email"
-            label="邮箱"
-            required
-            rules={[
-              { required: true, message: '请输入邮箱' },
-              { type: 'email', message: '请输入有效的邮箱地址' },
-            ]}
-          >
-            <Input
-              placeholder="请输入邮箱"
-              size="large"
-              {...form.register('email')}
-            />
-          </Form.Item>
-
-          <Form.Item
-            field="password"
-            label="密码"
-            required
-            rules={[
-              { required: true, message: '请输入密码' },
-              { minLength: 8, message: '密码至少为 8 位字符' },
-              { maxLength: 100, message: '密码最多为 100 个字符' },
-            ]}
-          >
-            <Input.Password
-              placeholder="请输入密码（至少 8 位字符）"
-              size="large"
-              {...form.register('password')}
-            />
-          </Form.Item>
-
-          <Form.Item
-            field="role"
-            label="角色"
-            required
-            rules={[{ required: true, message: '请选择用户角色' }]}
-          >
-            <Radio.Group
-              {...form.register('role')}
-              options={[
-                { label: '普通用户', value: 'normal' },
-                { label: '管理员', value: 'admin' },
-                { label: '超级管理员', value: 'super_admin' },
+        <RateLimiter
+          isLocked={rateLimit.isLocked}
+          remainingAttempts={rateLimit.remainingAttempts}
+          maxAttempts={RateLimitConfig.REGISTER.maxAttempts}
+          remainingTime={rateLimit.remainingTime}
+        >
+          <Form onSubmit={form.handleSubmit(handleSubmit)} layout="vertical">
+            <Form.Item
+              field="username"
+              label="用户名"
+              required
+              rules={[
+                { required: true, message: '请输入用户名' },
+                {
+                  minLength: 3,
+                  message: '用户名至少为 3 个字符',
+                },
+                {
+                  maxLength: 32,
+                  message: '用户名最多为 32 个字符',
+                },
               ]}
-            />
-          </Form.Item>
+            >
+              <Input
+                placeholder="请输入用户名"
+                size="large"
+                disabled={isDisabled}
+                {...form.register('username')}
+              />
+            </Form.Item>
 
-          <Button
-            type="primary"
-            size="large"
-            long
-            htmlType="submit"
-            loading={register.isPending}
-            disabled={register.isSuccess}
-          >
-            注册
-          </Button>
+            <Form.Item
+              field="email"
+              label="邮箱"
+              required
+              rules={[
+                { required: true, message: '请输入邮箱' },
+                { type: 'email', message: '请输入有效的邮箱地址' },
+              ]}
+            >
+              <Input
+                placeholder="请输入邮箱"
+                size="large"
+                disabled={isDisabled}
+                {...form.register('email')}
+              />
+            </Form.Item>
 
-          <div className="mt-4 text-center text-sm text-gray-500">
-            已有账号？
-            <Link to="/login" className="ml-1 text-blue-500 hover:underline">
-              立即登录
-            </Link>
-          </div>
-        </Form>
+            <Form.Item
+              field="password"
+              label="密码"
+              required
+              rules={[
+                { required: true, message: '请输入密码' },
+                { minLength: 8, message: '密码至少为 8 位字符' },
+                { maxLength: 100, message: '密码最多为 100 个字符' },
+              ]}
+            >
+              <Input.Password
+                placeholder="请输入密码（至少 8 位字符）"
+                size="large"
+                disabled={isDisabled}
+                {...form.register('password')}
+              />
+            </Form.Item>
+
+            <Form.Item
+              field="role"
+              label="角色"
+              required
+              rules={[{ required: true, message: '请选择用户角色' }]}
+            >
+              <Radio.Group
+                {...form.register('role')}
+                options={[
+                  { label: '普通用户', value: 'normal' },
+                  { label: '管理员', value: 'admin' },
+                  { label: '超级管理员', value: 'super_admin' },
+                ]}
+              />
+            </Form.Item>
+
+            <Button
+              type="primary"
+              size="large"
+              long
+              htmlType="submit"
+              loading={register.isPending}
+              disabled={isDisabled}
+            >
+              {rateLimit.isLocked
+                ? `请等待 ${rateLimit.remainingTime} 秒`
+                : '注册'}
+            </Button>
+
+            <div className="mt-4 text-center text-sm text-gray-500">
+              已有账号？
+              <Link to="/login" className="ml-1 text-blue-500 hover:underline">
+                立即登录
+              </Link>
+            </div>
+          </Form>
+        </RateLimiter>
       </Card>
     </div>
   )

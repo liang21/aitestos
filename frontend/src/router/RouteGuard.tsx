@@ -8,6 +8,31 @@ interface RouteGuardProps {
 }
 
 /**
+ * Check if JWT token is expired by decoding the exp claim
+ * @param token - JWT access token
+ * @returns true if token is expired or invalid, false otherwise
+ */
+function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) {
+      return true // Invalid JWT format
+    }
+
+    const payload = JSON.parse(atob(parts[1]))
+    const exp = payload.exp
+    if (!exp) {
+      return true // No exp claim
+    }
+
+    const now = Math.floor(Date.now() / 1000)
+    return exp < now
+  } catch {
+    return true // Treat invalid tokens as expired
+  }
+}
+
+/**
  * RouteGuard Component
  *
  * Protects routes by checking authentication status and user role
@@ -15,7 +40,10 @@ interface RouteGuardProps {
  * - Checks token expiration via JWT exp claim
  * - Enforces admin role if requireAdmin is true
  */
-export function RouteGuard({ children, requireAdmin = false }: RouteGuardProps) {
+export function RouteGuard({
+  children,
+  requireAdmin = false,
+}: RouteGuardProps) {
   const location = useLocation()
   const { user, token, isAuthenticated, logout } = useAuthStore()
 
@@ -31,25 +59,8 @@ export function RouteGuard({ children, requireAdmin = false }: RouteGuardProps) 
     )
   }
 
-  // Check token expiration (decode JWT exp claim)
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    const exp = payload.exp
-    const now = Math.floor(Date.now() / 1000)
-
-    if (exp < now) {
-      // Token expired
-      logout()
-      return (
-        <Navigate
-          to="/login"
-          state={{ from: location.pathname + location.search }}
-          replace
-        />
-      )
-    }
-  } catch {
-    // Invalid token format
+  // Check token expiration
+  if (isTokenExpired(token)) {
     logout()
     return (
       <Navigate

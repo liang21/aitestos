@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { useAuthStore } from './useAuthStore'
 import { authApi } from '../services/auth'
+import { logAuthError } from '../../../lib/logger'
 
 /**
  * Login mutation hook
@@ -8,7 +9,13 @@ import { authApi } from '../services/auth'
  */
 export function useLogin() {
   const login = useMutation({
-    mutationFn: async ({ email, password }: { email: string; password: string }) => {
+    mutationFn: async ({
+      email,
+      password,
+    }: {
+      email: string
+      password: string
+    }) => {
       return authApi.login({ email, password })
     },
     onSuccess: async (data) => {
@@ -29,7 +36,7 @@ export function useLogin() {
     },
     onError: (error: Error) => {
       // Error will be handled by the component
-      console.error('Login failed:', error)
+      logAuthError('Login failed', error)
     },
   })
 
@@ -59,7 +66,7 @@ export function useRegister() {
       // Registration successful - component will handle navigation
     },
     onError: (error: Error) => {
-      console.error('Registration failed:', error)
+      logAuthError('Registration failed', error)
     },
   })
 
@@ -90,9 +97,9 @@ export function useRefresh() {
         })
       }
     },
-    onError: () => {
+    onError: (error: Error) => {
       // Refresh failed - logout will be called by useAuthStore.refresh
-      console.error('Token refresh failed')
+      logAuthError('Token refresh failed', error)
     },
   })
 

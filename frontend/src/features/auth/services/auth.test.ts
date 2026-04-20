@@ -64,11 +64,7 @@ describe('authApi', () => {
     })
 
     it('should throw error on network failure', async () => {
-      server.use(
-        http.post('/api/v1/auth/login', () =>
-          HttpResponse.error()
-        )
-      )
+      server.use(http.post('/api/v1/auth/login', () => HttpResponse.error()))
 
       await expect(
         authApi.login({ email: 'test@example.com', password: 'password' })
@@ -147,9 +143,9 @@ describe('authApi', () => {
 
     it('should throw error on 401 (invalid refresh token)', async () => {
       // Mock post to bypass the token refresh interceptor
-      const mockPost = vi.spyOn(requestModule, 'post').mockRejectedValue(
-        new Error('Request failed with status code 401')
-      )
+      const mockPost = vi
+        .spyOn(requestModule, 'post')
+        .mockRejectedValue(new Error('Request failed with status code 401'))
 
       await expect(authApi.refresh('invalid-token')).rejects.toThrow()
 
