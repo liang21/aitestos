@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { useAuthStore } from './useAuthStore'
-import { authApi } from '../services/auth'
-import { logAuthError } from '../../../lib/logger'
+import { authApi } from '@/features/auth/services/auth'
+import { logAuthError } from '@/lib/logger'
 
 /**
  * Login mutation hook

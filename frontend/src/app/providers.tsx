@@ -3,8 +3,8 @@ import type { ReactNode } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ConfigProvider } from '@arco-design/web-react'
-import { queryClient } from '../lib/query-client'
-import { useAuthStore } from '../features/auth/hooks/useAuthStore'
+import { queryClient } from '@/lib/query-client'
+import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
 
 interface ProvidersProps {
   children: ReactNode

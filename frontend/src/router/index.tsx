@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate, Route } from 'react-router-dom'
-import { RouteGuard } from './RouteGuard'
-import { AuthErrorBoundary } from '../components/ErrorBoundary'
-import { App } from '../app/App'
+import { RouteGuard } from '@/router/RouteGuard'
+import { AuthErrorBoundary } from '@/components/ErrorBoundary'
+import { App } from '@/app/App'
 
 /**
  * Application Router Configuration

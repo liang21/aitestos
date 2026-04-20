@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { UserJSON } from '../../../types/api'
+import type { UserJSON } from '@/types/api'
 
 /**
  * Authentication state managed by Zustand

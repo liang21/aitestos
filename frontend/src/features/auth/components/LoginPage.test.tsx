@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { LoginPage } from './LoginPage'
-import { useAuthStore } from '../hooks/useAuthStore'
+import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
 
 describe('LoginPage', () => {
   let queryClient: QueryClient

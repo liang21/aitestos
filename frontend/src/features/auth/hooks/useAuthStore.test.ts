@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useAuthStore } from './useAuthStore'
-import { authApi } from '../services/auth'
+import { authApi } from '@/features/auth/services/auth'
 
-vi.mock('../services/auth')
+vi.mock('@/features/auth/services/auth')
 
 type MockLocalStorage = {
   getItem: ReturnType<typeof vi.fn>

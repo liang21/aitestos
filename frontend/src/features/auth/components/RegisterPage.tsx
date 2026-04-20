@@ -10,9 +10,9 @@ import {
   Radio,
 } from '@arco-design/web-react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useRegister } from '../hooks/useAuth'
-import { useRateLimit, RateLimitConfig } from '../../../lib/hooks/useRateLimit'
-import { RateLimiter } from '../../../components/RateLimiter'
+import { useRegister } from '@/features/auth/hooks/useAuth'
+import { useRateLimit, RateLimitConfig } from '@/lib/hooks/useRateLimit'
+import { RateLimiter } from '@/components/RateLimiter'
 
 /**
  * Register schema validation

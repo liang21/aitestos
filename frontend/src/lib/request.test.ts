@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import request from './request'
-import { server } from '../../tests/msw/server'
+import { server } from '@/tests/msw/server'
 import { http, HttpResponse } from 'msw'
 
 type MockLocalStorage = {

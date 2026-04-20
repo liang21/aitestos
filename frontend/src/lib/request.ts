@@ -1,5 +1,5 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
-import type { RefreshResponse } from '../types/api'
+import type { RefreshResponse } from '@/types/api'
 
 // ============================================================================
 // Token Refresh State

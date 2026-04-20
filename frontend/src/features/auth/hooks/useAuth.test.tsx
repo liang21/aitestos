@@ -3,10 +3,10 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useLogin, useRegister } from './useAuth'
 import { useAuthStore } from './useAuthStore'
-import { authApi } from '../services/auth'
-import { server } from '../../../../tests/msw/server'
+import { authApi } from '@/features/auth/services/auth'
+import { server } from '@/tests/msw/server'
 
-vi.mock('../services/auth')
+vi.mock('@/features/auth/services/auth')
 
 describe('useAuth hooks', () => {
   let queryClient: QueryClient

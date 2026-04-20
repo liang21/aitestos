@@ -3,14 +3,14 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { server } from '../../../tests/msw/server'
+import { server } from '@/tests/msw/server'
 import { http, HttpResponse } from 'msw'
-import { LoginPage } from '../../features/auth/components/LoginPage'
-import { RegisterPage } from '../../features/auth/components/RegisterPage'
-import { useAuthStore } from '../../features/auth/hooks/useAuthStore'
-import { AuthErrorBoundary } from '../../components/ErrorBoundary'
+import { LoginPage } from '@/features/auth/components/LoginPage'
+import { RegisterPage } from '@/features/auth/components/RegisterPage'
+import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
+import { AuthErrorBoundary } from '@/components/ErrorBoundary'
 
-vi.mock('../../features/auth/services/auth')
+vi.mock('@/features/auth/services/auth')
 
 describe('Authentication Integration Tests', () => {
   let queryClient: QueryClient
@@ -43,7 +43,7 @@ describe('Authentication Integration Tests', () => {
 
   describe('Complete Registration Flow', () => {
     it('should successfully register a new user and redirect to login', async () => {
-      const { authApi } = await import('../../features/auth/services/auth')
+      const { authApi } = await import('@/features/auth/services/auth')
 
       // Mock successful registration
       vi.mocked(authApi).register = vi.fn().mockResolvedValue({
@@ -91,7 +91,7 @@ describe('Authentication Integration Tests', () => {
     })
 
     it('should handle registration errors gracefully', async () => {
-      const { authApi } = await import('../../features/auth/services/auth')
+      const { authApi } = await import('@/features/auth/services/auth')
 
       // Mock registration failure
       vi.mocked(authApi).register = vi
@@ -127,7 +127,7 @@ describe('Authentication Integration Tests', () => {
 
   describe('Complete Login Flow', () => {
     it('should successfully login and update auth store', async () => {
-      const { authApi } = await import('../../features/auth/services/auth')
+      const { authApi } = await import('@/features/auth/services/auth')
 
       const mockUser = {
         id: 'user-123',
@@ -174,7 +174,7 @@ describe('Authentication Integration Tests', () => {
     })
 
     it('should handle login errors and keep user unauthenticated', async () => {
-      const { authApi } = await import('../../features/auth/services/auth')
+      const { authApi } = await import('@/features/auth/services/auth')
 
       // Mock login failure
       vi.mocked(authApi).login = vi
@@ -211,7 +211,7 @@ describe('Authentication Integration Tests', () => {
 
   describe('Protected Routes Behavior', () => {
     it('should redirect unauthenticated users to login', async () => {
-      const { RouteGuard } = await import('../../router/RouteGuard')
+      const { RouteGuard } = await import('@/router/RouteGuard')
 
       renderWithProviders(
         <Routes>
@@ -238,7 +238,7 @@ describe('Authentication Integration Tests', () => {
     })
 
     it('should allow authenticated users to access protected routes', async () => {
-      const { RouteGuard } = await import('../../router/RouteGuard')
+      const { RouteGuard } = await import('@/router/RouteGuard')
 
       // Set authenticated state
       useAuthStore.setState({
@@ -280,7 +280,7 @@ describe('Authentication Integration Tests', () => {
     })
 
     it('should redirect to login when token is expired', async () => {
-      const { RouteGuard } = await import('../../router/RouteGuard')
+      const { RouteGuard } = await import('@/router/RouteGuard')
 
       // Set authenticated state with expired token
       useAuthStore.setState({

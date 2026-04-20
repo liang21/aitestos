@@ -3,10 +3,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Form, Input, Button, Message, Card } from '@arco-design/web-react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useLogin } from '../hooks/useAuth'
-import { useAuthStore } from '../hooks/useAuthStore'
-import { useRateLimit, RateLimitConfig } from '../../../lib/hooks/useRateLimit'
-import { RateLimiter } from '../../../components/RateLimiter'
+import { useLogin } from '@/features/auth/hooks/useAuth'
+import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
+import { useRateLimit, RateLimitConfig } from '@/lib/hooks/useRateLimit'
+import { RateLimiter } from '@/components/RateLimiter'
 
 /**
  * Login schema validation

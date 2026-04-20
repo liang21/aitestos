@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { RouteGuard } from './RouteGuard'
-import { useAuthStore } from '../features/auth/hooks/useAuthStore'
+import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
 
 describe('RouteGuard', () => {
   let queryClient: QueryClient

@@ -1,5 +1,5 @@
-import { get, post } from '../../../lib/request'
-import type { UserJSON, UserRole } from '../../../types/api'
+import { get, post } from '@/lib/request'
+import type { UserJSON, UserRole } from '@/types/api'
 
 /**
  * Login request payload
