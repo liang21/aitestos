@@ -36,12 +36,12 @@ reviewers: [前端团队]
 
 **状态分层原则**：
 
-| 数据类型 | 管理方式 | 示例 |
-|----------|----------|------|
-| 服务端数据 | React Query | 项目列表、用例详情、草稿列表 |
-| 客户端全局状态 | Zustand | auth token、侧边栏折叠、通知 |
-| 客户端局部状态 | useState/useReducer | 表单输入、弹窗开关、筛选条件 |
-| URL 状态 | React Router params/search | 当前项目 ID、分页页码 |
+| 数据类型       | 管理方式                   | 示例                         |
+| -------------- | -------------------------- | ---------------------------- |
+| 服务端数据     | React Query                | 项目列表、用例详情、草稿列表 |
+| 客户端全局状态 | Zustand                    | auth token、侧边栏折叠、通知 |
+| 客户端局部状态 | useState/useReducer        | 表单输入、弹窗开关、筛选条件 |
+| URL 状态       | React Router params/search | 当前项目 ID、分页页码        |
 
 ---
 
@@ -49,42 +49,42 @@ reviewers: [前端团队]
 
 ### 2.1 技术栈选型
 
-| 技术 | 版本 | 职责 | 选型理由 |
-|------|------|------|----------|
-| React | 19.2 | UI 框架 | 项目已安装，生态成熟 |
-| TypeScript | 5.9 | 类型系统 | strict: true，编译期捕获错误 |
-| React Router | 7.x | 路由 | 项目已安装，支持 lazy loading |
-| Zustand | 5.x | 全局状态 | 项目已安装，极简 API |
-| TanStack React Query | 5.x | 服务端状态 | 缓存/重试/轮询/失效一体化 |
-| React Hook Form | 7.x | 表单管理 | 非受控性能优势，与 Arco 集成简洁 |
-| Arco Design | 2.66 | UI 组件库 | 项目已安装，企业级组件完备 |
-| Tailwind CSS | 4.x | 样式 | 项目已安装，原子化样式 |
-| Axios | 1.14 | HTTP 客户端 | 项目已安装，作为 React Query 的 queryFn 底层 |
-| dayjs | 1.11 | 日期处理 | 项目已安装，轻量 |
-| Lucide React | 1.7 | 图标 | 项目已安装，一致性好 |
-| Testing Library | latest | 组件测试 | React 社区标准 |
-| MSW | latest | API Mock | 浏览器层拦截，与 React Query 配合好 |
-| Vitest | latest | 测试运行器 | 与 Vite 原生集成 |
-| Playwright | latest | E2E 测试 | 关键路径端到端验证 |
+| 技术                 | 版本   | 职责        | 选型理由                                     |
+| -------------------- | ------ | ----------- | -------------------------------------------- |
+| React                | 19.2   | UI 框架     | 项目已安装，生态成熟                         |
+| TypeScript           | 5.9    | 类型系统    | strict: true，编译期捕获错误                 |
+| React Router         | 7.x    | 路由        | 项目已安装，支持 lazy loading                |
+| Zustand              | 5.x    | 全局状态    | 项目已安装，极简 API                         |
+| TanStack React Query | 5.x    | 服务端状态  | 缓存/重试/轮询/失效一体化                    |
+| React Hook Form      | 7.x    | 表单管理    | 非受控性能优势，与 Arco 集成简洁             |
+| Arco Design          | 2.66   | UI 组件库   | 项目已安装，企业级组件完备                   |
+| Tailwind CSS         | 4.x    | 样式        | 项目已安装，原子化样式                       |
+| Axios                | 1.14   | HTTP 客户端 | 项目已安装，作为 React Query 的 queryFn 底层 |
+| dayjs                | 1.11   | 日期处理    | 项目已安装，轻量                             |
+| Lucide React         | 1.7    | 图标        | 项目已安装，一致性好                         |
+| Testing Library      | latest | 组件测试    | React 社区标准                               |
+| MSW                  | latest | API Mock    | 浏览器层拦截，与 React Query 配合好          |
+| Vitest               | latest | 测试运行器  | 与 Vite 原生集成                             |
+| Playwright           | latest | E2E 测试    | 关键路径端到端验证                           |
 
 ### 2.2 简单性原则验证
 
-| 检查项 | 结果 | 说明 |
-|--------|------|------|
-| 无多余抽象层 | ✅ | API function → React Query hook → Component，三层即可 |
-| 状态管理最小化 | ✅ | 仅 auth + UI 用 Zustand，所有服务端数据走 React Query |
-| 无重复请求 | ✅ | React Query 自动去重和缓存 |
-| 无手写 loading/error | ✅ | React Query 提供 isLoading/isError |
-| 表单不手动管理 | ✅ | React Hook Form 管理 register/validate/submit |
+| 检查项               | 结果 | 说明                                                  |
+| -------------------- | ---- | ----------------------------------------------------- |
+| 无多余抽象层         | ✅   | API function → React Query hook → Component，三层即可 |
+| 状态管理最小化       | ✅   | 仅 auth + UI 用 Zustand，所有服务端数据走 React Query |
+| 无重复请求           | ✅   | React Query 自动去重和缓存                            |
+| 无手写 loading/error | ✅   | React Query 提供 isLoading/isError                    |
+| 表单不手动管理       | ✅   | React Hook Form 管理 register/validate/submit         |
 
 ### 2.3 可测试性验证
 
-| 测试层级 | 工具 | 覆盖目标 |
-|----------|------|----------|
-| 单元测试 | Vitest + Testing Library | 组件渲染、用户交互、Hook 逻辑 |
-| API Mock | MSW | 拦截 HTTP 请求，模拟成功/失败/超时 |
-| 集成测试 | Testing Library + MSW | 完整的用户操作流程 |
-| E2E | Playwright | 登录 → 创建项目 → 发起生成 → 确认草稿 |
+| 测试层级 | 工具                     | 覆盖目标                              |
+| -------- | ------------------------ | ------------------------------------- |
+| 单元测试 | Vitest + Testing Library | 组件渲染、用户交互、Hook 逻辑         |
+| API Mock | MSW                      | 拦截 HTTP 请求，模拟成功/失败/超时    |
+| 集成测试 | Testing Library + MSW    | 完整的用户操作流程                    |
+| E2E      | Playwright               | 登录 → 创建项目 → 发起生成 → 确认草稿 |
 
 ---
 
@@ -94,24 +94,24 @@ reviewers: [前端团队]
 
 ### Constitutional Audit
 
-| 规则 | 状态 | 说明 |
-|------|------|------|
-| **禁止直接 fetch/axios** | ✅ 通过 | 组件中禁止直接调用 `request.get()`。所有数据获取通过 React Query hook 包装。`src/lib/request.ts` 仅作为 queryFn 底层传输层 |
-| **禁止 any** | ✅ 通过 | API function 使用泛型 `request.post<never, ResponseType>()` 替代 `any`。类型定义在 `src/types/api.ts` 中集中管理 |
-| **避免过度抽象** | ✅ 通过 | 不创建 HOC、render props、context wrapper 等中间层。三层结构：Component → Hook → API function |
-| **状态本地化** | ✅ 通过 | 表单状态归 React Hook Form，服务端状态归 React Query，仅 token/sidebar 归 Zustand |
-| **Hook 提取规则** | ✅ 通过 | 每个自定义 Hook 单一职责：`useProjects()` 管理项目列表查询，`useCreateProject()` 管理创建 mutation |
-| **TDD First** | ✅ 通过 | 每个实现任务先写测试，验收标准包含测试通过条件 |
-| **禁止 useEffect 数据获取** | ✅ 通过 | 所有数据获取使用 `useQuery()`，轮询使用 `refetchInterval`，不手写 `useEffect + fetch` |
-| **React Query 统一数据获取** | ✅ 通过 | 列表、详情、统计全部使用 useQuery；创建、更新、删除全部使用 useMutation |
+| 规则                         | 状态    | 说明                                                                                                                       |
+| ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **禁止直接 fetch/axios**     | ✅ 通过 | 组件中禁止直接调用 `request.get()`。所有数据获取通过 React Query hook 包装。`src/lib/request.ts` 仅作为 queryFn 底层传输层 |
+| **禁止 any**                 | ✅ 通过 | API function 使用泛型 `request.post<never, ResponseType>()` 替代 `any`。类型定义在 `src/types/api.ts` 中集中管理           |
+| **避免过度抽象**             | ✅ 通过 | 不创建 HOC、render props、context wrapper 等中间层。三层结构：Component → Hook → API function                              |
+| **状态本地化**               | ✅ 通过 | 表单状态归 React Hook Form，服务端状态归 React Query，仅 token/sidebar 归 Zustand                                          |
+| **Hook 提取规则**            | ✅ 通过 | 每个自定义 Hook 单一职责：`useProjects()` 管理项目列表查询，`useCreateProject()` 管理创建 mutation                         |
+| **TDD First**                | ✅ 通过 | 每个实现任务先写测试，验收标准包含测试通过条件                                                                             |
+| **禁止 useEffect 数据获取**  | ✅ 通过 | 所有数据获取使用 `useQuery()`，轮询使用 `refetchInterval`，不手写 `useEffect + fetch`                                      |
+| **React Query 统一数据获取** | ✅ 通过 | 列表、详情、统计全部使用 useQuery；创建、更新、删除全部使用 useMutation                                                    |
 
 ### ⚠️ 现有代码修正项
 
-| 现有文件 | 问题 | 修正方案 |
-|----------|------|----------|
-| `src/lib/request.ts` | 组件直接调用 axios，绕过 React Query 缓存 | 保留为 React Query 的 queryFn 底层，组件层不再直接 import |
+| 现有文件                   | 问题                                                          | 修正方案                                                                          |
+| -------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `src/lib/request.ts`       | 组件直接调用 axios，绕过 React Query 缓存                     | 保留为 React Query 的 queryFn 底层，组件层不再直接 import                         |
 | `src/store/useAppStore.ts` | 包含样板 counter 代码，且 `fetchPendingDraftCount` 直接调 API | 清理为仅管理 sidebarCollapsed 和 notifications，待处理草稿数通过 React Query 查询 |
-| `src/App.tsx` | Vite 脚手架模板 | 完全重写为路由入口 |
+| `src/App.tsx`              | Vite 脚手架模板                                               | 完全重写为路由入口                                                                |
 
 ---
 
@@ -290,7 +290,12 @@ Page Component
 ```typescript
 // src/types/enums.ts
 export type CaseStatus = 'unexecuted' | 'pass' | 'block' | 'fail'
-export type CaseType = 'functionality' | 'performance' | 'api' | 'ui' | 'security'
+export type CaseType =
+  | 'functionality'
+  | 'performance'
+  | 'api'
+  | 'ui'
+  | 'security'
 export type PlanStatus = 'draft' | 'active' | 'completed' | 'archived'
 export type Priority = 'P0' | 'P1' | 'P2' | 'P3'
 export type ResultStatus = 'pass' | 'fail' | 'block' | 'skip'
@@ -339,7 +344,7 @@ interface TestCase {
   id: string
   moduleId: string
   userId: string
-  number: string          // 格式: ECO-USR-20260416-001
+  number: string // 格式: ECO-USR-20260416-001
   title: string
   preconditions: string[]
   steps: string[]
@@ -505,11 +510,11 @@ interface AppState {
 
 ### 7.1 组件分层
 
-| 层级 | 职责 | 数据来源 | 示例 |
-|------|------|----------|------|
-| **Page** | 路由对应、布局组合、数据编排 | React Query hooks | `CaseListPage` |
-| **Feature Component** | 业务逻辑、用户交互 | Props + React Query hooks | `CreateCaseDrawer` |
-| **Shared Component** | 可复用 UI，无业务逻辑 | Props only | `StatusTag`、`SearchTable` |
+| 层级                  | 职责                         | 数据来源                  | 示例                       |
+| --------------------- | ---------------------------- | ------------------------- | -------------------------- |
+| **Page**              | 路由对应、布局组合、数据编排 | React Query hooks         | `CaseListPage`             |
+| **Feature Component** | 业务逻辑、用户交互           | Props + React Query hooks | `CreateCaseDrawer`         |
+| **Shared Component**  | 可复用 UI，无业务逻辑        | Props only                | `StatusTag`、`SearchTable` |
 
 ### 7.2 核心 Page 组件
 
@@ -689,26 +694,26 @@ tests/
 
 ### 9.2 单元/UI 测试矩阵
 
-| 测试目标 | 测试内容 | Mock 策略 |
-|----------|----------|-----------|
-| **LoginPage** | 渲染邮箱/密码输入框和登录按钮 | 无需 Mock |
-| **LoginPage** | 输入无效邮箱时显示验证错误 | 无需 Mock |
-| **LoginPage** | 提交后调用 login API，成功跳转 /projects | MSW mock `POST /auth/login` 200 |
-| **LoginPage** | 登录失败显示错误提示 | MSW mock `POST /auth/login` 401 |
-| **useProjectList** | 返回项目列表数据 | MSW mock `GET /projects` |
-| **useProjectList** | 支持关键词搜索 | MSW mock `GET /projects?keywords=xxx` |
-| **useCreateProject** | 创建成功后失效项目列表缓存 | MSW mock `POST /projects` 201 |
-| **ProjectListPage** | 渲染项目表格，含搜索和分页 | MSW mock `GET /projects` |
-| **CreateProjectModal** | 提交表单后关闭弹窗并刷新列表 | MSW mock `POST /projects` 201 |
-| **useCaseList** | 返回筛选后的用例列表 | MSW mock `GET /testcases?project_id=xxx` |
-| **CaseDetailPage** | 显示用例详情和 AI 来源追溯 | MSW mock `GET /testcases/:id` |
-| **usePollingTask** | pending 时每 3s 轮询 | MSW mock 序列：pending → processing → completed |
-| **DraftConfirmPage** | 左右分栏布局，编辑+引用来源 | MSW mock `GET /generation/drafts/:id` |
-| **useConfirmDraft** | 确认后草稿状态变为 confirmed | MSW mock `POST /generation/drafts/:id/confirm` |
-| **useBatchConfirm** | 批量确认返回成功/失败计数 | MSW mock `POST /generation/drafts/batch-confirm` |
-| **StatusTag** | 根据 category+status 渲染正确颜色 | 无需 Mock（纯 UI） |
-| **SearchTable** | 渲染分页表格，支持排序 | 无需 Mock（纯 UI，传 props） |
-| **ArrayEditor** | 添加/删除/拖拽排序行 | 无需 Mock（纯 UI） |
+| 测试目标               | 测试内容                                 | Mock 策略                                        |
+| ---------------------- | ---------------------------------------- | ------------------------------------------------ |
+| **LoginPage**          | 渲染邮箱/密码输入框和登录按钮            | 无需 Mock                                        |
+| **LoginPage**          | 输入无效邮箱时显示验证错误               | 无需 Mock                                        |
+| **LoginPage**          | 提交后调用 login API，成功跳转 /projects | MSW mock `POST /auth/login` 200                  |
+| **LoginPage**          | 登录失败显示错误提示                     | MSW mock `POST /auth/login` 401                  |
+| **useProjectList**     | 返回项目列表数据                         | MSW mock `GET /projects`                         |
+| **useProjectList**     | 支持关键词搜索                           | MSW mock `GET /projects?keywords=xxx`            |
+| **useCreateProject**   | 创建成功后失效项目列表缓存               | MSW mock `POST /projects` 201                    |
+| **ProjectListPage**    | 渲染项目表格，含搜索和分页               | MSW mock `GET /projects`                         |
+| **CreateProjectModal** | 提交表单后关闭弹窗并刷新列表             | MSW mock `POST /projects` 201                    |
+| **useCaseList**        | 返回筛选后的用例列表                     | MSW mock `GET /testcases?project_id=xxx`         |
+| **CaseDetailPage**     | 显示用例详情和 AI 来源追溯               | MSW mock `GET /testcases/:id`                    |
+| **usePollingTask**     | pending 时每 3s 轮询                     | MSW mock 序列：pending → processing → completed  |
+| **DraftConfirmPage**   | 左右分栏布局，编辑+引用来源              | MSW mock `GET /generation/drafts/:id`            |
+| **useConfirmDraft**    | 确认后草稿状态变为 confirmed             | MSW mock `POST /generation/drafts/:id/confirm`   |
+| **useBatchConfirm**    | 批量确认返回成功/失败计数                | MSW mock `POST /generation/drafts/batch-confirm` |
+| **StatusTag**          | 根据 category+status 渲染正确颜色        | 无需 Mock（纯 UI）                               |
+| **SearchTable**        | 渲染分页表格，支持排序                   | 无需 Mock（纯 UI，传 props）                     |
+| **ArrayEditor**        | 添加/删除/拖拽排序行                     | 无需 Mock（纯 UI）                               |
 
 ### 9.3 测试示例
 
@@ -820,26 +825,26 @@ test.describe('AI 生成核心流程', () => {
 
 ### 10.1 性能
 
-| 优化项 | 策略 | 适用场景 |
-|--------|------|----------|
-| **路由懒加载** | `React.lazy()` + `Suspense` | 所有 Page 组件 |
-| **列表 key** | 使用 `item.id`（UUID） | 所有 Table/List 渲染 |
-| **虚拟滚动** | 暂不引入，1000 条用例 < 2s 满足要求 | 若后续超阈值再引入 `@tanstack/virtual` |
-| **React.memo** | 仅在 `StatusTag`、`SearchTable` 等高频渲染组件使用 | 避免不必要的重渲染 |
-| **React Query staleTime** | 项目列表 5min，详情 2min，统计数据 1min | 减少重复请求 |
-| **图片** | 使用 `loading="lazy"` | 知识库文档缩略图 |
-| **Bundle 分析** | `vite-plugin-visualizer` | 构建后检查包体积 |
+| 优化项                    | 策略                                               | 适用场景                               |
+| ------------------------- | -------------------------------------------------- | -------------------------------------- |
+| **路由懒加载**            | `React.lazy()` + `Suspense`                        | 所有 Page 组件                         |
+| **列表 key**              | 使用 `item.id`（UUID）                             | 所有 Table/List 渲染                   |
+| **虚拟滚动**              | 暂不引入，1000 条用例 < 2s 满足要求                | 若后续超阈值再引入 `@tanstack/virtual` |
+| **React.memo**            | 仅在 `StatusTag`、`SearchTable` 等高频渲染组件使用 | 避免不必要的重渲染                     |
+| **React Query staleTime** | 项目列表 5min，详情 2min，统计数据 1min            | 减少重复请求                           |
+| **图片**                  | 使用 `loading="lazy"`                              | 知识库文档缩略图                       |
+| **Bundle 分析**           | `vite-plugin-visualizer`                           | 构建后检查包体积                       |
 
 ### 10.2 可访问性
 
-| 要求 | 实现 | 验证方式 |
-|------|------|----------|
-| **语义化 HTML** | 使用 `<nav>`, `<main>`, `<article>`, `<aside>` | axe audit |
-| **aria-label** | 所有按钮、链接、输入框添加描述性 label | 人工 Review |
-| **键盘导航** | 侧边栏 `Tab` + `Enter`，表格 `Arrow` 键 | 手动测试 |
-| **色彩对比度** | 所有文字/背景组合 ≥ 4.5:1 (WCAG AA) | UX 规范已验证 |
-| **Focus 管理** | Modal 打开时 trap focus，关闭时恢复 | Testing Library `tab` 测试 |
-| **Screen Reader** | StatusTag 添加 `aria-label="状态：通过"` | axe audit |
+| 要求              | 实现                                           | 验证方式                   |
+| ----------------- | ---------------------------------------------- | -------------------------- |
+| **语义化 HTML**   | 使用 `<nav>`, `<main>`, `<article>`, `<aside>` | axe audit                  |
+| **aria-label**    | 所有按钮、链接、输入框添加描述性 label         | 人工 Review                |
+| **键盘导航**      | 侧边栏 `Tab` + `Enter`，表格 `Arrow` 键        | 手动测试                   |
+| **色彩对比度**    | 所有文字/背景组合 ≥ 4.5:1 (WCAG AA)            | UX 规范已验证              |
+| **Focus 管理**    | Modal 打开时 trap focus，关闭时恢复            | Testing Library `tab` 测试 |
+| **Screen Reader** | StatusTag 添加 `aria-label="状态：通过"`       | axe audit                  |
 
 ---
 
@@ -847,127 +852,127 @@ test.describe('AI 生成核心流程', () => {
 
 ### Phase 0: 基础设施（TDD 基座）
 
-| 优先级 | 任务 | 路径 | AC |
-|--------|------|------|-----|
-| P0 | 安装依赖：@tanstack/react-query, react-hook-form, @testing-library/*, msw, vitest, zod | `package.json` | `npm install` 无错误；`npm test` 可运行 |
-| P0 | 配置 Vitest | `vitest.config.ts` | `npm test` 通过空测试 |
-| P0 | 配置 MSW | `tests/msw/server.ts` | handler 可拦截请求 |
-| P0 | 创建 React Query Client | `src/lib/query-client.ts` | 默认 staleTime 5min，retry 1 次 |
-| P0 | 创建 Provider 嵌套 | `src/app/providers.tsx` | QueryClientProvider + Arco ConfigProvider 包裹 |
-| P0 | 类型定义 | `src/types/enums.ts`, `src/types/api.ts` | TypeScript 编译通过，无 any |
-| P0 | 修正 Axios 调用 | `src/lib/request.ts` | 所有 `<any, T>` → `<never, T>`；Token 刷新逻辑完整 |
+| 优先级 | 任务                                                                                    | 路径                                     | AC                                                 |
+| ------ | --------------------------------------------------------------------------------------- | ---------------------------------------- | -------------------------------------------------- |
+| P0     | 安装依赖：@tanstack/react-query, react-hook-form, @testing-library/\*, msw, vitest, zod | `package.json`                           | `npm install` 无错误；`npm test` 可运行            |
+| P0     | 配置 Vitest                                                                             | `vitest.config.ts`                       | `npm test` 通过空测试                              |
+| P0     | 配置 MSW                                                                                | `tests/msw/server.ts`                    | handler 可拦截请求                                 |
+| P0     | 创建 React Query Client                                                                 | `src/lib/query-client.ts`                | 默认 staleTime 5min，retry 1 次                    |
+| P0     | 创建 Provider 嵌套                                                                      | `src/app/providers.tsx`                  | QueryClientProvider + Arco ConfigProvider 包裹     |
+| P0     | 类型定义                                                                                | `src/types/enums.ts`, `src/types/api.ts` | TypeScript 编译通过，无 any                        |
+| P0     | 修正 Axios 调用                                                                         | `src/lib/request.ts`                     | 所有 `<any, T>` → `<never, T>`；Token 刷新逻辑完整 |
 
 ### Phase 1: 认证模块
 
-| 优先级 | 任务 | 路径 | AC |
-|--------|------|------|-----|
-| P0 | Auth API service | `src/features/auth/services/auth.ts` | 类型安全，编译通过 |
-| P0 | Auth Zustand store | `src/features/auth/hooks/useAuthStore.ts` | login/logout/refresh 正确操作 localStorage |
-| P0 | `useLogin` hook + 测试 | `src/features/auth/hooks/useAuth.ts` | 测试：成功登录更新 store，失败抛错 |
-| P0 | LoginPage + 测试 | `src/features/auth/components/LoginPage.tsx` | 测试：渲染表单、校验邮箱、成功跳转、失败提示 |
-| P0 | RegisterPage + 测试 | `src/features/auth/components/RegisterPage.tsx` | 测试：渲染表单、字段校验、提交成功 |
-| P0 | RouteGuard + 测试 | `src/router/RouteGuard.tsx` | 测试：未认证跳转 /login，token 过期跳转 /login |
-| P0 | AuthLayout | `src/components/layout/AuthLayout.tsx` | 居中布局，无侧边栏 |
+| 优先级 | 任务                   | 路径                                            | AC                                             |
+| ------ | ---------------------- | ----------------------------------------------- | ---------------------------------------------- |
+| P0     | Auth API service       | `src/features/auth/services/auth.ts`            | 类型安全，编译通过                             |
+| P0     | Auth Zustand store     | `src/features/auth/hooks/useAuthStore.ts`       | login/logout/refresh 正确操作 localStorage     |
+| P0     | `useLogin` hook + 测试 | `src/features/auth/hooks/useAuth.ts`            | 测试：成功登录更新 store，失败抛错             |
+| P0     | LoginPage + 测试       | `src/features/auth/components/LoginPage.tsx`    | 测试：渲染表单、校验邮箱、成功跳转、失败提示   |
+| P0     | RegisterPage + 测试    | `src/features/auth/components/RegisterPage.tsx` | 测试：渲染表单、字段校验、提交成功             |
+| P0     | RouteGuard + 测试      | `src/router/RouteGuard.tsx`                     | 测试：未认证跳转 /login，token 过期跳转 /login |
+| P0     | AuthLayout             | `src/components/layout/AuthLayout.tsx`          | 居中布局，无侧边栏                             |
 
 ### Phase 2: 项目管理模块
 
-| 优先级 | 任务 | 路径 | AC |
-|--------|------|------|-----|
-| P0 | Projects API service | `src/features/projects/services/projects.ts` | 类型安全，与 OpenAPI 对齐 |
-| P0 | `useProjects` hooks + 测试 | `src/features/projects/hooks/useProjects.ts` | 测试：列表查询、详情查询、创建/更新/删除 mutation |
-| P0 | ProjectListPage + 测试 | `src/features/projects/components/ProjectListPage.tsx` | 测试：渲染表格、搜索、分页、新建弹窗 |
-| P0 | CreateProjectModal + 测试 | `src/features/projects/components/CreateProjectModal.tsx` | 测试：表单校验（名称/前缀必填，前缀 2-4 位大写）、提交成功 |
-| P0 | ProjectDashboard + 测试 | `src/features/projects/components/ProjectDashboard.tsx` | 测试：渲染统计卡片、趋势图、最近任务 |
-| P0 | StatsCard 组件 + 测试 | `src/components/business/StatsCard.tsx` | 测试：渲染标题、数值、趋势箭头 |
-| P0 | Module API + hooks + 测试 | `src/features/modules/` | 测试：CRUD 操作、列表按项目查询 |
-| P0 | ModuleManagePage + 测试 | `src/features/modules/components/ModuleManagePage.tsx` | 测试：模块列表、创建/删除 |
+| 优先级 | 任务                       | 路径                                                      | AC                                                         |
+| ------ | -------------------------- | --------------------------------------------------------- | ---------------------------------------------------------- |
+| P0     | Projects API service       | `src/features/projects/services/projects.ts`              | 类型安全，与 OpenAPI 对齐                                  |
+| P0     | `useProjects` hooks + 测试 | `src/features/projects/hooks/useProjects.ts`              | 测试：列表查询、详情查询、创建/更新/删除 mutation          |
+| P0     | ProjectListPage + 测试     | `src/features/projects/components/ProjectListPage.tsx`    | 测试：渲染表格、搜索、分页、新建弹窗                       |
+| P0     | CreateProjectModal + 测试  | `src/features/projects/components/CreateProjectModal.tsx` | 测试：表单校验（名称/前缀必填，前缀 2-4 位大写）、提交成功 |
+| P0     | ProjectDashboard + 测试    | `src/features/projects/components/ProjectDashboard.tsx`   | 测试：渲染统计卡片、趋势图、最近任务                       |
+| P0     | StatsCard 组件 + 测试      | `src/components/business/StatsCard.tsx`                   | 测试：渲染标题、数值、趋势箭头                             |
+| P0     | Module API + hooks + 测试  | `src/features/modules/`                                   | 测试：CRUD 操作、列表按项目查询                            |
+| P0     | ModuleManagePage + 测试    | `src/features/modules/components/ModuleManagePage.tsx`    | 测试：模块列表、创建/删除                                  |
 
 ### Phase 3: 知识库模块
 
-| 优先级 | 任务 | 路径 | AC |
-|--------|------|------|-----|
-| P0 | Documents API service | `src/features/documents/services/documents.ts` | 类型安全 |
-| P0 | `useDocuments` hooks + 测试 | `src/features/documents/hooks/useDocuments.ts` | 测试：列表查询、上传、删除、详情+分块 |
-| P0 | KnowledgeListPage + 测试 | `src/features/documents/components/KnowledgeListPage.tsx` | 测试：文档列表、状态 Tag、上传弹窗 |
-| P0 | UploadDocumentModal + 测试 | `src/features/documents/components/UploadDocumentModal.tsx` | 测试：文件类型选择、名称输入、提交 |
-| P1 | DocumentDetailPage + 测试 | `src/features/documents/components/DocumentDetailPage.tsx` | 测试：分块列表展示 |
+| 优先级 | 任务                        | 路径                                                        | AC                                    |
+| ------ | --------------------------- | ----------------------------------------------------------- | ------------------------------------- |
+| P0     | Documents API service       | `src/features/documents/services/documents.ts`              | 类型安全                              |
+| P0     | `useDocuments` hooks + 测试 | `src/features/documents/hooks/useDocuments.ts`              | 测试：列表查询、上传、删除、详情+分块 |
+| P0     | KnowledgeListPage + 测试    | `src/features/documents/components/KnowledgeListPage.tsx`   | 测试：文档列表、状态 Tag、上传弹窗    |
+| P0     | UploadDocumentModal + 测试  | `src/features/documents/components/UploadDocumentModal.tsx` | 测试：文件类型选择、名称输入、提交    |
+| P1     | DocumentDetailPage + 测试   | `src/features/documents/components/DocumentDetailPage.tsx`  | 测试：分块列表展示                    |
 
 ### Phase 4: AI 生成模块（核心）
 
-| 优先级 | 任务 | 路径 | AC |
-|--------|------|------|-----|
-| P0 | Generation API service | `src/features/generation/services/generation.ts` | 类型安全 |
-| P0 | `useGeneration` hooks + 测试 | `src/features/generation/hooks/useGeneration.ts` | 测试：创建任务、查询任务、查询草稿 |
-| P0 | `usePollingTask` hook + 测试 | `src/features/generation/hooks/usePollingTask.ts` | 测试：pending 时轮询、completed 时停止 |
-| P0 | NewGenerationTaskPage + 测试 | `src/features/generation/components/NewGenerationTaskPage.tsx` | 测试：模块选择、需求描述（≥10字）、高级选项折叠、提交 |
-| P0 | GenerationTaskListPage + 测试 | `src/features/generation/components/GenerationTaskListPage.tsx` | 测试：任务列表、状态 Tag、进度展示 |
-| P1 | TaskDetailPage + 测试 | `src/features/generation/components/TaskDetailPage.tsx` | 测试：草稿列表、置信度标签 |
+| 优先级 | 任务                          | 路径                                                            | AC                                                    |
+| ------ | ----------------------------- | --------------------------------------------------------------- | ----------------------------------------------------- |
+| P0     | Generation API service        | `src/features/generation/services/generation.ts`                | 类型安全                                              |
+| P0     | `useGeneration` hooks + 测试  | `src/features/generation/hooks/useGeneration.ts`                | 测试：创建任务、查询任务、查询草稿                    |
+| P0     | `usePollingTask` hook + 测试  | `src/features/generation/hooks/usePollingTask.ts`               | 测试：pending 时轮询、completed 时停止                |
+| P0     | NewGenerationTaskPage + 测试  | `src/features/generation/components/NewGenerationTaskPage.tsx`  | 测试：模块选择、需求描述（≥10字）、高级选项折叠、提交 |
+| P0     | GenerationTaskListPage + 测试 | `src/features/generation/components/GenerationTaskListPage.tsx` | 测试：任务列表、状态 Tag、进度展示                    |
+| P1     | TaskDetailPage + 测试         | `src/features/generation/components/TaskDetailPage.tsx`         | 测试：草稿列表、置信度标签                            |
 
 ### Phase 5: 草稿箱模块（核心）
 
-| 优先级 | 任务 | 路径 | AC |
-|--------|------|------|-----|
-| P0 | Drafts API service | `src/features/drafts/services/drafts.ts` | 类型安全 |
-| P0 | `useDrafts` hooks + 测试 | `src/features/drafts/hooks/useDrafts.ts` | 测试：列表查询、确认、拒绝、批量确认 |
-| P0 | DraftListPage + 测试 | `src/features/drafts/components/DraftListPage.tsx` | 测试：草稿列表、批量勾选、确认/拒绝操作 |
-| P0 | DraftConfirmPage + 测试 | `src/features/drafts/components/DraftConfirmPage.tsx` | 测试：左右分栏、编辑区、引用来源、确认/拒绝 |
-| P0 | SplitPanel 组件 + 测试 | `src/components/business/SplitPanel.tsx` | 测试：拖拽分割、最小宽度 |
-| P0 | ReferencePanel 组件 + 测试 | `src/components/business/ReferencePanel.tsx` | 测试：引用块列表、查看原文 |
-| P0 | ArrayEditor 组件 + 测试 | `src/components/business/ArrayEditor.tsx` | 测试：添加/删除行、拖拽排序 |
+| 优先级 | 任务                       | 路径                                                  | AC                                          |
+| ------ | -------------------------- | ----------------------------------------------------- | ------------------------------------------- |
+| P0     | Drafts API service         | `src/features/drafts/services/drafts.ts`              | 类型安全                                    |
+| P0     | `useDrafts` hooks + 测试   | `src/features/drafts/hooks/useDrafts.ts`              | 测试：列表查询、确认、拒绝、批量确认        |
+| P0     | DraftListPage + 测试       | `src/features/drafts/components/DraftListPage.tsx`    | 测试：草稿列表、批量勾选、确认/拒绝操作     |
+| P0     | DraftConfirmPage + 测试    | `src/features/drafts/components/DraftConfirmPage.tsx` | 测试：左右分栏、编辑区、引用来源、确认/拒绝 |
+| P0     | SplitPanel 组件 + 测试     | `src/components/business/SplitPanel.tsx`              | 测试：拖拽分割、最小宽度                    |
+| P0     | ReferencePanel 组件 + 测试 | `src/components/business/ReferencePanel.tsx`          | 测试：引用块列表、查看原文                  |
+| P0     | ArrayEditor 组件 + 测试    | `src/components/business/ArrayEditor.tsx`             | 测试：添加/删除行、拖拽排序                 |
 
 ### Phase 6: 测试用例管理
 
-| 优先级 | 任务 | 路径 | AC |
-|--------|------|------|-----|
-| P0 | TestCases API service | `src/features/testcases/services/testcases.ts` | 类型安全 |
-| P0 | `useTestCases` hooks + 测试 | `src/features/testcases/hooks/useTestCases.ts` | 测试：列表查询（含筛选）、详情、CRUD mutation |
-| P0 | CaseListPage + 测试 | `src/features/testcases/components/CaseListPage.tsx` | 测试：表格渲染、筛选栏（类型/优先级/状态）、分页 |
-| P0 | CaseDetailPage + 测试 | `src/features/testcases/components/CaseDetailPage.tsx` | 测试：用例信息展示、AI 元数据展示、编号显示 |
-| P0 | CreateCaseDrawer + 测试 | `src/features/testcases/components/CreateCaseDrawer.tsx` | 测试：表单校验、步骤编辑器、提交 |
-| P0 | StatusTag 组件 + 测试 | `src/components/business/StatusTag.tsx` | 测试：各 category+status 颜色映射正确 |
-| P0 | SearchTable 组件 + 测试 | `src/components/business/SearchTable.tsx` | 测试：渲染表格、分页、loading/error 状态 |
+| 优先级 | 任务                        | 路径                                                     | AC                                               |
+| ------ | --------------------------- | -------------------------------------------------------- | ------------------------------------------------ |
+| P0     | TestCases API service       | `src/features/testcases/services/testcases.ts`           | 类型安全                                         |
+| P0     | `useTestCases` hooks + 测试 | `src/features/testcases/hooks/useTestCases.ts`           | 测试：列表查询（含筛选）、详情、CRUD mutation    |
+| P0     | CaseListPage + 测试         | `src/features/testcases/components/CaseListPage.tsx`     | 测试：表格渲染、筛选栏（类型/优先级/状态）、分页 |
+| P0     | CaseDetailPage + 测试       | `src/features/testcases/components/CaseDetailPage.tsx`   | 测试：用例信息展示、AI 元数据展示、编号显示      |
+| P0     | CreateCaseDrawer + 测试     | `src/features/testcases/components/CreateCaseDrawer.tsx` | 测试：表单校验、步骤编辑器、提交                 |
+| P0     | StatusTag 组件 + 测试       | `src/components/business/StatusTag.tsx`                  | 测试：各 category+status 颜色映射正确            |
+| P0     | SearchTable 组件 + 测试     | `src/components/business/SearchTable.tsx`                | 测试：渲染表格、分页、loading/error 状态         |
 
 ### Phase 7: 测试计划与执行
 
-| 优先级 | 任务 | 路径 | AC |
-|--------|------|------|-----|
-| P0 | Plans API service | `src/features/plans/services/plans.ts` | 类型安全 |
-| P0 | `usePlans` hooks + 测试 | `src/features/plans/hooks/usePlans.ts` | 测试：列表、详情、创建、添加/移除用例、录入结果 |
-| P1 | PlanListPage + 测试 | `src/features/plans/components/PlanListPage.tsx` | 测试：计划列表、状态筛选 |
-| P1 | NewPlanPage + 测试 | `src/features/plans/components/NewPlanPage.tsx` | 测试：创建表单、用例选择 |
-| P1 | PlanDetailPage + 测试 | `src/features/plans/components/PlanDetailPage.tsx` | 测试：用例列表、执行统计、结果录入弹窗 |
-| P1 | ResultRecordModal + 测试 | `src/features/plans/components/ResultRecordModal.tsx` | 测试：状态选择、备注输入、提交 |
+| 优先级 | 任务                     | 路径                                                  | AC                                              |
+| ------ | ------------------------ | ----------------------------------------------------- | ----------------------------------------------- |
+| P0     | Plans API service        | `src/features/plans/services/plans.ts`                | 类型安全                                        |
+| P0     | `usePlans` hooks + 测试  | `src/features/plans/hooks/usePlans.ts`                | 测试：列表、详情、创建、添加/移除用例、录入结果 |
+| P1     | PlanListPage + 测试      | `src/features/plans/components/PlanListPage.tsx`      | 测试：计划列表、状态筛选                        |
+| P1     | NewPlanPage + 测试       | `src/features/plans/components/NewPlanPage.tsx`       | 测试：创建表单、用例选择                        |
+| P1     | PlanDetailPage + 测试    | `src/features/plans/components/PlanDetailPage.tsx`    | 测试：用例列表、执行统计、结果录入弹窗          |
+| P1     | ResultRecordModal + 测试 | `src/features/plans/components/ResultRecordModal.tsx` | 测试：状态选择、备注输入、提交                  |
 
 ### Phase 8: 全局组件与集成
 
-| 优先级 | 任务 | 路径 | AC |
-|--------|------|------|-----|
-| P0 | AppLayout + 测试 | `src/components/layout/AppLayout.tsx` | 测试：侧边栏+顶栏+内容区布局 |
-| P0 | Sidebar + 测试 | `src/components/layout/Sidebar.tsx` | 测试：菜单渲染、选中态、折叠、草稿 Badge |
-| P0 | Header + 测试 | `src/components/layout/Header.tsx` | 测试：面包屑、通知图标、用户下拉 |
-| P0 | 路由配置 | `src/router/index.tsx` | 所有路由可访问，lazy loading 正常 |
-| P0 | 404 页面 | `src/components/NotFoundPage.tsx` | 未知路由显示 404 |
-| P1 | 主题配置 | `src/styles/theme.css` | Arco 品牌色 #7B61FF 生效 |
+| 优先级 | 任务             | 路径                                  | AC                                       |
+| ------ | ---------------- | ------------------------------------- | ---------------------------------------- |
+| P0     | AppLayout + 测试 | `src/components/layout/AppLayout.tsx` | 测试：侧边栏+顶栏+内容区布局             |
+| P0     | Sidebar + 测试   | `src/components/layout/Sidebar.tsx`   | 测试：菜单渲染、选中态、折叠、草稿 Badge |
+| P0     | Header + 测试    | `src/components/layout/Header.tsx`    | 测试：面包屑、通知图标、用户下拉         |
+| P0     | 路由配置         | `src/router/index.tsx`                | 所有路由可访问，lazy loading 正常        |
+| P0     | 404 页面         | `src/components/NotFoundPage.tsx`     | 未知路由显示 404                         |
+| P1     | 主题配置         | `src/styles/theme.css`                | Arco 品牌色 #7B61FF 生效                 |
 
 ### Phase 9: E2E 与验收
 
-| 优先级 | 任务 | 路径 | AC |
-|--------|------|------|-----|
-| P0 | E2E: 登录流程 | `tests/e2e/auth.spec.ts` | 登录成功跳转、失败提示 |
-| P0 | E2E: AI 生成核心流程 | `tests/e2e/core-flow.spec.ts` | 登录→创建项目→发起生成→确认草稿→验证编号 |
-| P1 | E2E: 测试计划执行 | `tests/e2e/plan-execution.spec.ts` | 创建计划→关联用例→录入结果→统计更新 |
+| 优先级 | 任务                 | 路径                               | AC                                       |
+| ------ | -------------------- | ---------------------------------- | ---------------------------------------- |
+| P0     | E2E: 登录流程        | `tests/e2e/auth.spec.ts`           | 登录成功跳转、失败提示                   |
+| P0     | E2E: AI 生成核心流程 | `tests/e2e/core-flow.spec.ts`      | 登录→创建项目→发起生成→确认草稿→验证编号 |
+| P1     | E2E: 测试计划执行    | `tests/e2e/plan-execution.spec.ts` | 创建计划→关联用例→录入结果→统计更新      |
 
 ---
 
 ## ✅ Self Review
 
-| 检查项 | 状态 | 说明 |
-|--------|------|------|
-| 符合 React 宪法 | ✅ | 无过度抽象、状态本地化、Hook 单一职责 |
-| 避免过度设计 | ✅ | 三层架构（Component → Hook → API），Feature-Based 但不额外嵌套 |
-| TDD-ready | ✅ | 每个任务包含测试要求，MSW 覆盖所有 API mock |
-| 完全类型安全 | ✅ | 禁止 any，枚举和接口完整定义，Zod 校验运行时类型 |
-| 数据获取规范 | ✅ | 全部使用 React Query，禁止 useEffect + fetch |
-| 全局状态最小化 | ✅ | 仅 auth token 和 sidebar 用 Zustand |
-| 组件职责单一 | ✅ | Page 编排、Feature 交互、Shared 纯 UI，三层清晰 |
-| 依赖方向正确 | ✅ | 单向依赖：Component → Hook → Service → Request，无循环 |
+| 检查项          | 状态 | 说明                                                           |
+| --------------- | ---- | -------------------------------------------------------------- |
+| 符合 React 宪法 | ✅   | 无过度抽象、状态本地化、Hook 单一职责                          |
+| 避免过度设计    | ✅   | 三层架构（Component → Hook → API），Feature-Based 但不额外嵌套 |
+| TDD-ready       | ✅   | 每个任务包含测试要求，MSW 覆盖所有 API mock                    |
+| 完全类型安全    | ✅   | 禁止 any，枚举和接口完整定义，Zod 校验运行时类型               |
+| 数据获取规范    | ✅   | 全部使用 React Query，禁止 useEffect + fetch                   |
+| 全局状态最小化  | ✅   | 仅 auth token 和 sidebar 用 Zustand                            |
+| 组件职责单一    | ✅   | Page 编排、Feature 交互、Shared 纯 UI，三层清晰                |
+| 依赖方向正确    | ✅   | 单向依赖：Component → Hook → Service → Request，无循环         |
