@@ -32,7 +32,7 @@ export function ProjectListPage() {
 
   // Update search params when debounced keywords change
   useEffect(() => {
-    setSearchParams(prev => ({
+    setSearchParams((prev) => ({
       ...prev,
       keywords: debouncedKeywords,
       offset: debouncedKeywords === '' ? 0 : prev.offset, // Reset offset when searching

@@ -14,7 +14,8 @@ import { projectsApi } from '../services/projects'
 export const projectKeys = {
   all: ['projects'] as const,
   lists: () => [...projectKeys.all, 'list'] as const,
-  list: (params: Record<string, unknown>) => [...projectKeys.lists(), params] as const,
+  list: (params: Record<string, unknown>) =>
+    [...projectKeys.lists(), params] as const,
   details: () => [...projectKeys.all, 'detail'] as const,
   detail: (id: string) => [...projectKeys.details(), id] as const,
   stats: (id: string) => [...projectKeys.all, 'stats', id] as const,
@@ -80,7 +81,9 @@ export function useUpdateProject() {
     mutationFn: ({ id, data }: { id: string; data: UpdateProjectRequest }) =>
       projectsApi.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: projectKeys.detail(variables.id) })
+      queryClient.invalidateQueries({
+        queryKey: projectKeys.detail(variables.id),
+      })
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() })
     },
   })

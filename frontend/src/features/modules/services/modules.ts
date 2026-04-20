@@ -13,9 +13,7 @@ export const modulesApi = {
   /**
    * List modules for a project
    */
-  list: async (
-    projectId: string
-  ): Promise<PaginatedResponse<Module>> => {
+  list: async (projectId: string): Promise<PaginatedResponse<Module>> => {
     return request.get(`/projects/${projectId}/modules`)
   },
 

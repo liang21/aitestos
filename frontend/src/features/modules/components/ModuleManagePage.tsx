@@ -12,7 +12,11 @@ import {
   Message,
 } from '@arco-design/web-react'
 import { IconPlus } from '@arco-design/web-react/icon'
-import { useModuleList, useDeleteModule, useCreateModule } from '../hooks/useModules'
+import {
+  useModuleList,
+  useDeleteModule,
+  useCreateModule,
+} from '../hooks/useModules'
 
 const { Title } = Typography
 const { Item: FormItem } = Form
@@ -45,8 +49,7 @@ export function ModuleManagePage() {
       title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (date: string) =>
-        new Date(date).toLocaleDateString('zh-CN'),
+      render: (date: string) => new Date(date).toLocaleDateString('zh-CN'),
     },
     {
       title: '操作',

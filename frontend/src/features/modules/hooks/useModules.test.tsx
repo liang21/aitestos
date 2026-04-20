@@ -13,7 +13,11 @@ function createTestQueryClient() {
 }
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  return <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
+  return (
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  )
 }
 
 describe('useModules hooks', () => {
@@ -25,8 +29,22 @@ describe('useModules hooks', () => {
     it('should fetch modules by projectId', async () => {
       const mockData = {
         data: [
-          { id: '1', projectId: 'proj1', name: 'User Module', abbreviation: 'USR', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-          { id: '2', projectId: 'proj1', name: 'Order Module', abbreviation: 'ORD', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+          {
+            id: '1',
+            projectId: 'proj1',
+            name: 'User Module',
+            abbreviation: 'USR',
+            createdAt: '2024-01-01',
+            updatedAt: '2024-01-01',
+          },
+          {
+            id: '2',
+            projectId: 'proj1',
+            name: 'Order Module',
+            abbreviation: 'ORD',
+            createdAt: '2024-01-01',
+            updatedAt: '2024-01-01',
+          },
         ],
         total: 2,
         offset: 0,
@@ -34,7 +52,9 @@ describe('useModules hooks', () => {
       }
 
       server.use(
-        http.get('/api/v1/projects/proj1/modules', () => HttpResponse.json(mockData))
+        http.get('/api/v1/projects/proj1/modules', () =>
+          HttpResponse.json(mockData)
+        )
       )
 
       const { result } = renderHook(() => useModuleList('proj1'), { wrapper })
@@ -70,19 +90,25 @@ describe('useModules hooks', () => {
       }
 
       server.use(
-        http.post('/api/v1/projects/proj1/modules', async () => HttpResponse.json(mockResponse, { status: 201 }))
+        http.post('/api/v1/projects/proj1/modules', async () =>
+          HttpResponse.json(mockResponse, { status: 201 })
+        )
       )
 
       const { result } = renderHook(() => useCreateModule(), {
         wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
         ),
       })
 
       await result.current.mutateAsync({ projectId: 'proj1', data: newModule })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['modules', 'list', 'proj1'] })
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ['modules', 'list', 'proj1'],
+      })
     })
   })
 
@@ -92,19 +118,26 @@ describe('useModules hooks', () => {
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
 
       server.use(
-        http.delete('/api/v1/modules/123', () => new HttpResponse(null, { status: 204 }))
+        http.delete(
+          '/api/v1/modules/123',
+          () => new HttpResponse(null, { status: 204 })
+        )
       )
 
       const { result } = renderHook(() => useDeleteModule(), {
         wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
         ),
       })
 
       await result.current.mutateAsync({ projectId: 'proj1', id: '123' })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['modules', 'list', 'proj1'] })
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ['modules', 'list', 'proj1'],
+      })
     })
   })
 })

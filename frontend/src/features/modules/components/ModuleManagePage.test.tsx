@@ -36,8 +36,22 @@ describe('ModuleManagePage', () => {
   it('should render modules table', async () => {
     const mockModules = {
       data: [
-        { id: '1', projectId: 'proj1', name: '用户模块', abbreviation: 'USR', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-        { id: '2', projectId: 'proj1', name: '订单模块', abbreviation: 'ORD', createdAt: '2024-01-02T00:00:00Z', updatedAt: '2024-01-02T00:00:00Z' },
+        {
+          id: '1',
+          projectId: 'proj1',
+          name: '用户模块',
+          abbreviation: 'USR',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: '2',
+          projectId: 'proj1',
+          name: '订单模块',
+          abbreviation: 'ORD',
+          createdAt: '2024-01-02T00:00:00Z',
+          updatedAt: '2024-01-02T00:00:00Z',
+        },
       ],
       total: 2,
       offset: 0,
@@ -45,7 +59,9 @@ describe('ModuleManagePage', () => {
     }
 
     server.use(
-      http.get('/api/v1/projects/proj1/modules', () => HttpResponse.json(mockModules))
+      http.get('/api/v1/projects/proj1/modules', () =>
+        HttpResponse.json(mockModules)
+      )
     )
 
     renderWithProviders(<ModuleManagePage />)
@@ -63,7 +79,9 @@ describe('ModuleManagePage', () => {
     const mockModules = { data: [], total: 0, offset: 0, limit: 10 }
 
     server.use(
-      http.get('/api/v1/projects/proj1/modules', () => HttpResponse.json(mockModules))
+      http.get('/api/v1/projects/proj1/modules', () =>
+        HttpResponse.json(mockModules)
+      )
     )
 
     renderWithProviders(<ModuleManagePage />)
@@ -79,7 +97,14 @@ describe('ModuleManagePage', () => {
   it('should show delete confirmation', async () => {
     const mockModules = {
       data: [
-        { id: '1', projectId: 'proj1', name: 'TestModule', abbreviation: 'TST', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+        {
+          id: '1',
+          projectId: 'proj1',
+          name: 'TestModule',
+          abbreviation: 'TST',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
       ],
       total: 1,
       offset: 0,
@@ -87,7 +112,9 @@ describe('ModuleManagePage', () => {
     }
 
     server.use(
-      http.get('/api/v1/projects/proj1/modules', () => HttpResponse.json(mockModules))
+      http.get('/api/v1/projects/proj1/modules', () =>
+        HttpResponse.json(mockModules)
+      )
     )
 
     renderWithProviders(<ModuleManagePage />)

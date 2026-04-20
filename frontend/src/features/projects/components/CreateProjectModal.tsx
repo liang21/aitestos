@@ -2,11 +2,7 @@ import { useState } from 'react'
 import { useForm, useController } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import {
-  Modal,
-  Input,
-  Message,
-} from '@arco-design/web-react'
+import { Modal, Input, Message } from '@arco-design/web-react'
 import { useCreateProject } from '../hooks/useProjects'
 
 const { TextArea } = Input
@@ -104,7 +100,9 @@ export function CreateProjectModal({
             aria-label="项目名称"
           />
           {submitAttempted && errors.name && (
-            <div className="text-red-500 text-sm mt-1">{errors.name.message}</div>
+            <div className="text-red-500 text-sm mt-1">
+              {errors.name.message}
+            </div>
           )}
         </div>
 
@@ -120,7 +118,9 @@ export function CreateProjectModal({
             aria-label="项目前缀"
           />
           {submitAttempted && errors.prefix && (
-            <div className="text-red-500 text-sm mt-1">{errors.prefix.message}</div>
+            <div className="text-red-500 text-sm mt-1">
+              {errors.prefix.message}
+            </div>
           )}
         </div>
 
@@ -134,7 +134,9 @@ export function CreateProjectModal({
             aria-label="项目描述"
           />
           {submitAttempted && errors.description && (
-            <div className="text-red-500 text-sm mt-1">{errors.description.message}</div>
+            <div className="text-red-500 text-sm mt-1">
+              {errors.description.message}
+            </div>
           )}
         </div>
       </form>

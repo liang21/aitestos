@@ -12,7 +12,14 @@ describe('projectsApi', () => {
     it('should call GET /projects with params', async () => {
       const mockData = {
         data: [
-          { id: '1', name: 'ECommerce', prefix: 'ECO', description: 'Test project', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+          {
+            id: '1',
+            name: 'ECommerce',
+            prefix: 'ECO',
+            description: 'Test project',
+            createdAt: '2024-01-01',
+            updatedAt: '2024-01-01',
+          },
         ],
         total: 1,
         offset: 0,
@@ -29,15 +36,33 @@ describe('projectsApi', () => {
         })
       )
 
-      const result = await projectsApi.list({ keywords: 'test', offset: 0, limit: 10 })
+      const result = await projectsApi.list({
+        keywords: 'test',
+        offset: 0,
+        limit: 10,
+      })
       expect(result).toEqual(mockData)
     })
 
     it('should return projects list', async () => {
       const mockData = {
         data: [
-          { id: '1', name: 'Project A', prefix: 'PA', description: 'Desc A', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-          { id: '2', name: 'Project B', prefix: 'PB', description: 'Desc B', createdAt: '2024-01-02', updatedAt: '2024-01-02' },
+          {
+            id: '1',
+            name: 'Project A',
+            prefix: 'PA',
+            description: 'Desc A',
+            createdAt: '2024-01-01',
+            updatedAt: '2024-01-01',
+          },
+          {
+            id: '2',
+            name: 'Project B',
+            prefix: 'PB',
+            description: 'Desc B',
+            createdAt: '2024-01-02',
+            updatedAt: '2024-01-02',
+          },
         ],
         total: 2,
         offset: 0,
@@ -134,7 +159,10 @@ describe('projectsApi', () => {
   describe('delete', () => {
     it('should call DELETE /projects/:id', async () => {
       server.use(
-        http.delete('/api/v1/projects/123', () => new HttpResponse(null, { status: 204 }))
+        http.delete(
+          '/api/v1/projects/123',
+          () => new HttpResponse(null, { status: 204 })
+        )
       )
 
       // DELETE returns 204, axios returns empty string
@@ -156,7 +184,9 @@ describe('projectsApi', () => {
       }
 
       server.use(
-        http.get('/api/v1/projects/123/stats', () => HttpResponse.json(mockStats))
+        http.get('/api/v1/projects/123/stats', () =>
+          HttpResponse.json(mockStats)
+        )
       )
 
       const result = await projectsApi.getStats('123')

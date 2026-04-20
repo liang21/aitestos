@@ -19,7 +19,12 @@ export const projectsApi = {
     keywords?: string
     offset?: number
     limit?: number
-  }): Promise<{ data: Project[]; total: number; offset: number; limit: number }> => {
+  }): Promise<{
+    data: Project[]
+    total: number
+    offset: number
+    limit: number
+  }> => {
     return request.get('/projects', { params })
   },
 

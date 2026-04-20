@@ -12,8 +12,22 @@ describe('modulesApi', () => {
     it('should call GET /modules with projectId param', async () => {
       const mockData = {
         data: [
-          { id: '1', projectId: 'proj1', name: 'User Module', abbreviation: 'USR', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-          { id: '2', projectId: 'proj1', name: 'Order Module', abbreviation: 'ORD', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+          {
+            id: '1',
+            projectId: 'proj1',
+            name: 'User Module',
+            abbreviation: 'USR',
+            createdAt: '2024-01-01',
+            updatedAt: '2024-01-01',
+          },
+          {
+            id: '2',
+            projectId: 'proj1',
+            name: 'Order Module',
+            abbreviation: 'ORD',
+            createdAt: '2024-01-01',
+            updatedAt: '2024-01-01',
+          },
         ],
         total: 2,
         offset: 0,
@@ -21,7 +35,9 @@ describe('modulesApi', () => {
       }
 
       server.use(
-        http.get('/api/v1/projects/proj1/modules', () => HttpResponse.json(mockData))
+        http.get('/api/v1/projects/proj1/modules', () =>
+          HttpResponse.json(mockData)
+        )
       )
 
       const result = await modulesApi.list('proj1')
@@ -32,7 +48,14 @@ describe('modulesApi', () => {
     it('should return modules list for project', async () => {
       const mockData = {
         data: [
-          { id: '1', projectId: 'proj1', name: 'Module A', abbreviation: 'MDA', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+          {
+            id: '1',
+            projectId: 'proj1',
+            name: 'Module A',
+            abbreviation: 'MDA',
+            createdAt: '2024-01-01',
+            updatedAt: '2024-01-01',
+          },
         ],
         total: 1,
         offset: 0,
@@ -40,7 +63,9 @@ describe('modulesApi', () => {
       }
 
       server.use(
-        http.get('/api/v1/projects/proj1/modules', () => HttpResponse.json(mockData))
+        http.get('/api/v1/projects/proj1/modules', () =>
+          HttpResponse.json(mockData)
+        )
       )
 
       const result = await modulesApi.list('proj1')
@@ -80,7 +105,10 @@ describe('modulesApi', () => {
   describe('delete', () => {
     it('should call DELETE /modules/:id', async () => {
       server.use(
-        http.delete('/api/v1/modules/123', () => new HttpResponse(null, { status: 204 }))
+        http.delete(
+          '/api/v1/modules/123',
+          () => new HttpResponse(null, { status: 204 })
+        )
       )
 
       await expect(modulesApi.delete('123')).resolves.toBe('')

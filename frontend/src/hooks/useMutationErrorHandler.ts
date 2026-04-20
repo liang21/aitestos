@@ -9,7 +9,9 @@ interface UseMutationErrorHandlerOptions {
  * Hook to handle mutation errors consistently
  * Provides error parsing and user-friendly messages
  */
-export function useMutationErrorHandler(options: UseMutationErrorHandlerOptions = {}) {
+export function useMutationErrorHandler(
+  options: UseMutationErrorHandlerOptions = {}
+) {
   const handleError = useCallback(
     (error: unknown) => {
       if (options.onError) {

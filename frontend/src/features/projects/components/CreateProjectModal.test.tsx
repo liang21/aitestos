@@ -15,9 +15,7 @@ function createTestQueryClient() {
 function renderWithProviders(ui: React.ReactElement) {
   const queryClient = createTestQueryClient()
   return render(
-    <QueryClientProvider client={queryClient}>
-      {ui}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
   )
 }
 
@@ -90,7 +88,9 @@ describe('CreateProjectModal', () => {
     }
 
     server.use(
-      http.post('/api/v1/projects', async () => HttpResponse.json(mockResponse, { status: 201 }))
+      http.post('/api/v1/projects', async () =>
+        HttpResponse.json(mockResponse, { status: 201 })
+      )
     )
 
     renderWithProviders(

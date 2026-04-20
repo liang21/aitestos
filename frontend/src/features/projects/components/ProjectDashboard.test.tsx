@@ -11,12 +11,13 @@ function createTestQueryClient() {
   })
 }
 
-function renderWithProviders(ui: React.ReactElement, projectId: string = 'proj1') {
+function renderWithProviders(
+  ui: React.ReactElement,
+  projectId: string = 'proj1'
+) {
   const queryClient = createTestQueryClient()
   return render(
-    <QueryClientProvider client={queryClient}>
-      {ui}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
   )
 }
 
@@ -39,7 +40,9 @@ describe('ProjectDashboard', () => {
     }
 
     server.use(
-      http.get('/api/v1/projects/proj1/stats', () => HttpResponse.json(mockStats))
+      http.get('/api/v1/projects/proj1/stats', () =>
+        HttpResponse.json(mockStats)
+      )
     )
 
     renderWithProviders(<ProjectDashboard projectId="proj1" />)
@@ -66,7 +69,9 @@ describe('ProjectDashboard', () => {
     }
 
     server.use(
-      http.get('/api/v1/projects/proj1/stats', () => HttpResponse.json(mockStats))
+      http.get('/api/v1/projects/proj1/stats', () =>
+        HttpResponse.json(mockStats)
+      )
     )
 
     renderWithProviders(<ProjectDashboard projectId="proj1" />)
@@ -86,7 +91,9 @@ describe('ProjectDashboard', () => {
     }
 
     server.use(
-      http.get('/api/v1/projects/proj1/stats', () => HttpResponse.json(mockStats))
+      http.get('/api/v1/projects/proj1/stats', () =>
+        HttpResponse.json(mockStats)
+      )
     )
 
     renderWithProviders(<ProjectDashboard projectId="proj1" />)

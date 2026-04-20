@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { CreateModuleRequest, Module, PaginatedResponse } from '@/types/api'
+import type {
+  CreateModuleRequest,
+  Module,
+  PaginatedResponse,
+} from '@/types/api'
 import { modulesApi } from '../services/modules'
 
 /**
@@ -29,10 +33,17 @@ export function useCreateModule() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ projectId, data }: { projectId: string; data: CreateModuleRequest }) =>
-      modulesApi.create(projectId, data),
+    mutationFn: ({
+      projectId,
+      data,
+    }: {
+      projectId: string
+      data: CreateModuleRequest
+    }) => modulesApi.create(projectId, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: moduleKeys.list(variables.projectId) })
+      queryClient.invalidateQueries({
+        queryKey: moduleKeys.list(variables.projectId),
+      })
     },
   })
 }
@@ -47,7 +58,9 @@ export function useDeleteModule() {
     mutationFn: ({ projectId, id }: { projectId: string; id: string }) =>
       modulesApi.delete(id),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: moduleKeys.list(variables.projectId) })
+      queryClient.invalidateQueries({
+        queryKey: moduleKeys.list(variables.projectId),
+      })
     },
   })
 }

@@ -30,8 +30,22 @@ describe('ProjectListPage', () => {
   it('should render project table with columns', async () => {
     const mockProjects = {
       data: [
-        { id: '1', name: 'ECommerce', prefix: 'ECO', description: '电商平台', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-        { id: '2', name: 'CRMSystem', prefix: 'CRM', description: '客户管理系统', createdAt: '2024-01-02T00:00:00Z', updatedAt: '2024-01-02T00:00:00Z' },
+        {
+          id: '1',
+          name: 'ECommerce',
+          prefix: 'ECO',
+          description: '电商平台',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: '2',
+          name: 'CRMSystem',
+          prefix: 'CRM',
+          description: '客户管理系统',
+          createdAt: '2024-01-02T00:00:00Z',
+          updatedAt: '2024-01-02T00:00:00Z',
+        },
       ],
       total: 2,
       offset: 0,
@@ -57,7 +71,14 @@ describe('ProjectListPage', () => {
     const user = userEvent.setup()
     const mockProjects = {
       data: [
-        { id: '1', name: 'TestProject', prefix: 'TST', description: 'Test', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+        {
+          id: '1',
+          name: 'TestProject',
+          prefix: 'TST',
+          description: 'Test',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
       ],
       total: 1,
       offset: 0,
@@ -103,7 +124,14 @@ describe('ProjectListPage', () => {
         if (offset === '10') {
           return HttpResponse.json({
             data: [
-              { id: '11', name: 'Project 11', prefix: 'P11', description: 'Desc 11', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+              {
+                id: '11',
+                name: 'Project 11',
+                prefix: 'P11',
+                description: 'Desc 11',
+                createdAt: '2024-01-01T00:00:00Z',
+                updatedAt: '2024-01-01T00:00:00Z',
+              },
             ],
             total: 25,
             offset: 10,

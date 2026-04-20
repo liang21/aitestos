@@ -2,7 +2,15 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { server } from '../../../../tests/msw/server'
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
 import {
   useProjectList,
   useProjectDetail,
@@ -20,7 +28,11 @@ function createTestQueryClient() {
 }
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  return <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
+  return (
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  )
 }
 
 describe('useProjects hooks', () => {
@@ -32,7 +44,14 @@ describe('useProjects hooks', () => {
     it('should return projects list', async () => {
       const mockData = {
         data: [
-          { id: '1', name: 'Project A', prefix: 'PA', description: 'Desc A', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+          {
+            id: '1',
+            name: 'Project A',
+            prefix: 'PA',
+            description: 'Desc A',
+            createdAt: '2024-01-01',
+            updatedAt: '2024-01-01',
+          },
         ],
         total: 1,
         offset: 0,
@@ -51,7 +70,16 @@ describe('useProjects hooks', () => {
 
     it('should support keyword search', async () => {
       const mockData = {
-        data: [{ id: '1', name: 'TestProject', prefix: 'TST', description: 'Test', createdAt: '2024-01-01', updatedAt: '2024-01-01' }],
+        data: [
+          {
+            id: '1',
+            name: 'TestProject',
+            prefix: 'TST',
+            description: 'Test',
+            createdAt: '2024-01-01',
+            updatedAt: '2024-01-01',
+          },
+        ],
         total: 1,
         offset: 0,
         limit: 10,
@@ -65,7 +93,10 @@ describe('useProjects hooks', () => {
         })
       )
 
-      const { result } = renderHook(() => useProjectList({ keywords: 'TestProject' }), { wrapper })
+      const { result } = renderHook(
+        () => useProjectList({ keywords: 'TestProject' }),
+        { wrapper }
+      )
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
     })
@@ -110,7 +141,9 @@ describe('useProjects hooks', () => {
       }
 
       server.use(
-        http.get('/api/v1/projects/123/stats', () => HttpResponse.json(mockStats))
+        http.get('/api/v1/projects/123/stats', () =>
+          HttpResponse.json(mockStats)
+        )
       )
 
       const { result } = renderHook(() => useProjectStats('123'), { wrapper })
@@ -139,19 +172,25 @@ describe('useProjects hooks', () => {
       }
 
       server.use(
-        http.post('/api/v1/projects', async () => HttpResponse.json(mockResponse, { status: 201 }))
+        http.post('/api/v1/projects', async () =>
+          HttpResponse.json(mockResponse, { status: 201 })
+        )
       )
 
       const { result } = renderHook(() => useCreateProject(), {
         wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
         ),
       })
 
       await result.current.mutateAsync(newProject)
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['projects', 'list'] })
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ['projects', 'list'],
+      })
     })
   })
 
@@ -172,19 +211,25 @@ describe('useProjects hooks', () => {
       }
 
       server.use(
-        http.put('/api/v1/projects/123', async () => HttpResponse.json(mockResponse))
+        http.put('/api/v1/projects/123', async () =>
+          HttpResponse.json(mockResponse)
+        )
       )
 
       const { result } = renderHook(() => useUpdateProject(), {
         wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
         ),
       })
 
       await result.current.mutateAsync({ id: '123', data: updateData })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['projects', 'detail', '123'] })
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ['projects', 'detail', '123'],
+      })
     })
   })
 
@@ -194,19 +239,26 @@ describe('useProjects hooks', () => {
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
 
       server.use(
-        http.delete('/api/v1/projects/123', () => new HttpResponse(null, { status: 204 }))
+        http.delete(
+          '/api/v1/projects/123',
+          () => new HttpResponse(null, { status: 204 })
+        )
       )
 
       const { result } = renderHook(() => useDeleteProject(), {
         wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
         ),
       })
 
       await result.current.mutateAsync('123')
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['projects', 'list'] })
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ['projects', 'list'],
+      })
     })
   })
 })
