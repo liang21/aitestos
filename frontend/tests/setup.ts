@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll } from 'vitest'
+import { afterAll, afterEach, beforeAll, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { server } from './msw/server'
@@ -28,4 +28,19 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
+})
+
+// Mock Arco Design message component
+vi.mock('@arco-design/web-react', async () => {
+  const actual = await vi.importActual('@arco-design/web-react')
+  return {
+    ...actual as any,
+    message: {
+      success: vi.fn(),
+      error: vi.fn(),
+      warning: vi.fn(),
+      info: vi.fn(),
+      config: vi.fn(),
+    },
+  }
 })
