@@ -82,7 +82,12 @@ export function ArrayEditor({
   }
 
   return (
-    <Space className={className} direction="vertical" size="small" style={{ width: '100%' }}>
+    <Space
+      className={className}
+      direction="vertical"
+      size="small"
+      style={{ width: '100%' }}
+    >
       {rows.map((row, index) => (
         <div key={index} className="flex gap-2 items-center">
           <Input

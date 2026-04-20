@@ -18,7 +18,11 @@ describe('ArrayEditor', () => {
     const onChange = vi.fn()
     const initialValue = ['步骤1', '步骤2', '步骤3']
     render(
-      <ArrayEditor value={initialValue} onChange={onChange} placeholder="请输入" />
+      <ArrayEditor
+        value={initialValue}
+        onChange={onChange}
+        placeholder="请输入"
+      />
     )
 
     const inputs = screen.getAllByRole('textbox')
@@ -47,7 +51,11 @@ describe('ArrayEditor', () => {
     const onChange = vi.fn()
     const user = userEvent.setup()
     render(
-      <ArrayEditor value={['步骤1', '步骤2', '步骤3']} onChange={onChange} placeholder="请输入" />
+      <ArrayEditor
+        value={['步骤1', '步骤2', '步骤3']}
+        onChange={onChange}
+        placeholder="请输入"
+      />
     )
 
     const deleteButtons = screen.getAllByRole('button', { name: /删除/i })

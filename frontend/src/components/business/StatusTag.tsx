@@ -1,5 +1,18 @@
 import { Tag } from '@arco-design/web-react'
-import type { CaseStatus, CaseType, Confidence, DocumentStatus, DocumentType, DraftStatus, PlanStatus, Priority, ResultStatus, SceneType, TaskStatus, UserRole } from '@/types/enums'
+import type {
+  CaseStatus,
+  CaseType,
+  Confidence,
+  DocumentStatus,
+  DocumentType,
+  DraftStatus,
+  PlanStatus,
+  Priority,
+  ResultStatus,
+  SceneType,
+  TaskStatus,
+  UserRole,
+} from '@/types/enums'
 
 /**
  * Status category determines which color mapping to use
@@ -30,7 +43,11 @@ interface ColorMapping {
  */
 const COLOR_MAP: Record<StatusCategory, Record<string, ColorMapping>> = {
   case_status: {
-    unexecuted: { color: '#86909C', text: '未执行', bg: 'rgba(134,144,156,0.10)' },
+    unexecuted: {
+      color: '#86909C',
+      text: '未执行',
+      bg: 'rgba(134,144,156,0.10)',
+    },
     pass: { color: '#00B42A', text: '通过', bg: 'rgba(0,180,42,0.10)' },
     block: { color: '#FF7D00', text: '阻塞', bg: 'rgba(255,125,0,0.10)' },
     fail: { color: '#F53F3F', text: '失败', bg: 'rgba(245,63,63,0.10)' },
@@ -39,11 +56,19 @@ const COLOR_MAP: Record<StatusCategory, Record<string, ColorMapping>> = {
     draft: { color: '#86909C', text: '草稿', bg: 'rgba(134,144,156,0.10)' },
     active: { color: '#165DFF', text: '进行中', bg: 'rgba(22,93,255,0.10)' },
     completed: { color: '#00B42A', text: '已完成', bg: 'rgba(0,180,42,0.10)' },
-    archived: { color: '#C9CDD4', text: '已归档', bg: 'rgba(201,205,212,0.10)' },
+    archived: {
+      color: '#C9CDD4',
+      text: '已归档',
+      bg: 'rgba(201,205,212,0.10)',
+    },
   },
   task_status: {
     pending: { color: '#86909C', text: '待处理', bg: 'rgba(134,144,156,0.10)' },
-    processing: { color: '#165DFF', text: '处理中', bg: 'rgba(22,93,255,0.10)' },
+    processing: {
+      color: '#165DFF',
+      text: '处理中',
+      bg: 'rgba(22,93,255,0.10)',
+    },
     completed: { color: '#00B42A', text: '已完成', bg: 'rgba(0,180,42,0.10)' },
     failed: { color: '#F53F3F', text: '失败', bg: 'rgba(245,63,63,0.10)' },
   },
@@ -64,22 +89,42 @@ const COLOR_MAP: Record<StatusCategory, Record<string, ColorMapping>> = {
     low: { color: '#F53F3F', text: '低置信度', bg: 'rgba(245,63,63,0.10)' },
   },
   case_type: {
-    functionality: { color: '#165DFF', text: '功能测试', bg: 'rgba(22,93,255,0.10)' },
-    performance: { color: '#7B61FF', text: '性能测试', bg: 'rgba(123,97,255,0.10)' },
+    functionality: {
+      color: '#165DFF',
+      text: '功能测试',
+      bg: 'rgba(22,93,255,0.10)',
+    },
+    performance: {
+      color: '#7B61FF',
+      text: '性能测试',
+      bg: 'rgba(123,97,255,0.10)',
+    },
     api: { color: '#00B42A', text: 'API 测试', bg: 'rgba(0,180,42,0.10)' },
     ui: { color: '#FF7D00', text: 'UI 测试', bg: 'rgba(255,125,0,0.10)' },
-    security: { color: '#F53F3F', text: '安全测试', bg: 'rgba(245,63,63,0.10)' },
+    security: {
+      color: '#F53F3F',
+      text: '安全测试',
+      bg: 'rgba(245,63,63,0.10)',
+    },
   },
   document_type: {
     prd: { color: '#165DFF', text: 'PRD', bg: 'rgba(22,93,255,0.10)' },
     figma: { color: '#F53F3F', text: 'Figma', bg: 'rgba(245,63,63,0.10)' },
     api_spec: { color: '#00B42A', text: 'API Spec', bg: 'rgba(0,180,42,0.10)' },
     swagger: { color: '#7B61FF', text: 'Swagger', bg: 'rgba(123,97,255,0.10)' },
-    markdown: { color: '#86909C', text: 'Markdown', bg: 'rgba(134,144,156,0.10)' },
+    markdown: {
+      color: '#86909C',
+      text: 'Markdown',
+      bg: 'rgba(134,144,156,0.10)',
+    },
   },
   document_status: {
     pending: { color: '#86909C', text: '待处理', bg: 'rgba(134,144,156,0.10)' },
-    processing: { color: '#165DFF', text: '解析中', bg: 'rgba(22,93,255,0.10)' },
+    processing: {
+      color: '#165DFF',
+      text: '解析中',
+      bg: 'rgba(22,93,255,0.10)',
+    },
     completed: { color: '#00B42A', text: '已完成', bg: 'rgba(0,180,42,0.10)' },
     failed: { color: '#F53F3F', text: '失败', bg: 'rgba(245,63,63,0.10)' },
   },
@@ -91,13 +136,29 @@ const COLOR_MAP: Record<StatusCategory, Record<string, ColorMapping>> = {
   },
   scene_type: {
     positive: { color: '#00B42A', text: '正向场景', bg: 'rgba(0,180,42,0.10)' },
-    negative: { color: '#F53F3F', text: '负向场景', bg: 'rgba(245,63,63,0.10)' },
-    boundary: { color: '#FF7D00', text: '边界场景', bg: 'rgba(255,125,0,0.10)' },
+    negative: {
+      color: '#F53F3F',
+      text: '负向场景',
+      bg: 'rgba(245,63,63,0.10)',
+    },
+    boundary: {
+      color: '#FF7D00',
+      text: '边界场景',
+      bg: 'rgba(255,125,0,0.10)',
+    },
   },
   user_role: {
-    super_admin: { color: '#F53F3F', text: '超级管理员', bg: 'rgba(245,63,63,0.10)' },
+    super_admin: {
+      color: '#F53F3F',
+      text: '超级管理员',
+      bg: 'rgba(245,63,63,0.10)',
+    },
     admin: { color: '#FF7D00', text: '管理员', bg: 'rgba(255,125,0,0.10)' },
-    normal: { color: '#86909C', text: '普通用户', bg: 'rgba(134,144,156,0.10)' },
+    normal: {
+      color: '#86909C',
+      text: '普通用户',
+      bg: 'rgba(134,144,156,0.10)',
+    },
   },
 }
 
@@ -118,7 +179,13 @@ export interface StatusTagProps {
  * Unified status tag component with consistent color mapping
  * Used across all status displays in the application
  */
-export function StatusTag({ status, category, label, size = 'small', className }: StatusTagProps) {
+export function StatusTag({
+  status,
+  category,
+  label,
+  size = 'small',
+  className,
+}: StatusTagProps) {
   const mapping = COLOR_MAP[category]?.[status]
   if (!mapping) return null
 

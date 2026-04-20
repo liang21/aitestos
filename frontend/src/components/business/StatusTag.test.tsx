@@ -14,7 +14,9 @@ describe('StatusTag', () => {
     })
 
     it('should render correct color for pass status', () => {
-      const { container } = render(<StatusTag status="pass" category="case_status" />)
+      const { container } = render(
+        <StatusTag status="pass" category="case_status" />
+      )
       const tag = container.querySelector('[class*="arco-tag"]') as HTMLElement
       expect(tag).toHaveStyle({ color: '#00B42A' })
       expect(tag).toHaveStyle({ backgroundColor: 'rgba(0,180,42,0.10)' })
@@ -32,7 +34,9 @@ describe('StatusTag', () => {
     })
 
     it('should render correct color for fail status', () => {
-      const { container } = render(<StatusTag status="fail" category="case_status" />)
+      const { container } = render(
+        <StatusTag status="fail" category="case_status" />
+      )
       const tag = container.querySelector('[class*="arco-tag"]') as HTMLElement
       expect(tag).toHaveStyle({ color: '#F53F3F' })
       expect(tag).toHaveStyle({ backgroundColor: 'rgba(245,63,63,0.10)' })
@@ -42,28 +46,36 @@ describe('StatusTag', () => {
 
   describe('priority category', () => {
     it('should render correct color for P0 priority', () => {
-      const { container } = render(<StatusTag status="P0" category="priority" />)
+      const { container } = render(
+        <StatusTag status="P0" category="priority" />
+      )
       const tag = container.querySelector('[class*="arco-tag"]') as HTMLElement
       expect(tag).toHaveStyle({ color: '#F53F3F' })
       expect(tag).toHaveTextContent('P0 紧急')
     })
 
     it('should render correct color for P1 priority', () => {
-      const { container } = render(<StatusTag status="P1" category="priority" />)
+      const { container } = render(
+        <StatusTag status="P1" category="priority" />
+      )
       const tag = container.querySelector('[class*="arco-tag"]') as HTMLElement
       expect(tag).toHaveStyle({ color: '#FF7D00' })
       expect(tag).toHaveTextContent('P1 高')
     })
 
     it('should render correct color for P2 priority', () => {
-      const { container } = render(<StatusTag status="P2" category="priority" />)
+      const { container } = render(
+        <StatusTag status="P2" category="priority" />
+      )
       const tag = container.querySelector('[class*="arco-tag"]') as HTMLElement
       expect(tag).toHaveStyle({ color: '#7B61FF' })
       expect(tag).toHaveTextContent('P2 中')
     })
 
     it('should render correct color for P3 priority', () => {
-      const { container } = render(<StatusTag status="P3" category="priority" />)
+      const { container } = render(
+        <StatusTag status="P3" category="priority" />
+      )
       const tag = container.querySelector('[class*="arco-tag"]') as HTMLElement
       expect(tag).toHaveStyle({ color: '#86909C' })
       expect(tag).toHaveTextContent('P3 低')

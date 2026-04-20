@@ -76,7 +76,9 @@ describe('SearchTable', () => {
       />
     )
 
-    const paginationElement = container.querySelector('[class*="arco-pagination"]')
+    const paginationElement = container.querySelector(
+      '[class*="arco-pagination"]'
+    )
     expect(paginationElement).toBeInTheDocument()
   })
 

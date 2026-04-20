@@ -96,12 +96,15 @@ export function SplitPanel({
     if (containerWidth <= 0) return
 
     // Clamp mouse position to container bounds
-    const clientX = Math.max(containerRect.left, Math.min(containerRect.right, e.clientX))
+    const clientX = Math.max(
+      containerRect.left,
+      Math.min(containerRect.right, e.clientX)
+    )
     const newLeftWidth = clientX - containerRect.left
 
     // Calculate new split ratio with boundaries
     const minRatio = minLeftWidth / containerWidth
-    const maxRatio = 1 - (minRightWidth / containerWidth)
+    const maxRatio = 1 - minRightWidth / containerWidth
 
     // Ensure minRatio < maxRatio
     const effectiveMinRatio = Math.max(0, Math.min(minRatio, 0.9))
@@ -121,12 +124,8 @@ export function SplitPanel({
 
   // Find Left and Right panel children
   const childArray = Array.isArray(children) ? children : [children]
-  const leftChild = childArray.find(
-    (c) => (c as any)?.type === LeftPanel
-  )
-  const rightChild = childArray.find(
-    (c) => (c as any)?.type === RightPanel
-  )
+  const leftChild = childArray.find((c) => (c as any)?.type === LeftPanel)
+  const rightChild = childArray.find((c) => (c as any)?.type === RightPanel)
 
   return (
     <div

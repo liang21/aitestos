@@ -3,7 +3,10 @@ import type { PaginationProps, TableProps } from '@arco-design/web-react'
 import { IconLoading } from '@arco-design/web-react/icon'
 import { useMemo } from 'react'
 
-export interface SearchTableProps<T = unknown> extends Omit<TableProps, 'pagination'> {
+export interface SearchTableProps<T = unknown> extends Omit<
+  TableProps,
+  'pagination'
+> {
   /** Table columns definition */
   columns: TableProps<T>['columns']
   /** Table data */
