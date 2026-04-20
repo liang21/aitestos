@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Button,
   Card,
@@ -11,6 +11,7 @@ import {
 import { IconPlus, IconSearch } from '@arco-design/web-react/icon'
 import { useProjectList, useDeleteProject } from '../hooks/useProjects'
 import { CreateProjectModal } from './CreateProjectModal'
+import { useDebounce } from '@/hooks/useDebounce'
 
 const { Title } = Typography
 
@@ -19,12 +20,24 @@ const { Title } = Typography
  * Lists all projects with search and pagination
  */
 export function ProjectListPage() {
+  const [searchInput, setSearchInput] = useState('')
+  const debouncedKeywords = useDebounce(searchInput, 300)
+
   const [searchParams, setSearchParams] = useState({
     keywords: '',
     offset: 0,
     limit: 10,
   })
   const [createModalVisible, setCreateModalVisible] = useState(false)
+
+  // Update search params when debounced keywords change
+  useEffect(() => {
+    setSearchParams(prev => ({
+      ...prev,
+      keywords: debouncedKeywords,
+      offset: debouncedKeywords === '' ? 0 : prev.offset, // Reset offset when searching
+    }))
+  }, [debouncedKeywords])
 
   const { data, isLoading } = useProjectList(searchParams)
   const deleteProject = useDeleteProject()
@@ -66,10 +79,6 @@ export function ProjectListPage() {
     },
   ]
 
-  const handleSearch = (value: string) => {
-    setSearchParams((prev) => ({ ...prev, keywords: value, offset: 0 }))
-  }
-
   const handleDelete = (id: string) => {
     Modal.confirm({
       title: '确认删除',
@@ -102,10 +111,9 @@ export function ProjectListPage() {
         <div className="mb-4">
           <Input.Search
             placeholder="搜索项目"
-            prefix={<IconSearch />}
+            value={searchInput}
+            onChange={setSearchInput}
             allowClear
-            onSearch={handleSearch}
-            onChange={(value) => !value && handleSearch('')}
           />
         </div>
 
