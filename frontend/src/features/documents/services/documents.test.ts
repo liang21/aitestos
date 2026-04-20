@@ -164,8 +164,9 @@ describe('Documents API service', () => {
     it('should call DELETE /knowledge/documents/{id} and return 204', async () => {
       // Arrange
       server.use(
-        http.delete('/api/v1/knowledge/documents/:id', () =>
-          new HttpResponse(null, { status: 204 })
+        http.delete(
+          '/api/v1/knowledge/documents/:id',
+          () => new HttpResponse(null, { status: 204 })
         )
       )
 

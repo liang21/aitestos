@@ -3,7 +3,13 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { server } from '../../../../tests/msw/server'
 import { http, HttpResponse } from 'msw'
-import { useDocumentList, useDocumentDetail, useUploadDocument, useDeleteDocument, useDocumentChunks } from './useDocuments'
+import {
+  useDocumentList,
+  useDocumentDetail,
+  useUploadDocument,
+  useDeleteDocument,
+  useDocumentChunks,
+} from './useDocuments'
 import { createElement } from 'react'
 
 // Helper: 创建测试用 QueryClient
@@ -14,7 +20,11 @@ function createTestQueryClient() {
 }
 
 function wrapper({ children }: { children: any }) {
-  return createElement(QueryClientProvider, { client: createTestQueryClient() }, children)
+  return createElement(
+    QueryClientProvider,
+    { client: createTestQueryClient() },
+    children
+  )
 }
 
 describe('useDocuments hooks', () => {
@@ -50,7 +60,10 @@ describe('useDocuments hooks', () => {
       )
 
       // Act
-      const { result } = renderHook(() => useDocumentList({ projectId: 'proj-1' }), { wrapper })
+      const { result } = renderHook(
+        () => useDocumentList({ projectId: 'proj-1' }),
+        { wrapper }
+      )
 
       // Assert
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -71,7 +84,12 @@ describe('useDocuments hooks', () => {
 
       // Act
       const { result } = renderHook(
-        () => useDocumentList({ projectId: 'proj-1', type: 'api_spec', status: 'processing' }),
+        () =>
+          useDocumentList({
+            projectId: 'proj-1',
+            type: 'api_spec',
+            status: 'processing',
+          }),
         { wrapper }
       )
 
@@ -102,7 +120,9 @@ describe('useDocuments hooks', () => {
       )
 
       // Act
-      const { result } = renderHook(() => useDocumentDetail('doc-1'), { wrapper })
+      const { result } = renderHook(() => useDocumentDetail('doc-1'), {
+        wrapper,
+      })
 
       // Assert
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -127,7 +147,9 @@ describe('useDocuments hooks', () => {
       )
 
       // Act
-      const { result } = renderHook(() => useDocumentDetail('doc-1'), { wrapper })
+      const { result } = renderHook(() => useDocumentDetail('doc-1'), {
+        wrapper,
+      })
 
       // Assert
       await waitFor(() => expect(result.current.isError).toBe(true))
@@ -201,8 +223,9 @@ describe('useDocuments hooks', () => {
     it('should delete document successfully', async () => {
       // Arrange
       server.use(
-        http.delete('/api/v1/knowledge/documents/:id', () =>
-          new HttpResponse(null, { status: 204 })
+        http.delete(
+          '/api/v1/knowledge/documents/:id',
+          () => new HttpResponse(null, { status: 204 })
         )
       )
 
@@ -256,7 +279,9 @@ describe('useDocuments hooks', () => {
       )
 
       // Act
-      const { result } = renderHook(() => useDocumentChunks('doc-1'), { wrapper })
+      const { result } = renderHook(() => useDocumentChunks('doc-1'), {
+        wrapper,
+      })
 
       // Assert
       await waitFor(() => expect(result.current.isSuccess).toBe(true))

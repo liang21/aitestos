@@ -87,11 +87,7 @@ export function KnowledgeListPage() {
       dataIndex: 'id',
       width: 100,
       render: (id: string) => (
-        <Button
-          type="text"
-          size="small"
-          onClick={() => navigate(id)}
-        >
+        <Button type="text" size="small" onClick={() => navigate(id)}>
           查看
         </Button>
       ),

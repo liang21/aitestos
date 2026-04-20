@@ -11,7 +11,7 @@ import { KnowledgeListPage } from './KnowledgeListPage'
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
   return {
-    ...actual as any,
+    ...(actual as any),
     useParams: () => ({ projectId: 'proj-1' }),
   }
 })
@@ -171,7 +171,9 @@ describe('KnowledgeListPage', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByRole('dialog', { name: /上传文档/i })).toBeInTheDocument()
+        expect(
+          screen.getByRole('dialog', { name: /上传文档/i })
+        ).toBeInTheDocument()
       })
     })
   })

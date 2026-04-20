@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryResult } from '@tanstack/react-query'
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query'
 import { message } from '@arco-design/web-react'
 import { documentsApi } from '../services/documents'
 import type {
@@ -71,7 +76,8 @@ export function useUploadDocument() {
       queryClient.invalidateQueries({ queryKey: documentKeys.lists() })
     },
     onError: (error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : '文档上传失败'
+      const errorMessage =
+        error instanceof Error ? error.message : '文档上传失败'
       message.error(errorMessage)
     },
   })
@@ -91,7 +97,8 @@ export function useDeleteDocument() {
       queryClient.invalidateQueries({ queryKey: documentKeys.lists() })
     },
     onError: (error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : '文档删除失败'
+      const errorMessage =
+        error instanceof Error ? error.message : '文档删除失败'
       message.error(errorMessage)
     },
   })
@@ -100,7 +107,9 @@ export function useDeleteDocument() {
 /**
  * Query document chunks
  */
-export function useDocumentChunks(docId: string): UseQueryResult<DocumentChunk[]> {
+export function useDocumentChunks(
+  docId: string
+): UseQueryResult<DocumentChunk[]> {
   return useQuery({
     queryKey: documentKeys.chunks(docId),
     queryFn: () => documentsApi.getChunks(docId),

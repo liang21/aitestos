@@ -19,7 +19,10 @@ export function DocumentDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 flex justify-center items-center" style={{ minHeight: 400 }}>
+      <div
+        className="p-6 flex justify-center items-center"
+        style={{ minHeight: 400 }}
+      >
         <Spin icon={<IconLoading spin />} tip="加载中..." />
       </div>
     )
@@ -99,7 +102,9 @@ export function DocumentDetailPage() {
           />
         ) : (
           <div className="text-center text-gray-400 py-8">
-            {document.status === 'processing' ? '文档解析中，分块将在完成后显示' : '暂无分块数据'}
+            {document.status === 'processing'
+              ? '文档解析中，分块将在完成后显示'
+              : '暂无分块数据'}
           </div>
         )}
       </Card>

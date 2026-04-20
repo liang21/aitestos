@@ -34,7 +34,7 @@ Object.defineProperty(window, 'matchMedia', {
 vi.mock('@arco-design/web-react', async () => {
   const actual = await vi.importActual('@arco-design/web-react')
   return {
-    ...actual as any,
+    ...(actual as any),
     message: {
       success: vi.fn(),
       error: vi.fn(),

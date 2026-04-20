@@ -15,9 +15,7 @@ function createTestQueryClient() {
 function renderWithProviders(ui: any) {
   const queryClient = createTestQueryClient()
   return render(
-    <QueryClientProvider client={queryClient}>
-      {ui}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
   )
 }
 
@@ -44,7 +42,9 @@ describe('UploadDocumentModal', () => {
 
       // Assert
       expect(screen.getByLabelText(/文档名称/i)).toBeInTheDocument()
-      expect(screen.getByRole('combobox', { name: /文档类型/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('combobox', { name: /文档类型/i })
+      ).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /确定/i })).toBeInTheDocument()
     })
   })

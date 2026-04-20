@@ -55,22 +55,24 @@ export const documentsHandlers = [
       uploadedByName: '张三',
       createdAt: '2026-04-16T08:00:00Z',
       updatedAt: '2026-04-16T08:30:00Z',
-      chunks: hasChunks ? [
-        {
-          id: 'chunk-1',
-          documentId: params.id,
-          chunkIndex: 0,
-          content: '用户注册功能概述...',
-          metadata: { page: 1 },
-        },
-        {
-          id: 'chunk-2',
-          documentId: params.id,
-          chunkIndex: 1,
-          content: '邮箱验证规则...',
-          metadata: { page: 2 },
-        },
-      ] : [],
+      chunks: hasChunks
+        ? [
+            {
+              id: 'chunk-1',
+              documentId: params.id,
+              chunkIndex: 0,
+              content: '用户注册功能概述...',
+              metadata: { page: 1 },
+            },
+            {
+              id: 'chunk-2',
+              documentId: params.id,
+              chunkIndex: 1,
+              content: '邮箱验证规则...',
+              metadata: { page: 2 },
+            },
+          ]
+        : [],
     })
   }),
 
