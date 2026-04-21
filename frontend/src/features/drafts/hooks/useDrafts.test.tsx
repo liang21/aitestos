@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useDraftList, useConfirmDraft, useRejectDraft, useBatchConfirm, usePendingDraftCount } from './useDrafts'
+import {
+  useDraftList,
+  useConfirmDraft,
+  useRejectDraft,
+  useBatchConfirm,
+  usePendingDraftCount,
+} from './useDrafts'
 import { server } from '../../../../tests/msw/server'
 import { draftsHandlers } from '../../../../tests/msw/handlers/drafts'
 import { http, HttpResponse } from 'msw'
@@ -155,10 +161,7 @@ describe('useDrafts hooks', () => {
 
   describe('usePendingDraftCount', () => {
     it('should poll pending draft count', async () => {
-      const { result } = renderHook(
-        () => usePendingDraftCount(),
-        { wrapper }
-      )
+      const { result } = renderHook(() => usePendingDraftCount(), { wrapper })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
@@ -166,14 +169,13 @@ describe('useDrafts hooks', () => {
     })
 
     it('should use correct refetch interval', async () => {
-      const { result } = renderHook(
-        () => usePendingDraftCount(),
-        { wrapper }
-      )
+      const { result } = renderHook(() => usePendingDraftCount(), { wrapper })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
-      const query = queryClient.getQueryCache().find(['drafts', 'pending-count'])
+      const query = queryClient
+        .getQueryCache()
+        .find(['drafts', 'pending-count'])
       expect(query?.observers[0].options.refetchInterval).toBe(5000)
     })
   })

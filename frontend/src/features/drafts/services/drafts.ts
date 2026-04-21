@@ -22,7 +22,9 @@ export const draftsApi = {
   /**
    * Get draft list with optional filters
    */
-  getDrafts: async (params?: DraftListParams): Promise<PaginatedResponse<CaseDraft>> => {
+  getDrafts: async (
+    params?: DraftListParams
+  ): Promise<PaginatedResponse<CaseDraft>> => {
     return get<PaginatedResponse<CaseDraft>>('/generation/drafts', { params })
   },
 
@@ -69,7 +71,9 @@ export const draftsApi = {
   /**
    * Batch confirm multiple drafts
    */
-  batchConfirm: async (data: BatchConfirmRequest): Promise<BatchConfirmResponse> => {
+  batchConfirm: async (
+    data: BatchConfirmRequest
+  ): Promise<BatchConfirmResponse> => {
     return post<BatchConfirmRequest, BatchConfirmResponse>(
       '/generation/drafts/batch-confirm',
       data

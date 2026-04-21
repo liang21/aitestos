@@ -2,7 +2,12 @@
  * Drafts React Query Hooks
  */
 
-import { useQuery, useMutation, useQueryClient, type UseQueryResult } from '@tanstack/react-query'
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query'
 import { draftsApi } from '../services/drafts'
 import { DRAFT_POLL_INTERVAL } from '../constants'
 import type {
@@ -28,7 +33,9 @@ export const draftKeys = {
 /**
  * Get draft list
  */
-export function useDraftList(params?: DraftListParams): UseQueryResult<PaginatedResponse<CaseDraft>> {
+export function useDraftList(
+  params?: DraftListParams
+): UseQueryResult<PaginatedResponse<CaseDraft>> {
   return useQuery({
     queryKey: draftKeys.list(params),
     queryFn: () => draftsApi.getDrafts(params),
@@ -53,8 +60,13 @@ export function useConfirmDraft() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ draftId, data }: { draftId: string; data: ConfirmDraftRequest }) =>
-      draftsApi.confirmDraft(draftId, data),
+    mutationFn: ({
+      draftId,
+      data,
+    }: {
+      draftId: string
+      data: ConfirmDraftRequest
+    }) => draftsApi.confirmDraft(draftId, data),
     onSuccess: () => {
       // Invalidate draft list queries
       queryClient.invalidateQueries({ queryKey: draftKeys.lists() })
@@ -71,8 +83,13 @@ export function useRejectDraft() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ draftId, data }: { draftId: string; data: RejectDraftRequest }) =>
-      draftsApi.rejectDraft(draftId, data),
+    mutationFn: ({
+      draftId,
+      data,
+    }: {
+      draftId: string
+      data: RejectDraftRequest
+    }) => draftsApi.rejectDraft(draftId, data),
     onSuccess: () => {
       // Invalidate draft list queries
       queryClient.invalidateQueries({ queryKey: draftKeys.lists() })
@@ -103,7 +120,9 @@ export function useBatchConfirm() {
  * Get pending draft count with polling (for badge)
  * Polls every 5 seconds when enabled
  */
-export function usePendingDraftCount(enabled: boolean = true): UseQueryResult<number> {
+export function usePendingDraftCount(
+  enabled: boolean = true
+): UseQueryResult<number> {
   return useQuery({
     queryKey: draftKeys.pendingCount(),
     queryFn: async () => {

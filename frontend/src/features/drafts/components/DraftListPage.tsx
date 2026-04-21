@@ -5,9 +5,20 @@
 
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Table, Button, Select, Space, Modal, Message } from '@arco-design/web-react'
+import {
+  Table,
+  Button,
+  Select,
+  Space,
+  Modal,
+  Message,
+} from '@arco-design/web-react'
 import { IconCheck, IconClose, IconSync } from '@arco-design/web-react/icon'
-import { useDraftList, useBatchConfirm, useRejectDraft } from '../hooks/useDrafts'
+import {
+  useDraftList,
+  useBatchConfirm,
+  useRejectDraft,
+} from '../hooks/useDrafts'
 import { useModuleList } from '@/features/modules/hooks/useModules'
 import { StatusTag } from '@/components/business/StatusTag'
 import type { CaseDraft, DraftStatus, Module } from '@/types/api'
@@ -148,7 +159,9 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
       title: '状态',
       dataIndex: 'status',
       width: 100,
-      render: (status: DraftStatus) => <StatusTag status={status} category="draft_status" />,
+      render: (status: DraftStatus) => (
+        <StatusTag status={status} category="draft_status" />
+      ),
     },
     {
       title: '创建时间',
@@ -174,7 +187,9 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
             size="small"
             status="danger"
             icon={<IconClose />}
-            onClick={() => setRejectModal({ visible: true, draftIds: [record.id] })}
+            onClick={() =>
+              setRejectModal({ visible: true, draftIds: [record.id] })
+            }
           >
             拒绝
           </Button>
@@ -219,7 +234,9 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
             <Button
               status="danger"
               icon={<IconClose />}
-              onClick={() => setRejectModal({ visible: true, draftIds: selectedRowKeys })}
+              onClick={() =>
+                setRejectModal({ visible: true, draftIds: selectedRowKeys })
+              }
             >
               批量拒绝
             </Button>
@@ -253,7 +270,9 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
       <Modal
         title={`批量确认草稿 (${selectedRowKeys.length} 条)`}
         visible={batchConfirmModal.visible}
-        onCancel={() => setBatchConfirmModal({ visible: false, targetModuleId: '' })}
+        onCancel={() =>
+          setBatchConfirmModal({ visible: false, targetModuleId: '' })
+        }
         onOk={executeBatchConfirm}
         okText="确认"
         cancelText="取消"
@@ -263,7 +282,12 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
         <p className="mb-4">请选择目标模块：</p>
         <Select
           value={batchConfirmModal.targetModuleId}
-          onChange={(value) => setBatchConfirmModal({ ...batchConfirmModal, targetModuleId: value })}
+          onChange={(value) =>
+            setBatchConfirmModal({
+              ...batchConfirmModal,
+              targetModuleId: value,
+            })
+          }
           placeholder="请选择目标模块"
           className="w-full"
           options={modules?.data?.map((m: Module) => ({
@@ -280,15 +304,27 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
         visible={rejectModal.visible}
         onCancel={() => setRejectModal({ visible: false, draftIds: [] })}
         onOk={() => {
-          const reason = (document.querySelector('[name="reject-reason"]') as HTMLSelectElement)?.value
-          const feedback = (document.querySelector('[name="reject-feedback"]') as HTMLTextAreaElement)?.value
+          const reason = (
+            document.querySelector(
+              '[name="reject-reason"]'
+            ) as HTMLSelectElement
+          )?.value
+          const feedback = (
+            document.querySelector(
+              '[name="reject-feedback"]'
+            ) as HTMLTextAreaElement
+          )?.value
           handleReject(reason, feedback)
         }}
         okText="确认拒绝"
         cancelText="取消"
       >
         <p className="mb-4">请选择拒绝原因：</p>
-        <Select name="reject-reason" options={reasonOptions} className="w-full mb-4" />
+        <Select
+          name="reject-reason"
+          options={reasonOptions}
+          className="w-full mb-4"
+        />
         <p className="mb-2">反馈意见（可选）：</p>
         <textarea
           name="reject-feedback"

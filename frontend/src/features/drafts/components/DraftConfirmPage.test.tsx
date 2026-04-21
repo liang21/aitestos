@@ -120,7 +120,9 @@ describe('DraftConfirmPage', () => {
       expect(screen.getByText('草稿确认')).toBeInTheDocument()
     })
 
-    expect(screen.getByRole('button', { name: /确认并转为正式用例/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /确认并转为正式用例/i })
+    ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /拒绝/i })).toBeInTheDocument()
   })
 

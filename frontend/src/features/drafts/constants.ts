@@ -25,4 +25,5 @@ export const DRAFT_REJECTION_REASONS = [
 /**
  * Draft rejection reason type
  */
-export type DraftRejectionReason = typeof DRAFT_REJECTION_REASONS[number]['value']
+export type DraftRejectionReason =
+  (typeof DRAFT_REJECTION_REASONS)[number]['value']

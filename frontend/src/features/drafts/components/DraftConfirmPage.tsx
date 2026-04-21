@@ -16,7 +16,11 @@ import {
   Spin,
 } from '@arco-design/web-react'
 import { IconCheck, IconClose, IconSave } from '@arco-design/web-react/icon'
-import { useDraftDetail, useConfirmDraft, useRejectDraft } from '../hooks/useDrafts'
+import {
+  useDraftDetail,
+  useConfirmDraft,
+  useRejectDraft,
+} from '../hooks/useDrafts'
 import { SplitPanel } from '@/components/business/SplitPanel'
 import { ArrayEditor } from '@/components/business/ArrayEditor'
 import { ReferencePanel } from '@/components/business/ReferencePanel'
@@ -136,11 +140,7 @@ export function DraftConfirmPage() {
           <Button onClick={handleSave} icon={<IconSave />}>
             保存
           </Button>
-          <Button
-            status="danger"
-            onClick={handleReject}
-            icon={<IconClose />}
-          >
+          <Button status="danger" onClick={handleReject} icon={<IconClose />}>
             拒绝
           </Button>
           <Button
@@ -182,10 +182,7 @@ export function DraftConfirmPage() {
 
                 {/* Preconditions */}
                 <Form.Item field="preconditions" label="前置条件">
-                  <ArrayEditor
-                    placeholder="请输入前置条件"
-                    minRows={0}
-                  />
+                  <ArrayEditor placeholder="请输入前置条件" minRows={0} />
                 </Form.Item>
 
                 {/* Steps */}
@@ -201,10 +198,7 @@ export function DraftConfirmPage() {
                     },
                   ]}
                 >
-                  <ArrayEditor
-                    placeholder="请输入测试步骤"
-                    minRows={1}
-                  />
+                  <ArrayEditor placeholder="请输入测试步骤" minRows={1} />
                 </Form.Item>
 
                 {/* Expected Results */}
@@ -214,7 +208,7 @@ export function DraftConfirmPage() {
                   rules={[{ required: true, message: '请输入预期结果' }]}
                 >
                   <Input.TextArea
-                    placeholder="请输入预期结果（JSON 格式，例如：{&quot;step_1&quot;: &quot;操作成功&quot;}）"
+                    placeholder='请输入预期结果（JSON 格式，例如：{"step_1": "操作成功"}）'
                     rows={4}
                   />
                 </Form.Item>
@@ -227,8 +221,12 @@ export function DraftConfirmPage() {
                     rules={[{ required: true }]}
                   >
                     <Select>
-                      <Select.Option value="functionality">功能测试</Select.Option>
-                      <Select.Option value="performance">性能测试</Select.Option>
+                      <Select.Option value="functionality">
+                        功能测试
+                      </Select.Option>
+                      <Select.Option value="performance">
+                        性能测试
+                      </Select.Option>
                       <Select.Option value="api">接口测试</Select.Option>
                       <Select.Option value="ui">UI 测试</Select.Option>
                       <Select.Option value="security">安全测试</Select.Option>
