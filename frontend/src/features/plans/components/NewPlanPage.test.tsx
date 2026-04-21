@@ -67,16 +67,19 @@ describe('NewPlanPage', () => {
       ),
       // Mock create plan API
       http.post('/api/v1/plans', () =>
-        HttpResponse.json({
-          id: 'plan-001',
-          projectId: 'project-001',
-          name: 'Sprint 12 回归测试',
-          description: 'Sprint 12 回归测试计划',
-          status: 'draft' as const,
-          createdBy: 'user-001',
-          createdAt: '2026-04-21T00:00:00Z',
-          updatedAt: '2026-04-21T00:00:00Z',
-        }, { status: 201 })
+        HttpResponse.json(
+          {
+            id: 'plan-001',
+            projectId: 'project-001',
+            name: 'Sprint 12 回归测试',
+            description: 'Sprint 12 回归测试计划',
+            status: 'draft' as const,
+            createdBy: 'user-001',
+            createdAt: '2026-04-21T00:00:00Z',
+            updatedAt: '2026-04-21T00:00:00Z',
+          },
+          { status: 201 }
+        )
       )
     )
   })

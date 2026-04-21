@@ -5,7 +5,14 @@
 
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button, Card, Select, Table, Space, Message } from '@arco-design/web-react'
+import {
+  Button,
+  Card,
+  Select,
+  Table,
+  Space,
+  Message,
+} from '@arco-design/web-react'
 import { IconPlus } from '@arco-design/web-react/icon'
 import { usePlanList } from '../hooks/usePlans'
 import { SearchTable } from '@/components/business/SearchTable'
@@ -91,8 +98,7 @@ export function PlanListPage() {
       title: '创建时间',
       dataIndex: 'createdAt',
       width: 180,
-      render: (date: string) =>
-        new Date(date).toLocaleString('zh-CN'),
+      render: (date: string) => new Date(date).toLocaleString('zh-CN'),
     },
   ]
 

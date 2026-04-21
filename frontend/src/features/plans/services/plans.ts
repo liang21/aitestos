@@ -61,7 +61,10 @@ export const plansApi = {
   /**
    * Add cases to plan
    */
-  addCases: async (planId: string, caseIds: string[]): Promise<{ success: boolean }> => {
+  addCases: async (
+    planId: string,
+    caseIds: string[]
+  ): Promise<{ success: boolean }> => {
     return post<{ case_ids: string[] }, { success: boolean }>(
       `/plans/${planId}/cases`,
       { case_ids: caseIds }
@@ -89,9 +92,6 @@ export const plansApi = {
     planId: string,
     data: RecordResultRequest
   ): Promise<PlanCase> => {
-    return post<RecordResultRequest, PlanCase>(
-      `/plans/${planId}/results`,
-      data
-    )
+    return post<RecordResultRequest, PlanCase>(`/plans/${planId}/results`, data)
   },
 }

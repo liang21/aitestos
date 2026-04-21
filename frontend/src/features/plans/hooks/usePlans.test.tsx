@@ -202,8 +202,9 @@ describe('usePlans hooks', () => {
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
 
       server.use(
-        http.delete('/api/v1/plans/:id', () =>
-          new HttpResponse(null, { status: 204 })
+        http.delete(
+          '/api/v1/plans/:id',
+          () => new HttpResponse(null, { status: 204 })
         )
       )
 
@@ -229,7 +230,10 @@ describe('usePlans hooks', () => {
 
       const { result } = renderHook(() => useAddCases(), { wrapper })
 
-      result.current.mutate({ planId: 'plan-001', caseIds: ['case-001', 'case-002'] })
+      result.current.mutate({
+        planId: 'plan-001',
+        caseIds: ['case-001', 'case-002'],
+      })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
@@ -243,8 +247,9 @@ describe('usePlans hooks', () => {
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
 
       server.use(
-        http.delete('/api/v1/plans/:id/cases/:caseId', () =>
-          new HttpResponse(null, { status: 204 })
+        http.delete(
+          '/api/v1/plans/:id/cases/:caseId',
+          () => new HttpResponse(null, { status: 204 })
         )
       )
 

@@ -136,7 +136,9 @@ describe('PlanListPage', () => {
     it('should show create plan modal on button click', async () => {
       renderWithProviders(<PlanListPage />)
 
-      const createButton = await screen.findByRole('button', { name: /新建计划/i })
+      const createButton = await screen.findByRole('button', {
+        name: /新建计划/i,
+      })
       createButton.click()
 
       // Modal should appear

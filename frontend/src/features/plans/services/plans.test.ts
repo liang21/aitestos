@@ -157,9 +157,12 @@ describe('plansApi', () => {
 
       server.use(
         http.post('/api/v1/plans', () =>
-          HttpResponse.json({ ...mockPlan, id: 'plan-002', ...createData }, {
-            status: 201,
-          })
+          HttpResponse.json(
+            { ...mockPlan, id: 'plan-002', ...createData },
+            {
+              status: 201,
+            }
+          )
         )
       )
 
@@ -193,8 +196,9 @@ describe('plansApi', () => {
   describe('delete', () => {
     it('should delete plan', async () => {
       server.use(
-        http.delete('/api/v1/plans/:id', () =>
-          new HttpResponse(null, { status: 204 })
+        http.delete(
+          '/api/v1/plans/:id',
+          () => new HttpResponse(null, { status: 204 })
         )
       )
 
@@ -213,7 +217,10 @@ describe('plansApi', () => {
         )
       )
 
-      const result = await plansApi.addCases('plan-001', ['case-001', 'case-002'])
+      const result = await plansApi.addCases('plan-001', [
+        'case-001',
+        'case-002',
+      ])
 
       expect(result).toEqual({ success: true })
     })
@@ -222,8 +229,9 @@ describe('plansApi', () => {
   describe('removeCase', () => {
     it('should remove case from plan', async () => {
       server.use(
-        http.delete('/api/v1/plans/:id/cases/:caseId', () =>
-          new HttpResponse(null, { status: 204 })
+        http.delete(
+          '/api/v1/plans/:id/cases/:caseId',
+          () => new HttpResponse(null, { status: 204 })
         )
       )
 
@@ -259,11 +267,14 @@ describe('plansApi', () => {
 
       server.use(
         http.post('/api/v1/plans/:id/results', () =>
-          HttpResponse.json({
-            caseId: 'case-001',
-            status: 'pass',
-            note: '功能正常',
-          }, { status: 201 })
+          HttpResponse.json(
+            {
+              caseId: 'case-001',
+              status: 'pass',
+              note: '功能正常',
+            },
+            { status: 201 }
+          )
         )
       )
 

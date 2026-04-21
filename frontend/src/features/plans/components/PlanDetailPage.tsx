@@ -17,8 +17,16 @@ import {
   Message,
   Popconfirm,
 } from '@arco-design/web-react'
-import { IconArrowLeft, IconEdit, IconDelete } from '@arco-design/web-react/icon'
-import { usePlanDetail, useRecordResult, useDeletePlan } from '../hooks/usePlans'
+import {
+  IconArrowLeft,
+  IconEdit,
+  IconDelete,
+} from '@arco-design/web-react/icon'
+import {
+  usePlanDetail,
+  useRecordResult,
+  useDeletePlan,
+} from '../hooks/usePlans'
 import { StatusTag } from '@/components/business/StatusTag'
 import { ResultRecordModal } from './ResultRecordModal'
 import type { ResultStatus } from '@/types/enums'
@@ -39,7 +47,10 @@ const resultStatusTextMap: Record<ResultStatus, string> = {
 
 export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
   const navigate = useNavigate()
-  const { planId: urlPlanId, projectId } = useParams<{ planId?: string; projectId?: string }>()
+  const { planId: urlPlanId, projectId } = useParams<{
+    planId?: string
+    projectId?: string
+  }>()
   const planId = propPlanId || urlPlanId || ''
 
   // If we have a projectId param, we might need to fetch the plan differently
@@ -71,7 +82,9 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
       Message.success('计划已删除')
       navigate('/plans')
     } catch (err) {
-      Message.error(`删除失败：${err instanceof Error ? err.message : '未知错误'}`)
+      Message.error(
+        `删除失败：${err instanceof Error ? err.message : '未知错误'}`
+      )
     }
   }
 
@@ -90,7 +103,10 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
   }
 
   // Handle submit result
-  const handleSubmitResult = async (data: { status: ResultStatus; note?: string }) => {
+  const handleSubmitResult = async (data: {
+    status: ResultStatus
+    note?: string
+  }) => {
     try {
       await recordResultMutation.mutateAsync({
         planId,
@@ -104,7 +120,9 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
       handleCloseResultModal()
       refetch()
     } catch (err) {
-      Message.error(`录入失败：${err instanceof Error ? err.message : '未知错误'}`)
+      Message.error(
+        `录入失败：${err instanceof Error ? err.message : '未知错误'}`
+      )
     }
   }
 
@@ -236,23 +254,33 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
             <div className="text-gray-500 text-sm">总用例</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-semibold text-green-600">{stats.passed}</div>
+            <div className="text-2xl font-semibold text-green-600">
+              {stats.passed}
+            </div>
             <div className="text-gray-500 text-sm">通过</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-semibold text-red-600">{stats.failed}</div>
+            <div className="text-2xl font-semibold text-red-600">
+              {stats.failed}
+            </div>
             <div className="text-gray-500 text-sm">失败</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-semibold text-orange-600">{stats.blocked}</div>
+            <div className="text-2xl font-semibold text-orange-600">
+              {stats.blocked}
+            </div>
             <div className="text-gray-500 text-sm">阻塞</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-semibold text-gray-600">{stats.skipped}</div>
+            <div className="text-2xl font-semibold text-gray-600">
+              {stats.skipped}
+            </div>
             <div className="text-gray-500 text-sm">跳过</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-semibold text-gray-400">{stats.unexecuted}</div>
+            <div className="text-2xl font-semibold text-gray-400">
+              {stats.unexecuted}
+            </div>
             <div className="text-gray-500 text-sm">未执行</div>
           </div>
         </div>
@@ -262,11 +290,7 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
             <span className="text-gray-500">通过率</span>
             <span className="font-medium">{passRate.toFixed(1)}%</span>
           </div>
-          <Progress
-            percent={passRate}
-            color="#00B42A"
-            animation
-          />
+          <Progress percent={passRate} color="#00B42A" animation />
         </div>
       </Card>
 

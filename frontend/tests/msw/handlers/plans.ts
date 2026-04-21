@@ -3,12 +3,7 @@
  */
 
 import { http, HttpResponse } from 'msw'
-import type {
-  TestPlan,
-  PlanDetail,
-  PlanCase,
-  PlanStats,
-} from '@/types/api'
+import type { TestPlan, PlanDetail, PlanCase, PlanStats } from '@/types/api'
 
 export const plansHandlers = [
   // GET /api/v1/plans - List plans

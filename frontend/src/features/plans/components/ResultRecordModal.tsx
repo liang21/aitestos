@@ -47,21 +47,26 @@ export function ResultRecordModal({
     existingResult?.resultStatus || 'pass'
   )
   const [note, setNote] = useState(existingResult?.resultNote || '')
-  const [existingCase, setExistingCase] = useState<PlanCase | undefined>(undefined)
+  const [existingCase, setExistingCase] = useState<PlanCase | undefined>(
+    undefined
+  )
 
   // Fetch existing plan detail to check if case is already executed
   useEffect(() => {
     if (visible && planId && !existingResult) {
-      plansApi.get(planId).then((planDetail) => {
-        const existing = planDetail.cases.find((c) => c.caseId === caseId)
-        setExistingCase(existing)
-        if (existing && existing.resultStatus) {
-          setStatus(existing.resultStatus)
-          setNote(existing.resultNote || '')
-        }
-      }).catch(() => {
-        // Ignore error, will proceed without existing data
-      })
+      plansApi
+        .get(planId)
+        .then((planDetail) => {
+          const existing = planDetail.cases.find((c) => c.caseId === caseId)
+          setExistingCase(existing)
+          if (existing && existing.resultStatus) {
+            setStatus(existing.resultStatus)
+            setNote(existing.resultNote || '')
+          }
+        })
+        .catch(() => {
+          // Ignore error, will proceed without existing data
+        })
     }
   }, [visible, planId, caseId, existingResult])
 
@@ -123,7 +128,8 @@ export function ResultRecordModal({
         <div>{caseTitle}</div>
         {hasExistingResult && (
           <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-orange-700 text-sm">
-            ⚠️ 该用例已有执行结果：{resultStatusTextMap[existingCase.resultStatus]}
+            ⚠️ 该用例已有执行结果：
+            {resultStatusTextMap[existingCase.resultStatus]}
           </div>
         )}
       </div>
@@ -144,7 +150,8 @@ export function ResultRecordModal({
 
       <div>
         <div className="mb-2 font-medium">
-          备注 <span className="text-gray-400 font-normal">{note.length}/500</span>
+          备注{' '}
+          <span className="text-gray-400 font-normal">{note.length}/500</span>
         </div>
         <TextArea
           placeholder="请输入备注（可选）"

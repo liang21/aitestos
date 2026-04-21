@@ -5,7 +5,15 @@
 
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button, Card, Form, Input, Checkbox, Message, Space } from '@arco-design/web-react'
+import {
+  Button,
+  Card,
+  Form,
+  Input,
+  Checkbox,
+  Message,
+  Space,
+} from '@arco-design/web-react'
 import { useCreatePlan } from '../hooks/usePlans'
 import { useCaseList } from '@/features/testcases/hooks/useTestCases'
 import type { CreatePlanRequest } from '@/types/api'
@@ -31,7 +39,10 @@ export function NewPlanPage() {
   const [selectedCaseIds, setSelectedCaseIds] = useState<string[]>([])
 
   // Handle form submission
-  const handleSubmit = async (values: { name: string; description: string }) => {
+  const handleSubmit = async (values: {
+    name: string
+    description: string
+  }) => {
     try {
       // Validate name
       if (!values.name || values.name.length < 3) {
@@ -60,7 +71,9 @@ export function NewPlanPage() {
       Message.success('计划创建成功')
       navigate(`/plans/${plan.id}`)
     } catch (error) {
-      Message.error(`创建失败：${error instanceof Error ? error.message : '未知错误'}`)
+      Message.error(
+        `创建失败：${error instanceof Error ? error.message : '未知错误'}`
+      )
     }
   }
 
@@ -111,10 +124,7 @@ export function NewPlanPage() {
           </Form.Item>
 
           <Form.Item field="description" label="计划描述">
-            <TextArea
-              placeholder="请输入计划描述"
-              rows={3}
-            />
+            <TextArea placeholder="请输入计划描述" rows={3} />
           </Form.Item>
         </Card>
 
@@ -149,12 +159,8 @@ export function NewPlanPage() {
                       handleCaseSelection(testCase.id, checked)
                     }
                   >
-                    <span className="ml-2 font-medium">
-                      {testCase.number}
-                    </span>
-                    <span className="ml-2 text-gray-600">
-                      {testCase.title}
-                    </span>
+                    <span className="ml-2 font-medium">{testCase.number}</span>
+                    <span className="ml-2 text-gray-600">{testCase.title}</span>
                   </Checkbox>
                 </div>
               ))}

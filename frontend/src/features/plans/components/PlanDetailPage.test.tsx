@@ -74,15 +74,18 @@ describe('PlanDetailPage', () => {
       ),
       // Mock record result API
       http.post('/api/v1/plans/:id/results', () =>
-        HttpResponse.json({
-          caseId: 'case-003',
-          caseNumber: 'TEST-USR-20260421-003',
-          caseTitle: '用户注销成功',
-          resultStatus: 'pass' as const,
-          resultNote: '功能正常',
-          executedAt: '2026-04-21T11:00:00Z',
-          executedBy: 'user-001',
-        }, { status: 201 })
+        HttpResponse.json(
+          {
+            caseId: 'case-003',
+            caseNumber: 'TEST-USR-20260421-003',
+            caseTitle: '用户注销成功',
+            resultStatus: 'pass' as const,
+            resultNote: '功能正常',
+            executedAt: '2026-04-21T11:00:00Z',
+            executedBy: 'user-001',
+          },
+          { status: 201 }
+        )
       )
     )
   })
@@ -127,7 +130,9 @@ describe('PlanDetailPage', () => {
     it('should display case numbers', async () => {
       renderWithProviders(<PlanDetailPage planId="plan-001" />)
 
-      expect(await screen.findByText(/TEST-USR-20260421-001/i)).toBeInTheDocument()
+      expect(
+        await screen.findByText(/TEST-USR-20260421-001/i)
+      ).toBeInTheDocument()
       expect(screen.getByText(/TEST-USR-20260421-002/i)).toBeInTheDocument()
     })
 

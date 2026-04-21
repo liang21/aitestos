@@ -63,15 +63,18 @@ describe('ResultRecordModal', () => {
       ),
       // Mock record result API
       http.post('/api/v1/plans/:id/results', () =>
-        HttpResponse.json({
-          caseId: 'case-001',
-          caseNumber: 'TEST-USR-20260421-001',
-          caseTitle: '用户登录成功',
-          resultStatus: 'pass' as const,
-          resultNote: '功能正常',
-          executedAt: '2026-04-21T10:00:00Z',
-          executedBy: 'user-001',
-        }, { status: 201 })
+        HttpResponse.json(
+          {
+            caseId: 'case-001',
+            caseNumber: 'TEST-USR-20260421-001',
+            caseTitle: '用户登录成功',
+            resultStatus: 'pass' as const,
+            resultNote: '功能正常',
+            executedAt: '2026-04-21T10:00:00Z',
+            executedBy: 'user-001',
+          },
+          { status: 201 }
+        )
       )
     )
   })
@@ -132,9 +135,7 @@ describe('ResultRecordModal', () => {
     it('should render notes textarea', async () => {
       renderWithProviders(<ResultRecordModal {...defaultProps} />)
 
-      expect(
-        await screen.findByPlaceholderText(/备注/i)
-      ).toBeInTheDocument()
+      expect(await screen.findByPlaceholderText(/备注/i)).toBeInTheDocument()
     })
 
     it('should allow typing notes', async () => {

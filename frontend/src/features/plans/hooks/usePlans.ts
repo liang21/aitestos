@@ -38,15 +38,13 @@ export const planKeys = {
 /**
  * Get plans list
  */
-export function usePlanList(
-  params?: {
-    projectId?: string
-    status?: string
-    keywords?: string
-    offset?: number
-    limit?: number
-  }
-): UseQueryResult<PaginatedResponse<TestPlan>> {
+export function usePlanList(params?: {
+  projectId?: string
+  status?: string
+  keywords?: string
+  offset?: number
+  limit?: number
+}): UseQueryResult<PaginatedResponse<TestPlan>> {
   return useQuery({
     queryKey: planKeys.list(params),
     queryFn: () => plansApi.list(params),
@@ -127,11 +125,14 @@ export function useAddCases() {
       const previousPlan = queryClient.getQueryData(planKeys.detail(planId))
 
       // Optimistically update to the new value
-      queryClient.setQueryData(planKeys.detail(planId), (old: PlanDetail | undefined) => {
-        if (!old) return old
-        // Add new cases to the existing list (they would be added server-side)
-        return { ...old, stats: { ...old.stats, total: old.stats.total + 1 } }
-      })
+      queryClient.setQueryData(
+        planKeys.detail(planId),
+        (old: PlanDetail | undefined) => {
+          if (!old) return old
+          // Add new cases to the existing list (they would be added server-side)
+          return { ...old, stats: { ...old.stats, total: old.stats.total + 1 } }
+        }
+      )
 
       // Return context with previous value
       return { previousPlan }
@@ -139,7 +140,10 @@ export function useAddCases() {
     onError: (err, variables, context) => {
       // Rollback to previous value
       if (context?.previousPlan) {
-        queryClient.setQueryData(planKeys.detail(context?.variables.planId), context.previousPlan)
+        queryClient.setQueryData(
+          planKeys.detail(context?.variables.planId),
+          context.previousPlan
+        )
       }
     },
     onSuccess: () => {
@@ -166,24 +170,29 @@ export function useRemoveCase() {
       const previousPlan = queryClient.getQueryData(planKeys.detail(planId))
 
       // Optimistically update to remove the case
-      queryClient.setQueryData(planKeys.detail(planId), (old: PlanDetail | undefined) => {
-        if (!old) return old
-        return {
-          ...old,
-          cases: old.cases.filter((c) => c.caseId !== caseId),
-          stats: {
-            ...old.stats,
-            total: old.stats.total - 1,
-            // Adjust status counts based on removed case
-            ...(old.cases.find((c) => c.caseId === caseId)?.resultStatus === 'pass' && {
-              passed: old.stats.passed - 1,
-            }),
-            ...(old.cases.find((c) => c.caseId === caseId)?.resultStatus === 'fail' && {
-              failed: old.stats.failed - 1,
-            }),
-          },
+      queryClient.setQueryData(
+        planKeys.detail(planId),
+        (old: PlanDetail | undefined) => {
+          if (!old) return old
+          return {
+            ...old,
+            cases: old.cases.filter((c) => c.caseId !== caseId),
+            stats: {
+              ...old.stats,
+              total: old.stats.total - 1,
+              // Adjust status counts based on removed case
+              ...(old.cases.find((c) => c.caseId === caseId)?.resultStatus ===
+                'pass' && {
+                passed: old.stats.passed - 1,
+              }),
+              ...(old.cases.find((c) => c.caseId === caseId)?.resultStatus ===
+                'fail' && {
+                failed: old.stats.failed - 1,
+              }),
+            },
+          }
         }
-      })
+      )
 
       // Return context with previous value
       return { previousPlan }
@@ -191,7 +200,10 @@ export function useRemoveCase() {
     onError: (err, variables, context) => {
       // Rollback to previous value
       if (context?.previousPlan) {
-        queryClient.setQueryData(planKeys.detail(context?.variables.planId), context.previousPlan)
+        queryClient.setQueryData(
+          planKeys.detail(context?.variables.planId),
+          context.previousPlan
+        )
       }
     },
     onSuccess: () => {
@@ -208,8 +220,13 @@ export function useRecordResult() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ planId, data }: { planId: string; data: RecordResultRequest }) =>
-      plansApi.recordResult(planId, data),
+    mutationFn: ({
+      planId,
+      data,
+    }: {
+      planId: string
+      data: RecordResultRequest
+    }) => plansApi.recordResult(planId, data),
     onMutate: async ({ planId, data }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: planKeys.detail(planId) })
@@ -218,44 +235,52 @@ export function useRecordResult() {
       const previousPlan = queryClient.getQueryData(planKeys.detail(planId))
 
       // Optimistically update the case result
-      queryClient.setQueryData(planKeys.detail(planId), (old: PlanDetail | undefined) => {
-        if (!old) return old
+      queryClient.setQueryData(
+        planKeys.detail(planId),
+        (old: PlanDetail | undefined) => {
+          if (!old) return old
 
-        // Find and update the specific case
-        const updatedCases = old.cases.map((c) =>
-          c.caseId === data.caseId
-            ? {
-                ...c,
-                resultStatus: data.status,
-                resultNote: data.note,
-                executedAt: new Date().toISOString(),
-              }
-            : c
-        )
+          // Find and update the specific case
+          const updatedCases = old.cases.map((c) =>
+            c.caseId === data.caseId
+              ? {
+                  ...c,
+                  resultStatus: data.status,
+                  resultNote: data.note,
+                  executedAt: new Date().toISOString(),
+                }
+              : c
+          )
 
-        // Recalculate stats
-        const oldResult = old.cases.find((c) => c.caseId === data.caseId)?.resultStatus
-        const stats = { ...old.stats }
+          // Recalculate stats
+          const oldResult = old.cases.find(
+            (c) => c.caseId === data.caseId
+          )?.resultStatus
+          const stats = { ...old.stats }
 
-        // Decrement old status count if case was previously executed
-        if (oldResult === 'pass') stats.passed = Math.max(0, stats.passed - 1)
-        if (oldResult === 'fail') stats.failed = Math.max(0, stats.failed - 1)
-        if (oldResult === 'block') stats.blocked = Math.max(0, stats.blocked - 1)
-        if (oldResult === 'skip') stats.skipped = Math.max(0, stats.skipped - 1)
-        if (oldResult === undefined) stats.unexecuted = Math.max(0, stats.unexecuted - 1)
+          // Decrement old status count if case was previously executed
+          if (oldResult === 'pass') stats.passed = Math.max(0, stats.passed - 1)
+          if (oldResult === 'fail') stats.failed = Math.max(0, stats.failed - 1)
+          if (oldResult === 'block')
+            stats.blocked = Math.max(0, stats.blocked - 1)
+          if (oldResult === 'skip')
+            stats.skipped = Math.max(0, stats.skipped - 1)
+          if (oldResult === undefined)
+            stats.unexecuted = Math.max(0, stats.unexecuted - 1)
 
-        // Increment new status count
-        if (data.status === 'pass') stats.passed += 1
-        if (data.status === 'fail') stats.failed += 1
-        if (data.status === 'block') stats.blocked += 1
-        if (data.status === 'skip') stats.skipped += 1
+          // Increment new status count
+          if (data.status === 'pass') stats.passed += 1
+          if (data.status === 'fail') stats.failed += 1
+          if (data.status === 'block') stats.blocked += 1
+          if (data.status === 'skip') stats.skipped += 1
 
-        return {
-          ...old,
-          cases: updatedCases,
-          stats,
+          return {
+            ...old,
+            cases: updatedCases,
+            stats,
+          }
         }
-      })
+      )
 
       // Return context with previous value
       return { previousPlan }
@@ -263,7 +288,10 @@ export function useRecordResult() {
     onError: (err, variables, context) => {
       // Rollback to previous value
       if (context?.previousPlan) {
-        queryClient.setQueryData(planKeys.detail(context?.variables.planId), context.previousPlan)
+        queryClient.setQueryData(
+          planKeys.detail(context?.variables.planId),
+          context.previousPlan
+        )
       }
     },
     onSuccess: () => {
