@@ -6,10 +6,7 @@ export function NotFoundPage() {
 
   return (
     <div className="flex h-screen items-center justify-center">
-      <Result
-        status="404"
-        subTitle="抱歉，您访问的页面不存在。"
-      >
+      <Result status="404" subTitle="抱歉，您访问的页面不存在。">
         <Button type="primary" onClick={() => navigate('/projects')}>
           返回首页
         </Button>

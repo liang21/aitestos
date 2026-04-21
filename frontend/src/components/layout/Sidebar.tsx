@@ -165,9 +165,7 @@ export function Sidebar() {
               </Menu>
             }
           >
-            <Avatar size={32}>
-              {user?.username?.charAt(0).toUpperCase()}
-            </Avatar>
+            <Avatar size={32}>{user?.username?.charAt(0).toUpperCase()}</Avatar>
           </Dropdown>
         </div>
       )}

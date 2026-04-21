@@ -41,7 +41,11 @@ function formatConfigValue(value: unknown): string {
 /**
  * Parse JSON value safely with error feedback
  */
-function parseJsonValue(value: string): { success: boolean; data: unknown; error?: string } {
+function parseJsonValue(value: string): {
+  success: boolean
+  data: unknown
+  error?: string
+} {
   try {
     const parsed = JSON.parse(value)
     return { success: true, data: parsed }
@@ -242,9 +246,7 @@ export function ConfigManagePage() {
         // 显示结果
         Message.success(
           `导入成功：${result.successCount} 个配置${
-            result.failedCount > 0
-              ? `，${result.failedCount} 个失败`
-              : ''
+            result.failedCount > 0 ? `，${result.failedCount} 个失败` : ''
           }`
         )
 
@@ -318,12 +320,7 @@ interface ConfigModalProps {
   onOk: (data: { key: string; value: string; description: string }) => void
 }
 
-function ConfigModal({
-  visible,
-  config,
-  onCancel,
-  onOk,
-}: ConfigModalProps) {
+function ConfigModal({ visible, config, onCancel, onOk }: ConfigModalProps) {
   const [key, setKey] = useState(config?.key || '')
   const [value, setValue] = useState(formatConfigValue(config?.value || ''))
   const [description, setDescription] = useState(config?.description || '')

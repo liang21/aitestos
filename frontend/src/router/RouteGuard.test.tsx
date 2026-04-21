@@ -27,7 +27,7 @@ describe('RouteGuard', () => {
             <Route path="/login" element={<div>Login Page</div>} />
             <Route path="/projects" element={<div>Projects Page</div>} />
             <Route path="/admin" element={<div>Admin Page</div>} />
-            <Route element={<RouteGuard requireAdmin={false} />}>
+            <Route element={<RouteGuard requireAdmin={false}>{ui}</RouteGuard>}>
               <Route path="/" element={ui} />
             </Route>
             <Route

@@ -1,4 +1,11 @@
-import { Breadcrumb, Button, Dropdown, Avatar, Badge, Menu as ArcoMenu } from '@arco-design/web-react'
+import {
+  Breadcrumb,
+  Button,
+  Dropdown,
+  Avatar,
+  Badge,
+  Menu as ArcoMenu,
+} from '@arco-design/web-react'
 import { Bell, Menu as MenuIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
@@ -37,7 +44,9 @@ export function Header({ title, breadcrumbs = [] }: HeaderProps) {
           <Breadcrumb className="breadcrumb">
             {breadcrumbs.map((crumb, index) => (
               <BreadcrumbItem key={index}>
-                <button onClick={() => navigate(crumb.path)}>{crumb.title}</button>
+                <button onClick={() => navigate(crumb.path)}>
+                  {crumb.title}
+                </button>
               </BreadcrumbItem>
             ))}
             <BreadcrumbItem>{title}</BreadcrumbItem>
@@ -45,19 +54,13 @@ export function Header({ title, breadcrumbs = [] }: HeaderProps) {
         )}
 
         {/* Title when no breadcrumbs */}
-        {breadcrumbs.length === 0 && (
-          <h1 className="page-title">{title}</h1>
-        )}
+        {breadcrumbs.length === 0 && <h1 className="page-title">{title}</h1>}
       </div>
 
       <div className="header-right">
         {/* Notifications */}
         <Badge count={1} dot>
-          <Button
-            type="text"
-            icon={<Bell size={18} />}
-            aria-label="通知"
-          />
+          <Button type="text" icon={<Bell size={18} />} aria-label="通知" />
         </Badge>
 
         {/* User Dropdown */}
@@ -65,13 +68,20 @@ export function Header({ title, breadcrumbs = [] }: HeaderProps) {
           trigger="click"
           position="br"
           droplist={
-            <ArcoMenu onClickMenuItem={(key) => key === 'logout' && handleLogout()}>
+            <ArcoMenu
+              onClickMenuItem={(key) => key === 'logout' && handleLogout()}
+            >
               <MenuItem key="settings">设置</MenuItem>
               <MenuItem key="logout">退出登录</MenuItem>
             </ArcoMenu>
           }
         >
-          <div className="user-info" role="button" tabIndex={0} aria-label="用户菜单">
+          <div
+            className="user-info"
+            role="button"
+            tabIndex={0}
+            aria-label="用户菜单"
+          >
             <Avatar size={32} style={{ cursor: 'pointer' }}>
               {user?.username?.charAt(0).toUpperCase()}
             </Avatar>

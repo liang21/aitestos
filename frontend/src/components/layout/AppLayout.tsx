@@ -32,9 +32,7 @@ export function AppLayout({
       </Sider>
       <Layout>
         <Header title={title} breadcrumbs={breadcrumbs} />
-        <Content className="app-content">
-          {children ?? <Outlet />}
-        </Content>
+        <Content className="app-content">{children ?? <Outlet />}</Content>
       </Layout>
     </Layout>
   )

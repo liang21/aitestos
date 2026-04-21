@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import type { CaseDraft, DraftStatus, TestCase } from '@/types/api'
+import type { CaseDraft, TestCase } from '@/types/api'
 
 /**
  * MSW handlers for Draft API endpoints
@@ -95,9 +95,7 @@ export const draftsHandlers = [
   }),
 
   // POST /api/v1/generation/drafts/:id/confirm - 确认草稿
-  http.post('/api/v1/generation/drafts/:id/confirm', ({ params }) => {
-    const draftId = params.id as string
-
+  http.post('/api/v1/generation/drafts/:id/confirm', () => {
     return HttpResponse.json<TestCase>({
       id: 'tc-001',
       moduleId: 'mod-001',
@@ -121,7 +119,7 @@ export const draftsHandlers = [
   }),
 
   // POST /api/v1/generation/drafts/:id/reject - 拒绝草稿
-  http.post('/api/v1/generation/drafts/:id/reject', ({ params }) => {
+  http.post('/api/v1/generation/drafts/:id/reject', () => {
     return HttpResponse.json({
       success: true,
       message: '草稿已拒绝',
@@ -129,8 +127,7 @@ export const draftsHandlers = [
   }),
 
   // POST /api/v1/generation/drafts/batch-confirm - 批量确认
-  http.post('/api/v1/generation/drafts/batch-confirm', async ({ request }) => {
-    const body = await request.json()
+  http.post('/api/v1/generation/drafts/batch-confirm', async () => {
     return HttpResponse.json({
       successCount: 2,
       failedCount: 0,

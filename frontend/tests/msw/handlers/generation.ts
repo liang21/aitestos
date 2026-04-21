@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import type { GenerationTask, CaseDraft, TaskStatus } from '@/types/api'
+import type { GenerationTask, CaseDraft } from '@/types/api'
 
 export const generationHandlers = [
   // POST /api/v1/generation/tasks - 创建生成任务
@@ -36,7 +36,7 @@ export const generationHandlers = [
         moduleId: '550e8400-e29b-41d4-a716-446655440003',
         status: 'completed',
         prompt: '测试用户登录功能',
-        result: { draftCount: 5 },
+        result: { draftCount: 5, confidence: 'high' },
         createdAt: '2026-04-20T09:00:00Z',
         updatedAt: '2026-04-20T09:05:00Z',
       },
@@ -80,7 +80,7 @@ export const generationHandlers = [
         moduleId: '550e8400-e29b-41d4-a716-446655440003',
         status: 'completed',
         prompt: '测试用户登录功能',
-        result: { draftCount: 5 },
+        result: { draftCount: 5, confidence: 'high' },
         createdAt: '2026-04-20T09:00:00Z',
         updatedAt: '2026-04-20T09:05:00Z',
       },

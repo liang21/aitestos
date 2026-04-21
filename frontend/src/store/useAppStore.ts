@@ -6,12 +6,19 @@ interface AppState {
   toggleSidebar: () => void
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>((set) => ({
   // Initial state: collapsed on small screens, expanded otherwise
   // Uses CSS variable breakpoint for consistency
-  sidebarCollapsed: typeof window !== 'undefined'
-    ? window.innerWidth < parseInt(getComputedStyle(document.documentElement).getPropertyValue('--responsive-breakpoint') || '768', 10)
-    : false,
+  sidebarCollapsed:
+    typeof window !== 'undefined'
+      ? window.innerWidth <
+        parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            '--responsive-breakpoint'
+          ) || '768',
+          10
+        )
+      : false,
 
   toggleSidebar: () =>
     set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
@@ -21,7 +28,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 export function useSidebarResponsive() {
   useEffect(() => {
     const getBreakpoint = () => {
-      const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--responsive-breakpoint')
+      const cssVar = getComputedStyle(
+        document.documentElement
+      ).getPropertyValue('--responsive-breakpoint')
       return parseInt(cssVar || '768', 10)
     }
 

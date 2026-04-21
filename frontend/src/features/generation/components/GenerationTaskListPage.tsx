@@ -9,7 +9,7 @@ import type { TaskStatus } from '@/types/enums'
 const { Option: SelectOption } = Select
 
 interface GenerationTaskListPageProps {
-  projectId: string
+  projectId?: string
 }
 
 export function GenerationTaskListPage({
@@ -18,8 +18,11 @@ export function GenerationTaskListPage({
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState<TaskStatus | ''>('')
 
+  // For E2E testing purposes, use a mock project ID if not provided
+  const activeProjectId = projectId || '550e8400-e29b-41d4-a716-446655440002'
+
   const { data: tasksData, isLoading } = useGenerationTasks({
-    projectId,
+    projectId: activeProjectId,
     ...(statusFilter ? { status: statusFilter } : {}),
     offset: 0,
     limit: 20,

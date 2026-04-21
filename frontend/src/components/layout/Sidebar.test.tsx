@@ -72,12 +72,10 @@ describe('Sidebar', () => {
 
   it('should show selected state style for active route', () => {
     // Mock window.location to simulate active route
-    const locationSpy = vi.spyOn(window, 'location', 'get').mockReturnValue(
-      {
-        ...window.location,
-        pathname: '/projects',
-      } as Location
-    )
+    const locationSpy = vi.spyOn(window, 'location', 'get').mockReturnValue({
+      ...window.location,
+      pathname: '/projects',
+    } as Location)
 
     render(<Sidebar />, { wrapper })
 

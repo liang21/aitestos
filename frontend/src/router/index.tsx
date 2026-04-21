@@ -1,7 +1,8 @@
-import { createBrowserRouter, Navigate, Route } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { RouteGuard } from '@/router/RouteGuard'
 import { AuthErrorBoundary } from '@/components/ErrorBoundary'
 import { App } from '@/app/App'
+import { AppLayout } from '@/components/layout/AppLayout'
 
 /**
  * Application Router Configuration
@@ -47,7 +48,9 @@ export const router = createBrowserRouter([
         path: '/',
         element: (
           <AuthErrorBoundary>
-            <RouteGuard />
+            <RouteGuard>
+              <AppLayout />
+            </RouteGuard>
           </AuthErrorBoundary>
         ),
         children: [
@@ -58,7 +61,41 @@ export const router = createBrowserRouter([
                 (m) => ({ Component: m.ProjectListPage })
               ),
           },
-          // More protected routes will be added here
+          {
+            path: 'testcases',
+            lazy: () =>
+              import('../features/testcases/components/CaseListPage').then(
+                (m) => ({ Component: m.CaseListPage })
+              ),
+          },
+          {
+            path: 'plans',
+            lazy: () =>
+              import('../features/plans/components/PlanListPage').then((m) => ({
+                Component: m.PlanListPage,
+              })),
+          },
+          {
+            path: 'generation',
+            lazy: () =>
+              import('../features/generation/components/GenerationTaskListPage').then(
+                (m) => ({ Component: m.GenerationTaskListPage })
+              ),
+          },
+          {
+            path: 'drafts',
+            lazy: () =>
+              import('../features/drafts/components/DraftListPage').then(
+                (m) => ({ Component: m.DraftListPage })
+              ),
+          },
+          {
+            path: 'documents',
+            lazy: () =>
+              import('../features/documents/components/KnowledgeListPage').then(
+                (m) => ({ Component: m.KnowledgeListPage })
+              ),
+          },
           {
             path: '*',
             element: <Navigate to="/projects" replace />,
@@ -68,7 +105,7 @@ export const router = createBrowserRouter([
       // 404 fallback
       {
         path: '*',
-        element: () =>
+        lazy: () =>
           import('../components/NotFoundPage').then((m) => ({
             Component: m.NotFoundPage,
           })),
