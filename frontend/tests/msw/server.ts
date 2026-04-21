@@ -2,6 +2,7 @@ import { setupServer } from 'msw/node'
 import { HttpResponse, http } from 'msw'
 import { draftsHandlers } from './handlers/drafts'
 import { testcasesHandlers } from './handlers/testcases'
+import { plansHandlers } from './handlers/plans'
 
 export const server = setupServer(
   // Default handlers for common endpoints
@@ -52,5 +53,7 @@ export const server = setupServer(
   // Draft handlers
   ...draftsHandlers,
   // Testcases handlers
-  ...testcasesHandlers
+  ...testcasesHandlers,
+  // Plans handlers
+  ...plansHandlers
 )
