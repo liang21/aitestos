@@ -1,0 +1,99 @@
+.sidebar {
+  height: 100vh;
+  background: var(--color-bg-2);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.2s ease;
+  width: var(--sidebar-width);
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-width-collapsed);
+}
+
+.sidebar-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+}
+
+.sidebar.collapsed .sidebar-header {
+  padding: 12px;
+  justify-content: center;
+}
+
+.collapse-btn {
+  width: 100%;
+  color: var(--color-text-2);
+}
+
+.sidebar-menu {
+  flex: 1;
+  border: none;
+  padding: 8px 0;
+}
+
+.sidebar-menu .arco-menu-item {
+  margin: 2px 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+}
+
+.sidebar.collapsed .sidebar-menu .arco-menu-item {
+  margin: 2px 4px;
+  padding: 10px;
+  justify-content: center;
+}
+
+.sidebar-menu .arco-menu-item a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text-2);
+  text-decoration: none;
+}
+
+.sidebar.collapsed .sidebar-menu .arco-menu-item a {
+  justify-content: center;
+  gap: 0;
+}
+
+.sidebar-menu .arco-menu-item-selected {
+  background: var(--color-fill-2);
+}
+
+.sidebar-menu .arco-menu-item-selected a {
+  color: rgb(var(--primary-6));
+}
+
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.sidebar-footer.collapsed {
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.user-info:hover {
+  background: var(--color-fill-1);
+}
+
+.username {
+  margin-left: 8px;
+  font-size: 14px;
+  color: var(--color-text-1);
+}

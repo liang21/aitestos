@@ -1,0 +1,55 @@
+.app-header {
+  height: var(--header-height);
+  background: var(--color-bg-1);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.collapse-btn {
+  color: var(--color-text-2);
+}
+
+.breadcrumb {
+  margin: 0;
+}
+
+.page-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-1);
+  margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.user-info:hover {
+  background: var(--color-fill-1);
+}
+
+.username {
+  font-size: 14px;
+  color: var(--color-text-1);
+}

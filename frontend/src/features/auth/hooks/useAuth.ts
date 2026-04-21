@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from './useAuthStore'
 import { authApi } from '@/features/auth/services/auth'
 import { logAuthError } from '@/lib/logger'
@@ -104,4 +105,20 @@ export function useRefresh() {
   })
 
   return refresh
+}
+
+/**
+ * Logout hook
+ * Handles user logout and navigation to login page
+ */
+export function useLogout() {
+  const navigate = useNavigate()
+  const { logout } = useAuthStore()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
+
+  return handleLogout
 }
