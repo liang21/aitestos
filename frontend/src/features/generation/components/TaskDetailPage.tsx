@@ -1,6 +1,13 @@
 import { useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Descriptions, Tag, Table, Button, Spin } from '@arco-design/web-react'
+import {
+  Card,
+  Descriptions,
+  Tag,
+  Table,
+  Button,
+  Spin,
+} from '@arco-design/web-react'
 import { IconArrowLeft } from '@arco-design/web-react/icon'
 import { useQuery } from '@tanstack/react-query'
 import { generationApi } from '@/features/generation/services/generation'
@@ -68,11 +75,15 @@ export function TaskDetailPage() {
                 metadata.confidence === 'high'
                   ? 'green'
                   : metadata.confidence === 'medium'
-                  ? 'orange'
-                  : 'red'
+                    ? 'orange'
+                    : 'red'
               }
             >
-              {metadata.confidence === 'high' ? '高' : metadata.confidence === 'medium' ? '中' : '低'}
+              {metadata.confidence === 'high'
+                ? '高'
+                : metadata.confidence === 'medium'
+                  ? '中'
+                  : '低'}
             </Tag>
           ) : null,
       },
@@ -157,7 +168,9 @@ export function TaskDetailPage() {
           <div className="mt-4 flex items-center gap-2">
             <Spin />
             <span className="text-gray-500">
-              {task.status === 'pending' ? '任务等待中...' : 'AI 正在生成用例，请稍候...'}
+              {task.status === 'pending'
+                ? '任务等待中...'
+                : 'AI 正在生成用例，请稍候...'}
             </span>
           </div>
         )}

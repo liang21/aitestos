@@ -16,7 +16,8 @@ export const generationKeys = {
   all: ['generation'] as const,
   tasks: () => [...generationKeys.all, 'tasks'] as const,
   task: (id: string) => [...generationKeys.tasks(), id] as const,
-  tasksList: (params: TaskListParams) => [...generationKeys.tasks(), 'list', params] as const,
+  tasksList: (params: TaskListParams) =>
+    [...generationKeys.tasks(), 'list', params] as const,
 }
 
 /**
@@ -53,7 +54,8 @@ export function useCreateGenerationTask() {
       queryClient.invalidateQueries({ queryKey: generationKeys.tasks() })
     },
     onError: (error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : '创建任务失败'
+      const errorMessage =
+        error instanceof Error ? error.message : '创建任务失败'
       Message.error(errorMessage)
       console.error('Generation task creation error:', error)
     },

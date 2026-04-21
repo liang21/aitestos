@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useGenerationTasks, useGenerationTask, useCreateGenerationTask } from './useGeneration'
+import {
+  useGenerationTasks,
+  useGenerationTask,
+  useCreateGenerationTask,
+} from './useGeneration'
 import { server } from '../../../../tests/msw/server'
 import { generationHandlers } from '../../../../tests/msw/handlers/generation'
 import { http, HttpResponse } from 'msw'
@@ -65,9 +69,9 @@ describe('useGeneration hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
-      expect(result.current.data?.data.every((task) => task.status === 'completed')).toBe(
-        true
-      )
+      expect(
+        result.current.data?.data.every((task) => task.status === 'completed')
+      ).toBe(true)
     })
 
     it('should handle loading state', () => {
@@ -89,7 +93,9 @@ describe('useGeneration hooks', () => {
     it('should fetch single task details', async () => {
       const taskId = '550e8400-e29b-41d4-a716-446655440001'
 
-      const { result } = renderHook(() => useGenerationTask(taskId), { wrapper })
+      const { result } = renderHook(() => useGenerationTask(taskId), {
+        wrapper,
+      })
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
@@ -111,7 +117,9 @@ describe('useGeneration hooks', () => {
 
   describe('useCreateGenerationTask', () => {
     it('should create task successfully', async () => {
-      const { result } = renderHook(() => useCreateGenerationTask(), { wrapper })
+      const { result } = renderHook(() => useCreateGenerationTask(), {
+        wrapper,
+      })
 
       result.current.mutate({
         projectId: '550e8400-e29b-41d4-a716-446655440002',
@@ -137,7 +145,9 @@ describe('useGeneration hooks', () => {
         )
       )
 
-      const { result } = renderHook(() => useCreateGenerationTask(), { wrapper })
+      const { result } = renderHook(() => useCreateGenerationTask(), {
+        wrapper,
+      })
 
       result.current.mutate({
         projectId: '550e8400-e29b-41d4-a716-446655440002',
@@ -151,11 +161,18 @@ describe('useGeneration hooks', () => {
     it('should invalidate queries on success', async () => {
       // First, populate the cache with a tasks query
       queryClient.setQueryData(
-        ['generation', 'tasks', 'list', { projectId: 'test', offset: 0, limit: 10 }],
+        [
+          'generation',
+          'tasks',
+          'list',
+          { projectId: 'test', offset: 0, limit: 10 },
+        ],
         { data: [], total: 0, offset: 0, limit: 10 }
       )
 
-      const { result } = renderHook(() => useCreateGenerationTask(), { wrapper })
+      const { result } = renderHook(() => useCreateGenerationTask(), {
+        wrapper,
+      })
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
 

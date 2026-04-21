@@ -103,7 +103,9 @@ describe('Generation API service', () => {
 
       const result = await generationApi.listTasks(params)
 
-      expect(result.data.every((task) => task.status === 'completed')).toBe(true)
+      expect(result.data.every((task) => task.status === 'completed')).toBe(
+        true
+      )
     })
   })
 
@@ -138,10 +140,7 @@ describe('Generation API service', () => {
         title: '验证有效邮箱注册',
         caseType: 'functionality',
         priority: 'P1',
-        steps: expect.arrayContaining([
-          '打开注册页面',
-          '输入有效邮箱',
-        ]),
+        steps: expect.arrayContaining(['打开注册页面', '输入有效邮箱']),
       })
     })
   })

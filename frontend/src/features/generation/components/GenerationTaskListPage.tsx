@@ -12,7 +12,9 @@ interface GenerationTaskListPageProps {
   projectId: string
 }
 
-export function GenerationTaskListPage({ projectId }: GenerationTaskListPageProps) {
+export function GenerationTaskListPage({
+  projectId,
+}: GenerationTaskListPageProps) {
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState<TaskStatus | ''>('')
 
@@ -92,7 +94,9 @@ export function GenerationTaskListPage({ projectId }: GenerationTaskListPageProp
             <Button
               type="primary"
               icon={<IconPlus />}
-              onClick={() => navigate('/generation/tasks/new', { state: { projectId } })}
+              onClick={() =>
+                navigate('/generation/tasks/new', { state: { projectId } })
+              }
             >
               新建任务
             </Button>

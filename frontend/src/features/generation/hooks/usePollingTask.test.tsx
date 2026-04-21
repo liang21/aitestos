@@ -43,7 +43,9 @@ describe('usePollingTask', () => {
       })
 
       // Verify refetchInterval function is set and returns 3000 for pending status
-      const query = queryClient.getQueryCache().find(['generation-task', taskId])
+      const query = queryClient
+        .getQueryCache()
+        .find(['generation-task', taskId])
       const refetchIntervalFn = query?.observers[0].options.refetchInterval
       expect(typeof refetchIntervalFn).toBe('function')
       if (typeof refetchIntervalFn === 'function') {
@@ -66,7 +68,9 @@ describe('usePollingTask', () => {
       })
 
       // Verify refetchInterval function returns 3000 for processing status
-      const query = queryClient.getQueryCache().find(['generation-task', taskId])
+      const query = queryClient
+        .getQueryCache()
+        .find(['generation-task', taskId])
       const refetchIntervalFn = query?.observers[0].options.refetchInterval
       if (typeof refetchIntervalFn === 'function') {
         expect(refetchIntervalFn(result.current.data)).toBe(3000)
@@ -89,7 +93,9 @@ describe('usePollingTask', () => {
       })
 
       // Verify refetchInterval function returns false for completed status
-      const query = queryClient.getQueryCache().find(['generation-task', taskId])
+      const query = queryClient
+        .getQueryCache()
+        .find(['generation-task', taskId])
       const refetchIntervalFn = query?.observers[0].options.refetchInterval
       if (typeof refetchIntervalFn === 'function') {
         expect(refetchIntervalFn(result.current.data)).toBe(false)
@@ -124,7 +130,9 @@ describe('usePollingTask', () => {
       })
 
       // Verify refetchInterval function returns false for failed status
-      const query = queryClient.getQueryCache().find(['generation-task', taskId])
+      const query = queryClient
+        .getQueryCache()
+        .find(['generation-task', taskId])
       const refetchIntervalFn = query?.observers[0].options.refetchInterval
       if (typeof refetchIntervalFn === 'function') {
         expect(refetchIntervalFn(result.current.data)).toBe(false)
@@ -142,9 +150,12 @@ describe('usePollingTask', () => {
     })
 
     it('should not fetch when taskId is undefined', async () => {
-      const { result } = renderHook(() => usePollingTask(undefined as unknown as string), {
-        wrapper,
-      })
+      const { result } = renderHook(
+        () => usePollingTask(undefined as unknown as string),
+        {
+          wrapper,
+        }
+      )
 
       // Query should be disabled
       expect(result.current.fetchStatus).toBe('idle')

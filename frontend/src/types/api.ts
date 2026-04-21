@@ -288,7 +288,7 @@ export interface ConfirmDraftRequest {
   steps?: string[]
   expected?: Record<string, unknown>
   caseType?: CaseType
-  priority?: CaseType
+  priority?: Priority
 }
 
 /**

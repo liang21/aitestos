@@ -95,7 +95,9 @@ describe('TaskDetailPage', () => {
   })
 
   it('should render task details (prompt, status, timestamps)', async () => {
-    renderWithProviders(<TaskDetailPage taskId="550e8400-e29b-41d4-a716-446655440001" />)
+    renderWithProviders(
+      <TaskDetailPage taskId="550e8400-e29b-41d4-a716-446655440001" />
+    )
 
     await waitFor(() => {
       expect(screen.getByText(/测试用户注册功能/i)).toBeInTheDocument()
@@ -106,7 +108,9 @@ describe('TaskDetailPage', () => {
   })
 
   it('should display polling progress when status is processing', async () => {
-    renderWithProviders(<TaskDetailPage taskId="550e8400-e29b-41d4-a716-446655440005" />)
+    renderWithProviders(
+      <TaskDetailPage taskId="550e8400-e29b-41d4-a716-446655440005" />
+    )
 
     await waitFor(() => {
       expect(screen.getByText(/processing/i)).toBeInTheDocument()
@@ -117,7 +121,9 @@ describe('TaskDetailPage', () => {
   })
 
   it('should display draft list when status is completed', async () => {
-    renderWithProviders(<TaskDetailPage taskId="550e8400-e29b-41d4-a716-446655440004" />)
+    renderWithProviders(
+      <TaskDetailPage taskId="550e8400-e29b-41d4-a716-446655440004" />
+    )
 
     await waitFor(() => {
       expect(screen.getByText(/草稿列表/i)).toBeInTheDocument()
@@ -129,7 +135,9 @@ describe('TaskDetailPage', () => {
   })
 
   it('should display draft with title, type, priority, and confidence tag', async () => {
-    renderWithProviders(<TaskDetailPage taskId="550e8400-e29b-41d4-a716-446655440004" />)
+    renderWithProviders(
+      <TaskDetailPage taskId="550e8400-e29b-41d4-a716-446655440004" />
+    )
 
     await waitFor(() => {
       expect(screen.getByText(/验证有效邮箱注册/i)).toBeInTheDocument()

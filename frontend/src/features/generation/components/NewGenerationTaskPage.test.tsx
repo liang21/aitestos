@@ -118,8 +118,14 @@ describe('NewGenerationTaskPage', () => {
     renderWithProviders(<NewGenerationTaskPage projectId="proj-1" />)
 
     // Fill required fields
-    await user.selectOptions(screen.getByRole('combobox', { name: /模块/i }), 'mod-1')
-    await user.type(screen.getByPlaceholderText(/请描述测试需求/i), '测试用户注册功能，包括邮箱验证和密码强度校验')
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: /模块/i }),
+      'mod-1'
+    )
+    await user.type(
+      screen.getByPlaceholderText(/请描述测试需求/i),
+      '测试用户注册功能，包括邮箱验证和密码强度校验'
+    )
     await user.type(screen.getByRole('spinbutton', { name: /用例数量/i }), '5')
 
     const submitButton = screen.getByRole('button', { name: /立即生成/i })

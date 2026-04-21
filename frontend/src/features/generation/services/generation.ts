@@ -32,7 +32,9 @@ export const generationApi = {
    * List generation tasks with filters
    * GET /api/v1/generation/tasks
    */
-  listTasks: async (params: TaskListParams): Promise<PaginatedResponse<GenerationTask>> => {
+  listTasks: async (
+    params: TaskListParams
+  ): Promise<PaginatedResponse<GenerationTask>> => {
     return request.get<PaginatedResponse<GenerationTask>>('/generation/tasks', {
       params,
     })

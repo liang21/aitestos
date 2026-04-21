@@ -3,7 +3,16 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button, Form, Select, Input, TextArea, Collapse, InputNumber, Message } from '@arco-design/web-react'
+import {
+  Button,
+  Form,
+  Select,
+  Input,
+  TextArea,
+  Collapse,
+  InputNumber,
+  Message,
+} from '@arco-design/web-react'
 import { IconPlus } from '@arco-design/web-react/icon'
 import { useCreateGenerationTask } from '@/features/generation/hooks/useGeneration'
 import { useModuleList } from '@/features/modules/hooks/useModules'
@@ -19,7 +28,9 @@ const createTaskSchema = z.object({
   moduleId: z.string().min(1, '请选择模块'),
   prompt: z.string().min(10, '需求描述至少10个字'),
   count: z.number().int().min(1).max(20, '用例数量范围为1-20'),
-  caseType: z.enum(['functionality', 'performance', 'api', 'ui', 'security'] as const).optional(),
+  caseType: z
+    .enum(['functionality', 'performance', 'api', 'ui', 'security'] as const)
+    .optional(),
   priority: z.enum(['P0', 'P1', 'P2', 'P3'] as const).optional(),
   sceneType: z.enum(['positive', 'negative', 'boundary'] as const).optional(),
 })
@@ -30,14 +41,17 @@ interface NewGenerationTaskPageProps {
   projectId?: string
 }
 
-export function NewGenerationTaskPage({ projectId: propProjectId }: NewGenerationTaskPageProps) {
+export function NewGenerationTaskPage({
+  projectId: propProjectId,
+}: NewGenerationTaskPageProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const [advancedExpanded, setAdvancedExpanded] = useState(false)
   const createTask = useCreateGenerationTask()
 
   // Get projectId from prop or router state
-  const projectId = propProjectId || (location.state as { projectId?: string })?.projectId || ''
+  const projectId =
+    propProjectId || (location.state as { projectId?: string })?.projectId || ''
 
   // Fetch modules for selection
   const { data: modulesData } = useModuleList(projectId)
@@ -160,10 +174,7 @@ export function NewGenerationTaskPage({ projectId: propProjectId }: NewGeneratio
                 style={{ background: 'transparent' }}
               >
                 <div className="space-y-4">
-                  <FormItem
-                    label="场景类型"
-                    help={errors.sceneType?.message}
-                  >
+                  <FormItem label="场景类型" help={errors.sceneType?.message}>
                     <Controller
                       name="sceneType"
                       control={control}
@@ -177,10 +188,7 @@ export function NewGenerationTaskPage({ projectId: propProjectId }: NewGeneratio
                     />
                   </FormItem>
 
-                  <FormItem
-                    label="优先级"
-                    help={errors.priority?.message}
-                  >
+                  <FormItem label="优先级" help={errors.priority?.message}>
                     <Controller
                       name="priority"
                       control={control}
@@ -195,17 +203,18 @@ export function NewGenerationTaskPage({ projectId: propProjectId }: NewGeneratio
                     />
                   </FormItem>
 
-                  <FormItem
-                    label="用例类型"
-                    help={errors.caseType?.message}
-                  >
+                  <FormItem label="用例类型" help={errors.caseType?.message}>
                     <Controller
                       name="caseType"
                       control={control}
                       render={({ field }) => (
                         <Select {...field} placeholder="选择用例类型">
-                          <SelectOption value="functionality">功能测试</SelectOption>
-                          <SelectOption value="performance">性能测试</SelectOption>
+                          <SelectOption value="functionality">
+                            功能测试
+                          </SelectOption>
+                          <SelectOption value="performance">
+                            性能测试
+                          </SelectOption>
                           <SelectOption value="api">API 测试</SelectOption>
                           <SelectOption value="ui">UI 测试</SelectOption>
                           <SelectOption value="security">安全测试</SelectOption>
