@@ -65,14 +65,20 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const isDisabled = login.isPending || login.isSuccess || rateLimit.isLocked
 
   return (
-    <div className="login-form-wrap">
+    <div className="flex flex-col items-center justify-center h-screen flex-1 py-15 px-10 bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Logo & Title */}
-      <div className="login-title">
-        <div className="logo-container">
-          <img src="/favicon.svg" alt="Aitestos" className="logo-image" />
+      <div className="text-center mb-10 animate-fade-in-up">
+        <div className="flex justify-center mb-5">
+          <img
+            src="/favicon.svg"
+            alt="Aitestos"
+            className="w-35 h-auto object-contain drop-shadow-[0_4px_12px_rgba(139,92,246,0.2)]"
+          />
         </div>
-        <div className="title-container">
-          <span className="title-welcome">AI 测试管理平台</span>
+        <div className="">
+          <span className="text-purple-700 text-xl font-semibold tracking-wide">
+            AI 测试管理平台
+          </span>
         </div>
       </div>
 
@@ -83,8 +89,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         maxAttempts={RateLimitConfig.LOGIN.maxAttempts}
         remainingTime={rateLimit.remainingTime}
       >
-        <div className="form-card">
-          <div className="form-header">账号登录</div>
+        <div className="min-w-120 px-12 py-12 rounded-2xl bg-white shadow-[0_20px_40px_rgba(0,0,0,0.08),0_8px_16px_rgba(0,0,0,0.04)] border border-purple-500/10 relative animate-slide-up hover:shadow-[0_25px_50px_rgba(0,0,0,0.12),0_12px_24px_rgba(0,0,0,0.08)] transition-shadow duration-300">
+          <div className="text-xl font-semibold text-purple-700 text-center mb-8 tracking-wide">
+            账号登录
+          </div>
 
           <Form
             onSubmit={form.handleSubmit(handleSubmit)}
@@ -94,7 +102,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <Form.Item
               field="email"
               rules={[{ required: true, message: '请输入邮箱' }]}
-              className="login-form-item"
+              className="mb-6"
             >
               <Input
                 {...(form.register('email') as object)}
@@ -103,14 +111,14 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 size="large"
                 maxLength={64}
                 disabled={isDisabled}
-                className="login-input"
+                className="login-input-rounded"
               />
             </Form.Item>
 
             <Form.Item
               field="password"
               rules={[{ required: true, message: '请输入密码' }]}
-              className="login-form-item"
+              className="mb-6"
             >
               <Input.Password
                 {...(form.register('password') as object)}
@@ -120,11 +128,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 maxLength={64}
                 disabled={isDisabled}
                 allowClear
-                className="login-password-input"
+                className="login-input-rounded"
               />
             </Form.Item>
 
-            <div className="form-actions">
+            <div className="mt-8 mb-0">
               <Button
                 type="primary"
                 size="large"
@@ -132,15 +140,19 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 htmlType="submit"
                 loading={login.isPending}
                 disabled={isDisabled}
+                className="!h-12 !text-base !font-semibold !bg-gradient-to-r !from-purple-500 !to-purple-700 !border-0 !rounded-3xl !shadow-[0_4px_12px_rgba(139,92,246,0.3)] hover:!bg-gradient-to-r hover:!from-purple-600 hover:!to-purple-800 hover:!shadow-[0_8px_20px_rgba(139,92,246,0.4)] hover:!-translate-y-[-2px] active:!translate-y-0 active:!shadow-[0_2px_8px_rgba(139,92,246,0.3)]"
               >
                 {rateLimit.isLocked ? `请等待 ${rateLimit.remainingTime} 秒` : '登录'}
               </Button>
             </div>
 
             {/* Register Link */}
-            <div className="form-footer">
-              <span className="footer-text">还没有账号？</span>
-              <Link to="/register" className="register-link">
+            <div className="flex justify-center items-center gap-2 mt-6 pt-6 border-t border-gray-100">
+              <span className="text-sm text-gray-500">还没有账号？</span>
+              <Link
+                to="/register"
+                className="text-sm text-purple-500 font-medium no-underline hover:text-purple-600 hover:underline"
+              >
                 立即注册
               </Link>
             </div>

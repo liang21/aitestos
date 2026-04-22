@@ -58,7 +58,10 @@ describe('Authentication Integration Tests', () => {
         return (
           <button
             onClick={() =>
-              login.mutate({ email: 'test@example.com', password: 'password123' })
+              login.mutate({
+                email: 'test@example.com',
+                password: 'password123',
+              })
             }
           >
             Login
@@ -237,7 +240,9 @@ describe('Authentication Integration Tests', () => {
       expect(screen.getByText('创建您的账号')).toBeInTheDocument()
       expect(screen.getByPlaceholderText('请输入用户名')).toBeInTheDocument()
       expect(screen.getByPlaceholderText('请输入邮箱')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('请输入密码（至少 8 位字符）')).toBeInTheDocument()
+      expect(
+        screen.getByPlaceholderText('请输入密码（至少 8 位字符）')
+      ).toBeInTheDocument()
       expect(screen.getByRole('button', { name: '注册' })).toBeInTheDocument()
     })
 

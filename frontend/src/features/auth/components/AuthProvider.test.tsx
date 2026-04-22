@@ -8,7 +8,8 @@ const mockSetAuthExpiredHandler = vi.fn()
 const mockSetTokenUpdatedHandler = vi.fn()
 
 vi.mock('@/lib/request', () => ({
-  setAuthExpiredHandler: (handler: () => void) => mockSetAuthExpiredHandler(handler),
+  setAuthExpiredHandler: (handler: () => void) =>
+    mockSetAuthExpiredHandler(handler),
   setTokenUpdatedHandler: (handler: (a: string, b: string) => void) =>
     mockSetTokenUpdatedHandler(handler),
 }))
@@ -56,9 +57,7 @@ describe('AuthProvider', () => {
   it('should register logout handler with request interceptor', () => {
     render(<AuthProvider>Test</AuthProvider>)
 
-    expect(mockSetAuthExpiredHandler).toHaveBeenCalledWith(
-      expect.any(Function)
-    )
+    expect(mockSetAuthExpiredHandler).toHaveBeenCalledWith(expect.any(Function))
   })
 
   it('should register setTokens handler with request interceptor', () => {
