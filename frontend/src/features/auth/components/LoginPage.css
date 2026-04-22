@@ -1,0 +1,427 @@
+/* Login Page Styles - Based on MeterSphere design with modern enhancements */
+
+/* Scope #root override to login page only */
+.login-page#root,
+#root:has(> .login-page) {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+.login-page {
+  display: flex;
+  align-items: stretch;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* ========== Banner - Left Side ========== */
+.banner-wrap {
+  width: 50%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+/* Enhanced decorative elements */
+.banner-bg-decoration-1 {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  border-radius: 50%;
+  top: -150px;
+  left: -150px;
+  animation: float 8s ease-in-out infinite;
+}
+
+.banner-bg-decoration-2 {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  border-radius: 50%;
+  bottom: -100px;
+  right: -100px;
+  animation: float 10s ease-in-out infinite reverse;
+}
+
+.banner-bg-decoration-3 {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: pulse 4s ease-in-out infinite;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+  opacity: 0.95;
+}
+
+.banner-slogan {
+  position: absolute;
+  top: 60px;
+  left: 60px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 3px;
+  z-index: 10;
+  animation: fadeInUp 1s ease-out 0.5s both;
+}
+
+/* ========== Login Form - Right Side ========== */
+.login-form-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  flex: 1;
+  padding: 60px 40px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.logo-image {
+  width: 140px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(139, 92, 246, 0.2));
+}
+
+.title-welcome {
+  color: #7c3aed;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* ========== Enhanced Form Card ========== */
+.form-card {
+  min-width: 480px;
+  padding: 48px;
+  border-radius: 16px;
+  background-color: #ffffff;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(139, 92, 246, 0.08);
+  position: relative;
+  animation: slideUp 0.6s ease-out 0.2s both;
+  transition: box-shadow 0.3s ease;
+}
+
+.form-card:hover {
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.12),
+    0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.form-header {
+  font-size: 20px;
+  font-weight: 600;
+  color: #7c3aed;
+  margin-bottom: 32px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* ========== Enhanced Input Fields ========== */
+.login-form-item {
+  margin-bottom: 24px;
+}
+
+.login-input,
+.login-password-input {
+  width: 100%;
+}
+
+/* Force rounded corners on all input elements */
+.login-input .arco-input-wrapper,
+.login-password-input .arco-input-wrapper,
+.login-input .arco-input-wrapper *,
+.login-password-input .arco-input-wrapper * {
+  border-radius: 24px !important;
+}
+
+.login-input .arco-input-wrapper,
+.login-password-input .arco-input-wrapper {
+  height: 48px;
+  border: 2px solid #e5e7eb;
+  border-radius: 24px;
+  background-color: #fafafa;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  padding-left: 20px;
+  padding-right: 20px;
+  overflow: hidden;
+}
+
+.login-input .arco-input-wrapper .arco-input-inner-wrapper,
+.login-password-input .arco-input-wrapper .arco-input-inner-wrapper {
+  border-radius: 24px;
+}
+
+.login-input .arco-input-wrapper:hover,
+.login-password-input .arco-input-wrapper:hover {
+  border-color: #c4b5fd;
+  background-color: #ffffff;
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.08);
+  border-radius: 24px;
+}
+
+.login-input .arco-input-wrapper:hover .arco-input-inner-wrapper,
+.login-password-input .arco-input-wrapper:hover .arco-input-inner-wrapper {
+  border-radius: 24px;
+}
+
+.login-input .arco-input-wrapper:focus-within,
+.login-password-input .arco-input-wrapper:focus-within {
+  border-color: #8b5cf6;
+  background-color: #ffffff;
+  box-shadow:
+    0 0 0 4px rgba(139, 92, 246, 0.1),
+    0 4px 12px rgba(139, 92, 246, 0.15);
+  border-radius: 24px;
+}
+
+.login-input .arco-input-wrapper:focus-within .arco-input-inner-wrapper,
+.login-password-input
+  .arco-input-wrapper:focus-within
+  .arco-input-inner-wrapper {
+  border-radius: 24px;
+}
+
+.login-input .arco-input,
+.login-password-input .arco-input {
+  height: 44px;
+  font-size: 15px;
+  color: #1f2937;
+  background-color: transparent;
+  border-radius: 24px;
+}
+
+/* Ensure inner input element also has rounded corners */
+.login-input .arco-input input,
+.login-password-input .arco-input input {
+  border-radius: 24px !important;
+}
+
+.login-input .arco-input::placeholder,
+.login-password-input .arco-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Fix prefix icon container to not break rounded corners */
+.login-input .arco-input-group-prefix,
+.login-password-input .arco-input-group-prefix {
+  border-radius: 24px 0 0 24px;
+}
+
+/* Fix suffix icon (password visibility toggle) */
+.login-password-input .arco-input-group-suffix {
+  border-radius: 0 24px 24px 0;
+}
+
+/* Ensure password input group maintains rounded corners */
+.login-password-input .arco-input-group {
+  border-radius: 24px;
+}
+
+/* Ensure all Arco input inner elements have rounded corners */
+.login-input .arco-input-wrapper *,
+.login-password-input .arco-input-wrapper * {
+  border-radius: inherit;
+}
+
+/* ========== Enhanced Button ========== */
+.form-actions {
+  margin-top: 32px;
+  margin-bottom: 0;
+}
+
+.form-actions .arco-btn-primary {
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-actions .arco-btn-primary:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+  transform: translateY(-2px);
+}
+
+.form-actions .arco-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+/* ========== Form Footer - Register Link ========== */
+.form-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.footer-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.register-link {
+  font-size: 14px;
+  color: #8b5cf6;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.register-link:hover {
+  color: #7c3aed;
+  text-decoration: underline;
+}
+
+/* ========== Animations ========== */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-30px) scale(1.05);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 1024px) {
+  .banner-wrap {
+    display: none;
+  }
+
+  .form-card {
+    min-width: auto;
+    width: 100%;
+    max-width: 480px;
+    padding: 36px;
+  }
+
+  .login-form-wrap {
+    padding: 40px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-card {
+    padding: 28px;
+    border-radius: 12px;
+  }
+
+  .form-header {
+    font-size: 18px;
+    margin-bottom: 24px;
+  }
+
+  .title-welcome {
+    font-size: 20px;
+  }
+
+  .login-input .arco-input-wrapper,
+  .login-password-input .arco-input-wrapper {
+    height: 44px;
+  }
+
+  .form-actions .arco-btn-primary {
+    height: 44px;
+  }
+}

@@ -1,8 +1,8 @@
-import { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { LoginBanner } from './LoginBanner'
 import { LoginForm } from './LoginForm'
 import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
+import './LoginPage.css'
 
 /**
  * LoginPage Component
@@ -21,11 +21,13 @@ export function LoginPage() {
   // If already authenticated, the LoginForm will handle the redirect
   // This component just prevents rendering the login form
   if (isAuthenticated) {
+    // Navigate to intended destination or /projects
+    // The LoginForm handles this, but we also check here
     return <Navigate to="/projects" replace />
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden overflow-x-hidden m-0 p-0">
+    <div className="login-page">
       <LoginBanner />
       <LoginForm />
     </div>
