@@ -40,7 +40,9 @@ describe('GenerationTaskListPage', () => {
     })
 
     // Should show new task button
-    expect(screen.getByRole('button', { name: /新建任务/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /新建任务/i })
+    ).toBeInTheDocument()
   })
 
   it('should render status filter dropdown', async () => {

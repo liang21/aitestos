@@ -109,9 +109,11 @@ export const router = createBrowserRouter([
           {
             path: 'plans/:planId',
             lazy: () =>
-              import('../features/plans/components/PlanDetailPage').then((m) => ({
-                Component: m.PlanDetailPage,
-              })),
+              import('../features/plans/components/PlanDetailPage').then(
+                (m) => ({
+                  Component: m.PlanDetailPage,
+                })
+              ),
           },
           // AI Generation
           {

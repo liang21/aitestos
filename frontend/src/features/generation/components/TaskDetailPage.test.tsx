@@ -29,7 +29,10 @@ describe('TaskDetailPage', () => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            <Route path="/generation/tasks/:taskId" element={<TaskDetailPage />} />
+            <Route
+              path="/generation/tasks/:taskId"
+              element={<TaskDetailPage />}
+            />
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>
@@ -44,7 +47,9 @@ describe('TaskDetailPage', () => {
     })
 
     // Should show back button
-    expect(screen.getByRole('button', { name: /返回列表/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /返回列表/i })
+    ).toBeInTheDocument()
   })
 
   it('should display polling indicator for processing status', async () => {
@@ -69,17 +74,25 @@ describe('TaskDetailPage', () => {
       expect(screen.getByText(/任务详情/i)).toBeInTheDocument()
     })
 
-    await waitFor(() => {
-      expect(screen.getByText(/生成的草稿/i)).toBeInTheDocument()
-    }, { timeout: 3000 })
+    await waitFor(
+      () => {
+        expect(screen.getByText(/生成的草稿/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
   })
 
   it('should render task description card', async () => {
     renderWithProviders('550e8400-e29b-41d4-a716-446655440001')
 
     // Wait for component to render
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /返回列表/i })).toBeInTheDocument()
-    }, { timeout: 3000 })
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole('button', { name: /返回列表/i })
+        ).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
   })
 })

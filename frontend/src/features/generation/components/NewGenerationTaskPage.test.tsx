@@ -90,7 +90,9 @@ describe('NewGenerationTaskPage', () => {
     })
 
     // Check for Collapse component by looking for the form item label
-    const collapseLabel = screen.getAllByText('高级选项').find(el => el.tagName === 'LABEL')
+    const collapseLabel = screen
+      .getAllByText('高级选项')
+      .find((el) => el.tagName === 'LABEL')
     expect(collapseLabel).toBeInTheDocument()
   })
 
@@ -98,7 +100,9 @@ describe('NewGenerationTaskPage', () => {
     renderWithProviders(<NewGenerationTaskPage projectId="proj-1" />)
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /立即生成/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /立即生成/i })
+      ).toBeInTheDocument()
     })
   })
 })
