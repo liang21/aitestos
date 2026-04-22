@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useLogin, useRegister } from './useAuth'
 import { useAuthStore } from './useAuthStore'
 import { authApi } from '@/features/auth/services/auth'
-import { server } from '@/tests/msw/server'
+import { server } from '../../../../tests/msw/server'
 
 vi.mock('@/features/auth/services/auth')
 
@@ -21,11 +21,7 @@ describe('useAuth hooks', () => {
     vi.clearAllMocks()
     // Reset store
     useAuthStore.getState().reset()
-    server.listen()
-  })
-
-  afterEach(() => {
-    server.close()
+    server.resetHandlers()
   })
 
   function wrapper({ children }: { children: React.ReactNode }) {

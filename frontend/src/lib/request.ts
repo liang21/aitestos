@@ -14,14 +14,28 @@ interface QueuedRequest {
 let isRefreshing = false
 const pendingRequests: QueuedRequest[] = []
 
-// Auth expired callback
+// Auth expired callback - will be set to useAuthStore.logout
 let authExpiredHandler: (() => void) | null = null
 
 /**
  * Register callback for auth expiration (e.g., redirect to login)
+ * Should be set to useAuthStore.logout to ensure state synchronization
  */
 export function setAuthExpiredHandler(handler: () => void) {
   authExpiredHandler = handler
+}
+
+// Token updated callback - will be set to useAuthStore.setTokens
+let tokenUpdatedHandler: ((accessToken: string, refreshToken: string) => void) | null = null
+
+/**
+ * Register callback for token updates
+ * Called after successful token refresh to keep useAuthStore in sync
+ */
+export function setTokenUpdatedHandler(
+  handler: (accessToken: string, refreshToken: string) => void
+) {
+  tokenUpdatedHandler = handler
 }
 
 // ============================================================================
@@ -47,7 +61,7 @@ const tokenStorage = {
     try {
       localStorage.removeItem(key)
     } catch {
-      // Silently fail if localStorage is unavailable
+      // Silently fail if localStorage unavailable
     }
   },
 }
@@ -140,6 +154,11 @@ request.interceptors.response.use(
         // Update storage
         tokenStorage.setItem('access_token', access_token)
         tokenStorage.setItem('refresh_token', newRefreshToken)
+
+        // Update useAuthStore if handler is registered
+        if (tokenUpdatedHandler) {
+          tokenUpdatedHandler(access_token, newRefreshToken)
+        }
 
         // Process queued requests: replay each with new token
         const queuedResults = await Promise.allSettled(

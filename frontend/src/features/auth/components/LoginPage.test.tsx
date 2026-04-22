@@ -22,38 +22,66 @@ describe('LoginPage', () => {
   function renderWithRouter(ui: React.ReactElement) {
     return render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>{ui}</MemoryRouter>
+        <MemoryRouter initialEntries={['/login']}>{ui}</MemoryRouter>
       </QueryClientProvider>
     )
   }
 
   describe('rendering', () => {
-    it('should render email/password input fields and login button', () => {
+    it('should render banner with slogan', () => {
       renderWithRouter(<LoginPage />)
 
-      expect(screen.getByText('邮箱')).toBeInTheDocument()
-      expect(screen.getByText('密码')).toBeInTheDocument()
+      expect(screen.getByAltText('Aitestos Platform')).toBeInTheDocument()
+      expect(screen.getByText('因为热爱 快乐成长')).toBeInTheDocument()
+    })
+
+    it('should render form with branding', () => {
+      renderWithRouter(<LoginPage />)
+
+      expect(screen.getByText('AI 测试管理平台')).toBeInTheDocument()
+      expect(screen.getByText('账号登录')).toBeInTheDocument()
+    })
+
+    it('should render email input field', () => {
+      renderWithRouter(<LoginPage />)
+
+      expect(screen.getByPlaceholderText('请输入邮箱')).toBeInTheDocument()
+    })
+
+    it('should render password input field', () => {
+      renderWithRouter(<LoginPage />)
+
+      expect(screen.getByPlaceholderText('请输入密码')).toBeInTheDocument()
+    })
+
+    it('should render login button', () => {
+      renderWithRouter(<LoginPage />)
+
       expect(screen.getByRole('button', { name: '登录' })).toBeInTheDocument()
     })
 
-    it('should show register link', () => {
+    it('should render register link', () => {
       renderWithRouter(<LoginPage />)
 
       expect(screen.getByText('还没有账号？')).toBeInTheDocument()
       expect(screen.getByRole('link', { name: '立即注册' })).toBeInTheDocument()
     })
 
-    it('should have correct placeholders', () => {
+    it('should not render "remember me" checkbox', () => {
       renderWithRouter(<LoginPage />)
 
-      expect(screen.getByPlaceholderText('请输入邮箱')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('请输入密码')).toBeInTheDocument()
+      expect(screen.queryByText('记住我')).not.toBeInTheDocument()
+    })
+
+    it('should not render "forgot password" link', () => {
+      renderWithRouter(<LoginPage />)
+
+      expect(screen.queryByText('忘记密码？')).not.toBeInTheDocument()
     })
   })
 
   describe('authentication check', () => {
     it('should redirect to /projects if already authenticated', () => {
-      // Set authenticated state
       useAuthStore.setState({
         user: {
           id: 'user-123',
@@ -70,8 +98,7 @@ describe('LoginPage', () => {
 
       renderWithRouter(<LoginPage />)
 
-      // Component should return null (redirects internally)
-      expect(screen.queryByText('登录')).not.toBeInTheDocument()
+      expect(screen.queryByText('账号登录')).not.toBeInTheDocument()
     })
   })
 })

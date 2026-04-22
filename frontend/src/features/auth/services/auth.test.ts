@@ -1,18 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { authApi } from './auth'
-import { server } from '@/tests/msw/server'
+import { server } from '../../../../tests/msw/server'
 import { http, HttpResponse } from 'msw'
 import * as requestModule from '@/lib/request'
 
 describe('authApi', () => {
-  beforeEach(() => {
-    server.listen()
-  })
-
-  afterEach(() => {
-    server.close()
-  })
-
   describe('login', () => {
     it('should call POST /auth/login and return tokens', async () => {
       server.use(

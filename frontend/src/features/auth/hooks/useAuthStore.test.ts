@@ -1,32 +1,91 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { useAuthStore } from './useAuthStore'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { authApi } from '@/features/auth/services/auth'
 
 vi.mock('@/features/auth/services/auth')
 
-type MockLocalStorage = {
-  getItem: ReturnType<typeof vi.fn>
-  setItem: ReturnType<typeof vi.fn>
-  removeItem: ReturnType<typeof vi.fn>
-  clear: ReturnType<typeof vi.fn>
+// Set up localStorage mock BEFORE importing useAuthStore
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 }
 
-describe('useAuthStore', () => {
-  let mockLocalStorage: MockLocalStorage
+vi.stubGlobal('localStorage', localStorageMock)
 
+// Import after localStorage is mocked
+import { useAuthStore } from './useAuthStore'
+
+describe('useAuthStore', () => {
   beforeEach(() => {
-    // Create localStorage mock before store is used
-    mockLocalStorage = {
-      getItem: vi.fn(),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-    }
-    vi.stubGlobal('localStorage', mockLocalStorage)
+    // Reset mocks
+    localStorageMock.getItem.mockReturnValue(null)
+    localStorageMock.setItem.mockImplementation(() => {})
+    localStorageMock.removeItem.mockImplementation(() => {})
+    localStorageMock.clear.mockImplementation(() => {})
 
     // Reset store before each test
     useAuthStore.getState().reset()
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    // Clean up
+    useAuthStore.getState().reset()
+  })
+
+  describe('initialize', () => {
+    it('should mark store as initialized', () => {
+      useAuthStore.getState().initialize()
+
+      expect(useAuthStore.getState().isInitialized).toBe(true)
+    })
+
+    it('should handle missing tokens gracefully', () => {
+      localStorageMock.getItem.mockReturnValue(null)
+
+      useAuthStore.getState().initialize()
+
+      expect(useAuthStore.getState().isAuthenticated).toBe(false)
+      expect(useAuthStore.getState().isInitialized).toBe(true)
+    })
+
+    it('should clear expired tokens on initialization', () => {
+      // Create an expired token (exp in the past)
+      const expiredPayload = btoa(
+        JSON.stringify({ exp: Math.floor(Date.now() / 1000) - 3600 })
+      )
+      const expiredToken = `header.${expiredPayload}.signature`
+
+      localStorageMock.getItem.mockImplementation((key) => {
+        if (key === 'access_token') return expiredToken
+        if (key === 'refresh_token') return 'refresh'
+        return null
+      })
+
+      useAuthStore.getState().initialize()
+
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('access_token')
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('refresh_token')
+      expect(useAuthStore.getState().isAuthenticated).toBe(false)
+    })
+  })
+
+  describe('setTokens', () => {
+    it('should update tokens in localStorage and state', () => {
+      useAuthStore.getState().setTokens('new-access', 'new-refresh')
+
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        'access_token',
+        'new-access'
+      )
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        'refresh_token',
+        'new-refresh'
+      )
+      expect(useAuthStore.getState().token).toBe('new-access')
+      expect(useAuthStore.getState().refreshToken).toBe('new-refresh')
+    })
   })
 
   describe('login', () => {
@@ -53,13 +112,14 @@ describe('useAuthStore', () => {
       expect(useAuthStore.getState().token).toBe('test-token')
       expect(useAuthStore.getState().refreshToken).toBe('test-refresh')
       expect(useAuthStore.getState().isAuthenticated).toBe(true)
+      expect(useAuthStore.getState().isInitialized).toBe(true)
 
       // Verify localStorage called
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'access_token',
         'test-token'
       )
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'refresh_token',
         'test-refresh'
       )
@@ -114,8 +174,8 @@ describe('useAuthStore', () => {
       expect(useAuthStore.getState().isAuthenticated).toBe(false)
 
       // Verify localStorage cleared
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('access_token')
-      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('refresh_token')
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('access_token')
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('refresh_token')
     })
   })
 
@@ -148,11 +208,11 @@ describe('useAuthStore', () => {
       expect(useAuthStore.getState().refreshToken).toBe('new-refresh')
 
       // Verify localStorage updated
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'access_token',
         'new-token'
       )
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'refresh_token',
         'new-refresh'
       )
