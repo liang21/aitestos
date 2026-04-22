@@ -142,7 +142,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 disabled={isDisabled}
                 className="!h-12 !text-base !font-semibold !bg-gradient-to-r !from-purple-500 !to-purple-700 !border-0 !rounded-3xl !shadow-[0_4px_12px_rgba(139,92,246,0.3)] hover:!bg-gradient-to-r hover:!from-purple-600 hover:!to-purple-800 hover:!shadow-[0_8px_20px_rgba(139,92,246,0.4)] hover:!-translate-y-[-2px] active:!translate-y-0 active:!shadow-[0_2px_8px_rgba(139,92,246,0.3)]"
               >
-                {rateLimit.isLocked ? `请等待 ${rateLimit.remainingTime} 秒` : '登录'}
+                {rateLimit.isLocked
+                  ? `请等待 ${rateLimit.remainingTime} 秒`
+                  : '登录'}
               </Button>
             </div>
 

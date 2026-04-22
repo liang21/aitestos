@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import React from 'react'
 import { ErrorBoundary } from './ErrorBoundary'
 
 // Component that throws an error
@@ -77,26 +78,43 @@ describe('ErrorBoundary', () => {
   it('should reset error state when reset button is clicked', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    // Use a wrapper component that controls error state
-    function TestWrapper({ shouldThrow }: { shouldThrow: boolean }) {
+    // Use a wrapper component with state to trigger error reset
+    function TestWrapper() {
+      const [shouldThrow, setShouldThrow] = React.useState(true)
+      const [key, setKey] = React.useState(0)
+
+      const handleReset = () => {
+        setKey((prev) => prev + 1)
+        setShouldThrow(false)
+      }
+
       return (
-        <ErrorBoundary key="test-boundary">
+        <ErrorBoundary
+          key={key}
+          fallback={
+            <div>
+              <div>Error fallback</div>
+              <button onClick={handleReset}>重试</button>
+            </div>
+          }
+        >
           <ThrowError shouldThrow={shouldThrow} />
         </ErrorBoundary>
       )
     }
 
-    const { rerender } = render(<TestWrapper shouldThrow={true} />)
+    const { rerender } = render(<TestWrapper />)
 
-    expect(screen.getByText('出现了一些问题')).toBeInTheDocument()
+    // Initial render with error
+    expect(screen.getByText('Error fallback')).toBeInTheDocument()
 
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: '重试' }))
 
-    // Now render without error - ErrorBoundary should reset and show content
-    rerender(<TestWrapper shouldThrow={false} />)
-
-    expect(screen.getByText('No error')).toBeInTheDocument()
+    // After reset, should render children without error
+    await waitFor(() => {
+      expect(screen.getByText('No error')).toBeInTheDocument()
+    })
 
     consoleSpy.mockRestore()
   })

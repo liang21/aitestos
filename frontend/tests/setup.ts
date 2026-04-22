@@ -30,17 +30,5 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-// Mock Arco Design message component
-vi.mock('@arco-design/web-react', async () => {
-  const actual = await vi.importActual('@arco-design/web-react')
-  return {
-    ...(actual as any),
-    message: {
-      success: vi.fn(),
-      error: vi.fn(),
-      warning: vi.fn(),
-      info: vi.fn(),
-      config: vi.fn(),
-    },
-  }
-})
+// Note: Arco Design components are not mocked here to preserve all functionality
+// Message side effects in tests can be suppressed by using vi.spyOn if needed

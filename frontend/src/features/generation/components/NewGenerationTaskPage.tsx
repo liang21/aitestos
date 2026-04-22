@@ -8,7 +8,6 @@ import {
   Form,
   Select,
   Input,
-  TextArea,
   Collapse,
   InputNumber,
   Message,
@@ -20,6 +19,7 @@ import type { CaseType, Priority, SceneType } from '@/types/enums'
 
 const { Item: FormItem } = Form
 const { Option: SelectOption } = Select
+const { TextArea } = Input
 
 /**
  * Zod schema for generation task form

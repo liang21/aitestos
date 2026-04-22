@@ -2,7 +2,8 @@
 
 /* Custom animations for login page */
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) scale(1);
   }
   50% {
@@ -11,7 +12,8 @@
 }
 
 @keyframes pulse-slow {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.8;
     transform: translate(-50%, -50%) scale(1);
   }
@@ -62,7 +64,9 @@
 
 .login-input-rounded .arco-input-wrapper:focus-within {
   @apply border-purple-600 bg-white;
-  box-shadow: 0 0 0 16px rgba(139, 92, 246, 0.1), 0 4px 12px rgba(139, 92, 246, 0.15);
+  box-shadow:
+    0 0 0 16px rgba(139, 92, 246, 0.1),
+    0 4px 12px rgba(139, 92, 246, 0.15);
 }
 
 /* Responsive adjustments */
@@ -93,7 +97,6 @@
     @apply text-xl;
   }
 }
-
 
 :root {
   --text: #6b6375;

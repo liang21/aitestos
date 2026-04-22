@@ -26,7 +26,9 @@ export function setAuthExpiredHandler(handler: () => void) {
 }
 
 // Token updated callback - will be set to useAuthStore.setTokens
-let tokenUpdatedHandler: ((accessToken: string, refreshToken: string) => void) | null = null
+let tokenUpdatedHandler:
+  | ((accessToken: string, refreshToken: string) => void)
+  | null = null
 
 /**
  * Register callback for token updates

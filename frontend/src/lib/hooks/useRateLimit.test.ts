@@ -114,8 +114,14 @@ describe('useRateLimit', () => {
         vi.advanceTimersByTime(6000)
       })
 
-      expect(result.current.canAttempt()).toBe(false) // Still locked, need to check again
-      expect(result.current.isLocked).toBe(false) // Should have reset
+      // canAttempt() should trigger state reset
+      act(() => {
+        result.current.canAttempt()
+      })
+
+      // After calling canAttempt, state should be updated
+      expect(result.current.isLocked).toBe(false)
+      expect(result.current.canAttempt()).toBe(true)
     })
   })
 

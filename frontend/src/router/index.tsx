@@ -54,6 +54,7 @@ export const router = createBrowserRouter([
           </AuthErrorBoundary>
         ),
         children: [
+          // Projects
           {
             path: 'projects',
             lazy: () =>
@@ -62,12 +63,35 @@ export const router = createBrowserRouter([
               ),
           },
           {
+            path: 'projects/:projectId',
+            lazy: () =>
+              import('../features/projects/components/ProjectDashboard').then(
+                (m) => ({ Component: m.ProjectDashboard })
+              ),
+          },
+          {
+            path: 'projects/:projectId/modules',
+            lazy: () =>
+              import('../features/modules/components/ModuleManagePage').then(
+                (m) => ({ Component: m.ModuleManagePage })
+              ),
+          },
+          // Test Cases
+          {
             path: 'testcases',
             lazy: () =>
               import('../features/testcases/components/CaseListPage').then(
                 (m) => ({ Component: m.CaseListPage })
               ),
           },
+          {
+            path: 'testcases/:caseId',
+            lazy: () =>
+              import('../features/testcases/components/CaseDetailPage').then(
+                (m) => ({ Component: m.CaseDetailPage })
+              ),
+          },
+          // Test Plans
           {
             path: 'plans',
             lazy: () =>
@@ -76,12 +100,42 @@ export const router = createBrowserRouter([
               })),
           },
           {
+            path: 'plans/new',
+            lazy: () =>
+              import('../features/plans/components/NewPlanPage').then((m) => ({
+                Component: m.NewPlanPage,
+              })),
+          },
+          {
+            path: 'plans/:planId',
+            lazy: () =>
+              import('../features/plans/components/PlanDetailPage').then((m) => ({
+                Component: m.PlanDetailPage,
+              })),
+          },
+          // AI Generation
+          {
             path: 'generation',
             lazy: () =>
               import('../features/generation/components/GenerationTaskListPage').then(
                 (m) => ({ Component: m.GenerationTaskListPage })
               ),
           },
+          {
+            path: 'generation/tasks/new',
+            lazy: () =>
+              import('../features/generation/components/NewGenerationTaskPage').then(
+                (m) => ({ Component: m.NewGenerationTaskPage })
+              ),
+          },
+          {
+            path: 'generation/tasks/:taskId',
+            lazy: () =>
+              import('../features/generation/components/TaskDetailPage').then(
+                (m) => ({ Component: m.TaskDetailPage })
+              ),
+          },
+          // Drafts
           {
             path: 'drafts',
             lazy: () =>
@@ -90,10 +144,33 @@ export const router = createBrowserRouter([
               ),
           },
           {
+            path: 'drafts/:draftId',
+            lazy: () =>
+              import('../features/drafts/components/DraftConfirmPage').then(
+                (m) => ({ Component: m.DraftConfirmPage })
+              ),
+          },
+          // Documents/Knowledge Base
+          {
             path: 'documents',
             lazy: () =>
               import('../features/documents/components/KnowledgeListPage').then(
                 (m) => ({ Component: m.KnowledgeListPage })
+              ),
+          },
+          {
+            path: 'documents/:documentId',
+            lazy: () =>
+              import('../features/documents/components/DocumentDetailPage').then(
+                (m) => ({ Component: m.DocumentDetailPage })
+              ),
+          },
+          // Configs
+          {
+            path: 'projects/:projectId/configs',
+            lazy: () =>
+              import('../features/configs/components/ConfigManagePage').then(
+                (m) => ({ Component: m.ConfigManagePage })
               ),
           },
           {
