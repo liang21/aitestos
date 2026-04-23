@@ -17,4 +17,23 @@ export default defineConfig({
       '@/tests': fileURLToPath(new URL('./tests', import.meta.url)),
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            // Debug logging
+            console.log('[Proxy] Forwarding request:', {
+              method: req.method,
+              url: req.url,
+              hasAuth: !!req.headers.authorization,
+            })
+          })
+        },
+      },
+    },
+  },
 })

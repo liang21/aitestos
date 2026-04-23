@@ -20,20 +20,13 @@ export function useLogin() {
       return authApi.login({ email, password })
     },
     onSuccess: async (data) => {
-      // Store will be updated by authApi.login internally
-      // But we need to update Zustand store separately
-      const { user, token, refreshToken } = useAuthStore.getState()
+      // Store tokens in localStorage and update Zustand store
+      const { access_token, refresh_token, user } = data
 
-      // Check if store was already updated by the API call
-      if (useAuthStore.getState().token !== data.access_token) {
-        // Update store with response data
-        useAuthStore.setState({
-          user: data.user,
-          token: data.access_token,
-          refreshToken: data.refresh_token,
-          isAuthenticated: true,
-        })
-      }
+      // Use the store's setTokens method to ensure consistency
+      useAuthStore.getState().setTokens(access_token, refresh_token)
+      useAuthStore.getState().setUser(user)
+      useAuthStore.setState({ isAuthenticated: true })
     },
     onError: (error: Error) => {
       // Error will be handled by the component

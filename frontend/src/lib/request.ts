@@ -86,7 +86,12 @@ request.interceptors.request.use(
     const token = tokenStorage.getItem('access_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+    } else {
+      console.warn('[Request] No access_token found in localStorage')
     }
+    console.log('[Request]', config.method?.toUpperCase(), config.url, {
+      hasAuth: !!config.headers.Authorization,
+    })
     return config
   },
   (error) => {
@@ -109,10 +114,15 @@ request.interceptors.response.use(
     }
 
     // Handle 401 Unauthorized - Token refresh
+    // Skip token refresh for login/register endpoints (they handle 401 as authentication failure)
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
+                           originalRequest.url?.includes('/auth/register')
+
     if (
       error.response?.status === 401 &&
       originalRequest &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !isAuthEndpoint
     ) {
       // If already refreshing, queue this request
       if (isRefreshing) {

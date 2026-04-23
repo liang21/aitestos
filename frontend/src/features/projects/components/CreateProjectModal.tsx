@@ -91,10 +91,11 @@ export function CreateProjectModal({
     >
       <form onSubmit={(e) => e.preventDefault()}>
         <div className="mb-4">
-          <label className="block mb-2">
+          <label htmlFor="project-name" className="block mb-2">
             <span className="text-red-500 mr-1">*</span>项目名称
           </label>
           <Input
+            id="project-name"
             {...nameField.field}
             placeholder="请输入项目名称"
             aria-label="项目名称"
@@ -107,10 +108,11 @@ export function CreateProjectModal({
         </div>
 
         <div className="mb-4">
-          <label className="block mb-2">
+          <label htmlFor="project-prefix" className="block mb-2">
             <span className="text-red-500 mr-1">*</span>项目前缀
           </label>
           <Input
+            id="project-prefix"
             {...prefixField.field}
             placeholder="2-4位大写字母，如：ECO"
             maxLength={4}
@@ -125,8 +127,9 @@ export function CreateProjectModal({
         </div>
 
         <div className="mb-4">
-          <label className="block mb-2">项目描述</label>
+          <label htmlFor="project-description" className="block mb-2">项目描述</label>
           <TextArea
+            id="project-description"
             {...descriptionField.field}
             placeholder="请输入项目描述（可选）"
             maxLength={200}

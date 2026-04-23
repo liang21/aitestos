@@ -25,7 +25,7 @@ func NewProjectRepository(db *sqlx.DB) *ProjectRepository {
 // Save persists a new project
 func (r *ProjectRepository) Save(ctx context.Context, project *domainproject.Project) error {
 	query := `
-		INSERT INTO projects (id, name, prefix, description, created_at, updated_at)
+		INSERT INTO project (id, name, prefix, description, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 	_, err := r.db.ExecContext(ctx, query,
@@ -55,7 +55,7 @@ func (r *ProjectRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain
 
 	query := `
 		SELECT id, name, prefix, description, created_at, updated_at
-		FROM projects
+		FROM project
 		WHERE id = $1 AND deleted_at IS NULL
 	`
 	err := r.db.GetContext(ctx, &row, query, id)
@@ -95,7 +95,7 @@ func (r *ProjectRepository) FindByName(ctx context.Context, name string) (*domai
 
 	query := `
 		SELECT id, name, prefix, description, created_at, updated_at
-		FROM projects
+		FROM project
 		WHERE name = $1 AND deleted_at IS NULL
 	`
 	err := r.db.GetContext(ctx, &row, query, name)
@@ -134,7 +134,7 @@ func (r *ProjectRepository) FindByPrefix(ctx context.Context, prefix domainproje
 
 	query := `
 		SELECT id, name, prefix, description, created_at, updated_at
-		FROM projects
+		FROM project
 		WHERE prefix = $1 AND deleted_at IS NULL
 	`
 	err := r.db.GetContext(ctx, &row, query, prefix.String())
@@ -164,7 +164,7 @@ func (r *ProjectRepository) FindByPrefix(ctx context.Context, prefix domainproje
 func (r *ProjectRepository) FindAll(ctx context.Context, opts domainproject.QueryOptions) ([]*domainproject.Project, error) {
 	query := `
 		SELECT id, name, prefix, description, created_at, updated_at
-		FROM projects
+		FROM project
 		WHERE deleted_at IS NULL
 	`
 	var args []interface{}
@@ -224,7 +224,7 @@ func (r *ProjectRepository) FindAll(ctx context.Context, opts domainproject.Quer
 // Update updates an existing project
 func (r *ProjectRepository) Update(ctx context.Context, project *domainproject.Project) error {
 	query := `
-		UPDATE projects
+		UPDATE project
 		SET name = $2, description = $3, updated_at = $4
 		WHERE id = $1 AND deleted_at IS NULL
 	`
@@ -250,7 +250,7 @@ func (r *ProjectRepository) Update(ctx context.Context, project *domainproject.P
 // Delete removes a project (soft delete)
 func (r *ProjectRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `
-		UPDATE projects
+		UPDATE project
 		SET deleted_at = NOW()
 		WHERE id = $1 AND deleted_at IS NULL
 	`

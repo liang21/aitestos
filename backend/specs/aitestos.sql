@@ -28,10 +28,12 @@ create table project
         primary key,
     name        varchar(255)                                           not null
         unique,
+    prefix      varchar(4)                                             not null
+        unique,
     description text,
-    config      jsonb                       default '{}'::jsonb,
     created_at  timestamp(3) with time zone default CURRENT_TIMESTAMP,
-    updated_at  timestamp(3) with time zone default CURRENT_TIMESTAMP
+    updated_at  timestamp(3) with time zone default CURRENT_TIMESTAMP,
+    deleted_at  timestamp(3) with time zone
 );
 
 alter table project
@@ -369,4 +371,10 @@ END;
 $$;
 
 alter function update_updated_at_column() owner to postgres;
+
+create trigger update_project_updated_at
+    before update
+    on project
+    for each row
+execute procedure update_updated_at_column();
 

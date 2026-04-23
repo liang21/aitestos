@@ -162,7 +162,7 @@ export function NewGenerationTaskPage({
             />
           </FormItem>
 
-          <FormItem label="高级选项">
+          <div className="mt-4">
             <Collapse
               activeKey={advancedExpanded ? ['advanced'] : []}
               onChange={(keys) => setAdvancedExpanded(keys.length > 0)}
@@ -225,7 +225,7 @@ export function NewGenerationTaskPage({
                 </div>
               </Collapse.Item>
             </Collapse>
-          </FormItem>
+          </div>
 
           <FormItem>
             <div className="flex gap-3">

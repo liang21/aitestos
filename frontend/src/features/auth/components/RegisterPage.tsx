@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -13,6 +13,8 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useRegister } from '@/features/auth/hooks/useAuth'
 import { useRateLimit, RateLimitConfig } from '@/lib/hooks/useRateLimit'
 import { RateLimiter } from '@/components/RateLimiter'
+
+const { Item: FormItem } = Form
 
 /**
  * Register schema validation
@@ -46,7 +48,11 @@ export function RegisterPage() {
   // Rate limiting
   const rateLimit = useRateLimit(RateLimitConfig.REGISTER)
 
-  const form = useForm<RegisterFormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       username: '',
@@ -56,7 +62,7 @@ export function RegisterPage() {
     },
   })
 
-  const handleSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     // Check rate limit before attempting registration
     if (!rateLimit.canAttempt()) {
       return
@@ -94,81 +100,89 @@ export function RegisterPage() {
           maxAttempts={RateLimitConfig.REGISTER.maxAttempts}
           remainingTime={rateLimit.remainingTime}
         >
-          <Form onSubmit={form.handleSubmit(handleSubmit)} layout="vertical">
-            <Form.Item
-              field="username"
+          <Form onSubmit={handleSubmit(onSubmit)} layout="vertical">
+            <FormItem
               label="用户名"
               required
-              rules={[
-                { required: true, message: '请输入用户名' },
-                {
-                  minLength: 3,
-                  message: '用户名至少为 3 个字符',
-                },
-                {
-                  maxLength: 32,
-                  message: '用户名最多为 32 个字符',
-                },
-              ]}
+              validateStatus={errors.username ? 'error' : undefined}
+              help={errors.username?.message}
             >
-              <Input
-                placeholder="请输入用户名"
-                size="large"
-                disabled={isDisabled}
-                {...form.register('username')}
+              <Controller
+                name="username"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    placeholder="请输入用户名"
+                    size="large"
+                    disabled={isDisabled}
+                  />
+                )}
               />
-            </Form.Item>
+            </FormItem>
 
-            <Form.Item
-              field="email"
+            <FormItem
               label="邮箱"
               required
-              rules={[
-                { required: true, message: '请输入邮箱' },
-                { type: 'email', message: '请输入有效的邮箱地址' },
-              ]}
+              validateStatus={errors.email ? 'error' : undefined}
+              help={errors.email?.message}
             >
-              <Input
-                placeholder="请输入邮箱"
-                size="large"
-                disabled={isDisabled}
-                {...form.register('email')}
+              <Controller
+                name="email"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    placeholder="请输入邮箱"
+                    size="large"
+                    disabled={isDisabled}
+                  />
+                )}
               />
-            </Form.Item>
+            </FormItem>
 
-            <Form.Item
-              field="password"
+            <FormItem
               label="密码"
               required
-              rules={[
-                { required: true, message: '请输入密码' },
-                { minLength: 8, message: '密码至少为 8 位字符' },
-                { maxLength: 100, message: '密码最多为 100 个字符' },
-              ]}
+              validateStatus={errors.password ? 'error' : undefined}
+              help={errors.password?.message}
             >
-              <Input.Password
-                placeholder="请输入密码（至少 8 位字符）"
-                size="large"
-                disabled={isDisabled}
-                {...form.register('password')}
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => (
+                  <Input.Password
+                    {...field}
+                    placeholder="请输入密码（至少 8 位字符）"
+                    size="large"
+                    disabled={isDisabled}
+                  />
+                )}
               />
-            </Form.Item>
+            </FormItem>
 
-            <Form.Item
-              field="role"
+            <FormItem
               label="角色"
               required
-              rules={[{ required: true, message: '请选择用户角色' }]}
+              validateStatus={errors.role ? 'error' : undefined}
+              help={errors.role?.message}
             >
-              <Radio.Group
-                {...form.register('role')}
-                options={[
-                  { label: '普通用户', value: 'normal' },
-                  { label: '管理员', value: 'admin' },
-                  { label: '超级管理员', value: 'super_admin' },
-                ]}
+              <Controller
+                name="role"
+                control={control}
+                render={({ field }) => (
+                  <Radio.Group
+                    {...field}
+                    disabled={isDisabled}
+                    options={[
+                      { label: '普通用户', value: 'normal' },
+                      { label: '管理员', value: 'admin' },
+                      { label: '超级管理员', value: 'super_admin' },
+                    ]}
+                  />
+                )}
               />
-            </Form.Item>
+            </FormItem>
 
             <Button
               type="primary"

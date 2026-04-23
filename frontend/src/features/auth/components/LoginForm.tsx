@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, Input, Button, Message } from '@arco-design/web-react'
 import { IconEmail, IconLock } from '@arco-design/web-react/icon'
@@ -7,6 +7,8 @@ import { z } from 'zod'
 import { useLogin } from '@/features/auth/hooks/useAuth'
 import { useRateLimit, RateLimitConfig } from '@/lib/hooks/useRateLimit'
 import { RateLimiter } from '@/components/RateLimiter'
+
+const { Item: FormItem } = Form
 
 // Login schema with email validation
 const loginSchema = z.object({
@@ -32,7 +34,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   // Get redirect destination from router state
   const from = (location.state as { from?: string })?.from || '/projects'
 
-  const form = useForm<LoginInput>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
@@ -40,7 +46,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     },
   })
 
-  const handleSubmit = async (data: LoginInput) => {
+  const onSubmit = async (data: LoginInput) => {
     if (!rateLimit.canAttempt()) {
       return
     }
@@ -87,42 +93,54 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           <div className="form-header">账号登录</div>
 
           <Form
-            onSubmit={form.handleSubmit(handleSubmit)}
+            onSubmit={handleSubmit(onSubmit)}
             layout="vertical"
             className="login-form"
           >
-            <Form.Item
-              field="email"
-              rules={[{ required: true, message: '请输入邮箱' }]}
+            <FormItem
               className="login-form-item"
+              validateStatus={errors.email ? 'error' : undefined}
+              help={errors.email?.message}
             >
-              <Input
-                {...(form.register('email') as object)}
-                prefix={<IconEmail />}
-                placeholder="请输入邮箱"
-                size="large"
-                maxLength={64}
-                disabled={isDisabled}
-                className="login-input"
+              <Controller
+                name="email"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    prefix={<IconEmail />}
+                    placeholder="请输入邮箱"
+                    size="large"
+                    maxLength={64}
+                    disabled={isDisabled}
+                    className="login-input"
+                  />
+                )}
               />
-            </Form.Item>
+            </FormItem>
 
-            <Form.Item
-              field="password"
-              rules={[{ required: true, message: '请输入密码' }]}
+            <FormItem
               className="login-form-item"
+              validateStatus={errors.password ? 'error' : undefined}
+              help={errors.password?.message}
             >
-              <Input.Password
-                {...(form.register('password') as object)}
-                prefix={<IconLock />}
-                placeholder="请输入密码"
-                size="large"
-                maxLength={64}
-                disabled={isDisabled}
-                allowClear
-                className="login-password-input"
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => (
+                  <Input.Password
+                    {...field}
+                    prefix={<IconLock />}
+                    placeholder="请输入密码"
+                    size="large"
+                    maxLength={64}
+                    disabled={isDisabled}
+                    allowClear
+                    className="login-password-input"
+                  />
+                )}
               />
-            </Form.Item>
+            </FormItem>
 
             <div className="form-actions">
               <Button
