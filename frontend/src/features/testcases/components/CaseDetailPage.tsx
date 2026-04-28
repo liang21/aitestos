@@ -5,11 +5,12 @@
 
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button, Card, Space, Message, Spin } from '@arco-design/web-react'
-import { IconEdit, IconDelete } from '@arco-design/web-react/icon'
+import { Button, Card, Space, Message, Spin, Popconfirm } from '@arco-design/web-react'
+import { IconEdit, IconCopy, IconDelete } from '@arco-design/web-react/icon'
 import { useCaseDetail, useDeleteTestCase } from '../hooks/useTestCases'
 import { StatusTag } from '@/components/business/StatusTag'
 import { ReferencePanel } from '@/components/business/ReferencePanel'
+import { CreateCaseDrawer } from './CreateCaseDrawer'
 import type { ReferencedChunk } from '@/types/api'
 
 interface CaseDetailPageProps {
@@ -23,7 +24,8 @@ export function CaseDetailPage({
   const { caseId: urlCaseId } = useParams<{ caseId: string }>()
   const caseId = propCaseId ?? urlCaseId ?? ''
   const navigate = useNavigate()
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false)
+  const [editDrawerVisible, setEditDrawerVisible] = useState(false)
+  const [copyDrawerVisible, setCopyDrawerVisible] = useState(false)
 
   const { data: testCase, isLoading, error } = useCaseDetail(caseId)
   const deleteMutation = useDeleteTestCase()
@@ -33,20 +35,22 @@ export function CaseDetailPage({
     if (!testCase) return
 
     try {
-      await deleteMutation.mutateAsync(testCase.id, {
-        onSuccess: () => {
-          Message.success('用例已删除')
-          navigate('/testcases')
-        },
-      })
+      await deleteMutation.mutateAsync(testCase.id)
+      Message.success('用例已删除')
+      navigate('/testcases')
     } catch {
       Message.error('删除失败')
     }
   }
 
-  // Handle edit
+  // Handle edit - open drawer
   const handleEdit = () => {
-    navigate(`/testcases/${testCase?.id}/edit`)
+    setEditDrawerVisible(true)
+  }
+
+  // Handle copy - open drawer
+  const handleCopy = () => {
+    setCopyDrawerVisible(true)
   }
 
   if (isLoading) {
@@ -75,13 +79,20 @@ export function CaseDetailPage({
           <Button icon={<IconEdit />} onClick={handleEdit}>
             编辑
           </Button>
-          <Button
-            status="danger"
-            icon={<IconDelete />}
-            onClick={() => setDeleteModalVisible(true)}
-          >
-            删除
+          <Button icon={<IconCopy />} onClick={handleCopy}>
+            复制
           </Button>
+          <Popconfirm
+            title="确认删除"
+            content="确定要删除此用例吗？此操作不可恢复。"
+            onOk={handleDelete}
+            okText="确认"
+            cancelText="取消"
+          >
+            <Button status="danger" icon={<IconDelete />}>
+              删除
+            </Button>
+          </Popconfirm>
         </Space>
       </div>
 
@@ -176,25 +187,22 @@ export function CaseDetailPage({
         </div>
       </Card>
 
-      {/* Delete Confirmation Modal */}
-      {deleteModalVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-96">
-            <h3 className="text-lg font-medium mb-4">确认删除</h3>
-            <p className="mb-6">确定要删除此用例吗？此操作不可恢复。</p>
-            <div className="flex justify-end gap-2">
-              <Button onClick={() => setDeleteModalVisible(false)}>取消</Button>
-              <Button
-                status="danger"
-                onClick={handleDelete}
-                loading={deleteMutation.isPending}
-              >
-                确认删除
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+      {/* Edit Drawer */}
+      <CreateCaseDrawer
+        visible={editDrawerVisible}
+        projectId={testCase.project_id}
+        editCase={testCase}
+        onClose={() => setEditDrawerVisible(false)}
+      />
+
+      {/* Copy Drawer */}
+      <CreateCaseDrawer
+        visible={copyDrawerVisible}
+        projectId={testCase.project_id}
+        editCase={testCase}
+        isCopy
+        onClose={() => setCopyDrawerVisible(false)}
+      />
     </div>
   )
 }

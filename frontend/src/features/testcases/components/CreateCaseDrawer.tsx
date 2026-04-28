@@ -1,6 +1,6 @@
 /**
  * Create Case Drawer
- * Form for creating new test cases
+ * Form for creating or editing test cases
  */
 
 import { useEffect } from 'react'
@@ -13,9 +13,9 @@ import {
   Message,
 } from '@arco-design/web-react'
 import { useModuleList } from '@/features/modules/hooks/useModules'
-import { useCreateTestCase } from '../hooks/useTestCases'
+import { useCreateTestCase, useUpdateTestCase } from '../hooks/useTestCases'
 import { ArrayEditor } from '@/components/business/ArrayEditor'
-import type { CaseType, Priority } from '@/types/api'
+import type { CaseType, Priority, TestCase } from '@/types/api'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -24,6 +24,10 @@ interface CreateCaseDrawerProps {
   visible: boolean
   projectId: string
   onClose: () => void
+  /** Edit mode: provide existing case data */
+  editCase?: TestCase
+  /** Copy mode: add "[副本]" prefix to title */
+  isCopy?: boolean
 }
 
 const caseTypeOptions = [
@@ -52,19 +56,40 @@ export function CreateCaseDrawer({
   visible,
   projectId,
   onClose,
+  editCase,
+  isCopy = false,
 }: CreateCaseDrawerProps) {
   const [form] = Form.useForm()
   const createMutation = useCreateTestCase()
+  const updateMutation = useUpdateTestCase()
+  const isEditMode = !!editCase && !isCopy
 
   // Fetch modules for selection
   const { data: modules } = useModuleList(projectId)
 
-  // Reset form when drawer opens
+  // Set form initial values when drawer opens or case changes
   useEffect(() => {
     if (visible) {
-      form.resetFields()
+      if (editCase) {
+        // Pre-fill form with existing case data
+        form.setFieldsValue({
+          moduleId: editCase.moduleId,
+          title: isCopy ? `[副本] ${editCase.title}` : editCase.title,
+          preconditions: editCase.preconditions || [],
+          steps: editCase.steps || [],
+          expected: editCase.expected && typeof editCase.expected === 'object'
+            ? JSON.stringify(editCase.expected, null, 2)
+            : '',
+          caseType: editCase.caseType,
+          priority: editCase.priority,
+        })
+      } else {
+        form.resetFields()
+      }
     }
-  }, [visible, form])
+    // Only re-run when visible, editCase.id, or isCopy changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, editCase?.id, isCopy, form])
 
   // Handle form submission
   const handleSubmit = async () => {
@@ -93,34 +118,52 @@ export function CreateCaseDrawer({
         return
       }
 
-      await createMutation.mutateAsync(
-        {
-          moduleId: values.moduleId,
-          title: values.title,
-          preconditions: values.preconditions || [],
-          steps: values.steps,
-          expected: values.expected ? JSON.parse(values.expected) : {},
-          caseType: values.caseType || 'functionality',
-          priority: values.priority || 'medium',
-        },
-        {
+      const requestData = {
+        moduleId: values.moduleId,
+        title: values.title,
+        preconditions: values.preconditions || [],
+        steps: values.steps,
+        expected: values.expected ? JSON.parse(values.expected) : {},
+        caseType: values.caseType || 'functionality',
+        priority: values.priority || 'P2',
+      }
+
+      if (isEditMode && editCase) {
+        // Update existing case
+        await updateMutation.mutateAsync(
+          { id: editCase.id, data: requestData },
+          {
+            onSuccess: () => {
+              Message.success('用例更新成功')
+              onClose()
+            },
+            onError: (error: Error) => {
+              Message.error(`更新失败：${error.message}`)
+            },
+          }
+        )
+      } else {
+        // Create new case
+        await createMutation.mutateAsync(requestData, {
           onSuccess: () => {
             Message.success('用例创建成功')
             onClose()
           },
-          onError: (error) => {
+          onError: (error: Error) => {
             Message.error(`创建失败：${error.message}`)
           },
-        }
-      )
+        })
+      }
     } catch (error) {
       // Form validation failed
     }
   }
 
+  const isLoading = createMutation.isPending || updateMutation.isPending
+
   return (
     <Drawer
-      title="新建测试用例"
+      title={isEditMode ? '编辑测试用例' : '新建测试用例'}
       visible={visible}
       onClose={onClose}
       width={600}
@@ -130,9 +173,9 @@ export function CreateCaseDrawer({
           <Button
             type="primary"
             onClick={handleSubmit}
-            loading={createMutation.isPending}
+            loading={isLoading}
           >
-            确认创建
+            {isEditMode ? '保存' : '确认创建'}
           </Button>
         </div>
       }
