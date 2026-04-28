@@ -263,6 +263,7 @@ export interface TestCaseListParams {
 export interface CaseDraft {
   id: string
   taskId: string
+  projectId: string
   title: string
   preconditions: string[]
   steps: string[]
