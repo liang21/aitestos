@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import request from './request'
-import { server } from '@/tests/msw/server'
+import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
+
+// 创建独立的 server 实例用于测试
+const server = setupServer()
 
 type MockLocalStorage = {
   getItem: ReturnType<typeof vi.fn>
