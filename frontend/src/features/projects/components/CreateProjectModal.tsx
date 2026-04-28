@@ -127,7 +127,9 @@ export function CreateProjectModal({
         </div>
 
         <div className="mb-4">
-          <label htmlFor="project-description" className="block mb-2">项目描述</label>
+          <label htmlFor="project-description" className="block mb-2">
+            项目描述
+          </label>
           <TextArea
             id="project-description"
             {...descriptionField.field}

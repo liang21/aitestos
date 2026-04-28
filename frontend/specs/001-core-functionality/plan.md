@@ -1,978 +1,422 @@
----
-title: 核心功能技术实现方案
-version: 1.0.0
-author: 首席前端架构师
-status: draft
-created: 2026-04-16
-reviewers: [前端团队]
----
+# Aitestos 前端实现计划
 
-# 核心功能技术实现方案
+## Context
 
-> 基于 `spec.md`、OpenAPI 3.0.3、UX 设计规范 v1.0、前端详细设计 v1.1 编制。
-> 本方案可直接驱动 TDD 开发。
+基于 `specs/001-core-functionality/spec.md` v2.0，制定前端实现计划。该规格书覆盖认证、项目管理、知识库、AI 生成、草稿确认、用例管理、测试执行 7 大模块，包含 20+ 页面、30+ API 端点、12 种枚举类型。
 
 ---
 
-## 1. 架构总览
+## Phase 依赖关系
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                       React 19 + TypeScript                  │
-├──────────┬──────────┬──────────┬──────────┬─────────────────┤
-│  Pages   │ Features │  Shared  │  Stores  │    Queries      │
-│ (Route)  │ (Domain) │   (UI)   │ (Zustand)│ (React Query)   │
-├──────────┴──────────┴──────────┴──────────┴─────────────────┤
-│                    Axios (request instance)                   │
-│                    Token 刷新 / 错误拦截                      │
-├─────────────────────────────────────────────────────────────┤
-│                    React Router v7                            │
-│                    Arco Design v2.66                          │
-│                    Tailwind CSS v4                            │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**数据流方向**：`Page → Query/Hook → API function → Axios → Backend`
-
-**状态分层原则**：
-
-| 数据类型       | 管理方式                   | 示例                         |
-| -------------- | -------------------------- | ---------------------------- |
-| 服务端数据     | React Query                | 项目列表、用例详情、草稿列表 |
-| 客户端全局状态 | Zustand                    | auth token、侧边栏折叠、通知 |
-| 客户端局部状态 | useState/useReducer        | 表单输入、弹窗开关、筛选条件 |
-| URL 状态       | React Router params/search | 当前项目 ID、分页页码        |
-
----
-
-## 2. 技术上下文
-
-### 2.1 技术栈选型
-
-| 技术                 | 版本   | 职责        | 选型理由                                     |
-| -------------------- | ------ | ----------- | -------------------------------------------- |
-| React                | 19.2   | UI 框架     | 项目已安装，生态成熟                         |
-| TypeScript           | 5.9    | 类型系统    | strict: true，编译期捕获错误                 |
-| React Router         | 7.x    | 路由        | 项目已安装，支持 lazy loading                |
-| Zustand              | 5.x    | 全局状态    | 项目已安装，极简 API                         |
-| TanStack React Query | 5.x    | 服务端状态  | 缓存/重试/轮询/失效一体化                    |
-| React Hook Form      | 7.x    | 表单管理    | 非受控性能优势，与 Arco 集成简洁             |
-| Arco Design          | 2.66   | UI 组件库   | 项目已安装，企业级组件完备                   |
-| Tailwind CSS         | 4.x    | 样式        | 项目已安装，原子化样式                       |
-| Axios                | 1.14   | HTTP 客户端 | 项目已安装，作为 React Query 的 queryFn 底层 |
-| dayjs                | 1.11   | 日期处理    | 项目已安装，轻量                             |
-| Lucide React         | 1.7    | 图标        | 项目已安装，一致性好                         |
-| Testing Library      | latest | 组件测试    | React 社区标准                               |
-| MSW                  | latest | API Mock    | 浏览器层拦截，与 React Query 配合好          |
-| Vitest               | latest | 测试运行器  | 与 Vite 原生集成                             |
-| Playwright           | latest | E2E 测试    | 关键路径端到端验证                           |
-
-### 2.2 简单性原则验证
-
-| 检查项               | 结果 | 说明                                                  |
-| -------------------- | ---- | ----------------------------------------------------- |
-| 无多余抽象层         | ✅   | API function → React Query hook → Component，三层即可 |
-| 状态管理最小化       | ✅   | 仅 auth + UI 用 Zustand，所有服务端数据走 React Query |
-| 无重复请求           | ✅   | React Query 自动去重和缓存                            |
-| 无手写 loading/error | ✅   | React Query 提供 isLoading/isError                    |
-| 表单不手动管理       | ✅   | React Hook Form 管理 register/validate/submit         |
-
-### 2.3 可测试性验证
-
-| 测试层级 | 工具                     | 覆盖目标                              |
-| -------- | ------------------------ | ------------------------------------- |
-| 单元测试 | Vitest + Testing Library | 组件渲染、用户交互、Hook 逻辑         |
-| API Mock | MSW                      | 拦截 HTTP 请求，模拟成功/失败/超时    |
-| 集成测试 | Testing Library + MSW    | 完整的用户操作流程                    |
-| E2E      | Playwright               | 登录 → 创建项目 → 发起生成 → 确认草稿 |
-
----
-
-## 3. 合宪性审查
-
-> `constitution.md` 当前为空文件，以下基于 Prompt 中声明的约束逐条审查。
-
-### Constitutional Audit
-
-| 规则                         | 状态    | 说明                                                                                                                       |
-| ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **禁止直接 fetch/axios**     | ✅ 通过 | 组件中禁止直接调用 `request.get()`。所有数据获取通过 React Query hook 包装。`src/lib/request.ts` 仅作为 queryFn 底层传输层 |
-| **禁止 any**                 | ✅ 通过 | API function 使用泛型 `request.post<never, ResponseType>()` 替代 `any`。类型定义在 `src/types/api.ts` 中集中管理           |
-| **避免过度抽象**             | ✅ 通过 | 不创建 HOC、render props、context wrapper 等中间层。三层结构：Component → Hook → API function                              |
-| **状态本地化**               | ✅ 通过 | 表单状态归 React Hook Form，服务端状态归 React Query，仅 token/sidebar 归 Zustand                                          |
-| **Hook 提取规则**            | ✅ 通过 | 每个自定义 Hook 单一职责：`useProjects()` 管理项目列表查询，`useCreateProject()` 管理创建 mutation                         |
-| **TDD First**                | ✅ 通过 | 每个实现任务先写测试，验收标准包含测试通过条件                                                                             |
-| **禁止 useEffect 数据获取**  | ✅ 通过 | 所有数据获取使用 `useQuery()`，轮询使用 `refetchInterval`，不手写 `useEffect + fetch`                                      |
-| **React Query 统一数据获取** | ✅ 通过 | 列表、详情、统计全部使用 useQuery；创建、更新、删除全部使用 useMutation                                                    |
-
-### ⚠️ 现有代码修正项
-
-| 现有文件                   | 问题                                                          | 修正方案                                                                          |
-| -------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `src/lib/request.ts`       | 组件直接调用 axios，绕过 React Query 缓存                     | 保留为 React Query 的 queryFn 底层，组件层不再直接 import                         |
-| `src/store/useAppStore.ts` | 包含样板 counter 代码，且 `fetchPendingDraftCount` 直接调 API | 清理为仅管理 sidebarCollapsed 和 notifications，待处理草稿数通过 React Query 查询 |
-| `src/App.tsx`              | Vite 脚手架模板                                               | 完全重写为路由入口                                                                |
-
----
-
-## 4. 项目结构
-
-```
-src/
-├── app/                          # 应用入口
-│   ├── App.tsx                   # 根组件（Provider 嵌套）
-│   ├── main.tsx                  # 渲染入口
-│   └── providers.tsx             # QueryClientProvider + ConfigProvider
-│
-├── router/                       # 路由
-│   ├── index.tsx                 # 路由定义（lazy loading）
-│   └── RouteGuard.tsx            # 认证/权限守卫
-│
-├── lib/                          # 基础设施
-│   ├── request.ts                # Axios 实例（Token 刷新、错误拦截）
-│   ├── query-client.ts           # React Query 全局配置
-│   └── utils.ts                  # cn() 等工具函数
-│
-├── types/                        # 全局类型
-│   ├── enums.ts                  # 枚举/字面量联合类型
-│   └── api.ts                    # API 请求/响应类型
-│
-├── features/                     # 业务功能模块（Feature-Based）
-│   ├── auth/                     # 认证
-│   │   ├── components/
-│   │   │   ├── LoginPage.tsx
-│   │   │   └── RegisterPage.tsx
-│   │   ├── hooks/
-│   │   │   ├── useAuth.ts        # useLogin, useRegister, useRefresh
-│   │   │   └── useAuthStore.ts   # Zustand store（token/user）
-│   │   ├── services/
-│   │   │   └── auth.ts           # API function
-│   │   └── types.ts              # 认证相关类型（如果与全局不同）
-│   │
-│   ├── projects/                 # 项目管理
-│   │   ├── components/
-│   │   │   ├── ProjectListPage.tsx
-│   │   │   ├── ProjectDashboard.tsx
-│   │   │   └── CreateProjectModal.tsx
-│   │   ├── hooks/
-│   │   │   ├── useProjects.ts    # useProjectList, useProjectDetail, useProjectStats
-│   │   │   └── useProjectMutations.ts  # useCreateProject, useUpdateProject, useDeleteProject
-│   │   └── services/
-│   │       └── projects.ts
-│   │
-│   ├── modules/                  # 模块管理
-│   │   ├── components/
-│   │   │   ├── ModuleManagePage.tsx
-│   │   │   └── CreateModuleModal.tsx
-│   │   ├── hooks/
-│   │   │   └── useModules.ts
-│   │   └── services/
-│   │       └── modules.ts
-│   │
-│   ├── testcases/                # 测试用例
-│   │   ├── components/
-│   │   │   ├── CaseListPage.tsx
-│   │   │   ├── CaseDetailPage.tsx
-│   │   │   └── CreateCaseDrawer.tsx
-│   │   ├── hooks/
-│   │   │   └── useTestCases.ts
-│   │   └── services/
-│   │       └── testcases.ts
-│   │
-│   ├── plans/                    # 测试计划
-│   │   ├── components/
-│   │   │   ├── PlanListPage.tsx
-│   │   │   ├── NewPlanPage.tsx
-│   │   │   ├── PlanDetailPage.tsx
-│   │   │   └── ResultRecordModal.tsx
-│   │   ├── hooks/
-│   │   │   └── usePlans.ts
-│   │   └── services/
-│   │       └── plans.ts
-│   │
-│   ├── generation/               # AI 生成
-│   │   ├── components/
-│   │   │   ├── GenerationTaskListPage.tsx
-│   │   │   ├── NewGenerationTaskPage.tsx
-│   │   │   └── TaskDetailPage.tsx
-│   │   ├── hooks/
-│   │   │   ├── useGeneration.ts  # useCreateTask, useTask, useTaskDrafts
-│   │   │   └── usePollingTask.ts # 轮询任务状态
-│   │   └── services/
-│   │       └── generation.ts
-│   │
-│   ├── drafts/                   # 草稿箱
-│   │   ├── components/
-│   │   │   ├── DraftListPage.tsx
-│   │   │   └── DraftConfirmPage.tsx
-│   │   ├── hooks/
-│   │   │   └── useDrafts.ts      # useDraftList, useConfirmDraft, useRejectDraft, useBatchConfirm
-│   │   └── services/
-│   │       └── drafts.ts
-│   │
-│   ├── documents/                # 知识库
-│   │   ├── components/
-│   │   │   ├── KnowledgeListPage.tsx
-│   │   │   ├── DocumentDetailPage.tsx
-│   │   │   └── UploadDocumentModal.tsx
-│   │   ├── hooks/
-│   │   │   └── useDocuments.ts
-│   │   └── services/
-│   │       └── documents.ts
-│   │
-│   └── configs/                  # 项目配置
-│       ├── components/
-│       │   ├── ConfigManagePage.tsx
-│       │   └── ConfigEditModal.tsx
-│       ├── hooks/
-│       │   └── useConfigs.ts
-│       └── services/
-│           └── configs.ts
-│
-├── components/                   # 跨 Feature 共享组件
-│   ├── layout/
-│   │   ├── AppLayout.tsx         # 主布局（Sidebar + Header + Content）
-│   │   ├── Sidebar.tsx           # 侧边栏
-│   │   ├── Header.tsx            # 顶部栏
-│   │   └── AuthLayout.tsx        # 登录/注册布局
-│   ├── business/
-│   │   ├── StatusTag.tsx         # 统一状态标签（色彩映射）
-│   │   ├── SearchTable.tsx       # 搜索筛选表格
-│   │   ├── ArrayEditor.tsx       # 数组编辑器（前置条件/步骤）
-│   │   ├── StatsCard.tsx         # 统计卡片
-│   │   ├── SplitPanel.tsx        # 分栏面板（草稿确认页）
-│   │   └── ReferencePanel.tsx    # 引用来源面板
-│   └── NotFoundPage.tsx          # 404 页面
-│
-├── hooks/                        # 跨 Feature 共享 Hook
-│   └── usePagination.ts          # 分页逻辑（与 React Query 集成）
-│
-├── store/                        # 全局 Zustand store
-│   └── useAppStore.ts            # sidebarCollapsed + notifications
-│
-├── styles/
-│   ├── theme.css                 # Arco 主题变量 + Tailwind @theme
-│   └── global.css                # 全局样式
-│
-├── index.css
-└── vite-env.d.ts
-```
-
-### 目录职责与依赖规则
-
-```
-Page Component
-  ├── 可引用 → 同 Feature 内的 hooks/
-  ├── 可引用 → 同 Feature 内的 components/
-  ├── 可引用 → @/components/ (共享组件)
-  ├── 可引用 → @/hooks/ (共享 Hook)
-  │
-  hooks/ (React Query hooks)
-  └── 可引用 → 同 Feature 内的 services/
-      │
-      services/ (API functions)
-      └── 可引用 → @/lib/request.ts
-      └── 可引用 → @/types/api.ts
-```
-
-**禁止**：
-
-- Feature A 引用 Feature B 的内部文件
-- components/ 引用 features/ 的任何内容
-- services/ 引用 store/ 或 hooks/
-
----
-
-## 5. 数据模型
-
-### 5.1 枚举类型
-
-```typescript
-// src/types/enums.ts
-export type CaseStatus = 'unexecuted' | 'pass' | 'block' | 'fail'
-export type CaseType =
-  | 'functionality'
-  | 'performance'
-  | 'api'
-  | 'ui'
-  | 'security'
-export type PlanStatus = 'draft' | 'active' | 'completed' | 'archived'
-export type Priority = 'P0' | 'P1' | 'P2' | 'P3'
-export type ResultStatus = 'pass' | 'fail' | 'block' | 'skip'
-export type TaskStatus = 'pending' | 'processing' | 'completed' | 'failed'
-export type DraftStatus = 'pending' | 'confirmed' | 'rejected'
-export type DocumentType = 'prd' | 'figma' | 'api_spec' | 'swagger' | 'markdown'
-export type DocumentStatus = 'pending' | 'processing' | 'completed' | 'failed'
-export type UserRole = 'super_admin' | 'admin' | 'normal'
-export type Confidence = 'high' | 'medium' | 'low'
-export type SceneType = 'positive' | 'negative' | 'boundary'
-```
-
-### 5.2 核心 API 类型
-
-> 完整类型定义见 `specs/frontend-detailed-design.md` 第 4.2 节，此处列出核心模型。
-
-```typescript
-// src/types/api.ts — 关键结构摘要
-
-interface PaginatedResponse<T> {
-  data: T[]
-  total: number
-  offset: number
-  limit: number
-}
-
-interface UserJSON {
-  id: string
-  username: string
-  email: string
-  role: UserRole
-  createdAt: string
-  updatedAt: string
-}
-
-interface Project {
-  id: string
-  name: string
-  prefix: string
-  description: string
-  createdAt: string
-  updatedAt: string
-}
-
-interface TestCase {
-  id: string
-  moduleId: string
-  userId: string
-  number: string // 格式: ECO-USR-20260416-001
-  title: string
-  preconditions: string[]
-  steps: string[]
-  expected: Record<string, unknown>
-  caseType: CaseType
-  priority: Priority
-  status: CaseStatus
-  aiMetadata?: AiMetadata
-  createdAt: string
-  updatedAt: string
-}
-
-interface AiMetadata {
-  generationTaskId: string
-  confidence: Confidence
-  referencedChunks: ReferencedChunk[]
-  modelVersion: string
-  generatedAt: string
-}
-
-interface CaseDraft {
-  id: string
-  taskId: string
-  title: string
-  preconditions: string[]
-  steps: string[]
-  expected: Record<string, unknown>
-  caseType: CaseType
-  priority: Priority
-  status: DraftStatus
-  feedback?: string
-  createdAt: string
-  updatedAt: string
-}
-
-interface TestPlan {
-  id: string
-  projectId: string
-  name: string
-  description: string
-  status: PlanStatus
-  createdBy: string
-  createdAt: string
-  updatedAt: string
-}
-
-interface GenerationTask {
-  id: string
-  projectId: string
-  moduleId: string
-  status: TaskStatus
-  prompt: string
-  result: Record<string, unknown>
-  createdAt: string
-  updatedAt: string
-}
-```
-
-### 5.3 禁止 any 的 Axios 调用规范
-
-```typescript
-// ❌ 禁止
-request.post<any, LoginResponse>('/auth/login', data)
-
-// ✅ 正确
-request.post<never, LoginResponse>('/auth/login', data)
-```
-
-全局替换：所有 API function 中 `<any, T>` 改为 `<never, T>`。
-
----
-
-## 6. 状态与数据流
-
-### 6.1 React Query 使用规范
-
-```typescript
-// ✅ 正确的数据获取模式
-export function useProjectList(params?: { keywords?: string }) {
-  return useQuery({
-    queryKey: ['projects', params],
-    queryFn: () => projectsApi.list(params),
-  })
-}
-
-export function useProjectDetail(id: string) {
-  return useQuery({
-    queryKey: ['projects', id],
-    queryFn: () => projectsApi.get(id),
-    enabled: !!id,
-  })
-}
-
-// ✅ 正确的 Mutation 模式
-export function useCreateProject() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: projectsApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-    },
-  })
-}
-```
-
-### 6.2 轮询策略
-
-```typescript
-// AI 生成任务轮询
-export function usePollingTask(taskId: string) {
-  return useQuery({
-    queryKey: ['generation-task', taskId],
-    queryFn: () => generationApi.getTask(taskId),
-    refetchInterval: (query) => {
-      const status = query.state.data?.status
-      return status === 'pending' || status === 'processing' ? 3000 : false
-    },
-    enabled: !!taskId,
-  })
-}
-
-// 待处理草稿数量轮询（侧边栏 Badge）
-export function usePendingDraftCount() {
-  return useQuery({
-    queryKey: ['drafts', 'pending-count'],
-    queryFn: async () => {
-      const res = await generationApi.getDrafts({ status: 'pending', limit: 1 })
-      return res.total
-    },
-    refetchInterval: 60_000, // 每 60s 刷新
-  })
-}
-```
-
-### 6.3 Zustand 使用范围
-
-仅以下状态使用 Zustand：
-
-```typescript
-// src/features/auth/hooks/useAuthStore.ts
-interface AuthState {
-  user: UserJSON | null
-  token: string | null
-  refreshToken: string | null
-  isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<void>
-  logout: () => void
-  refresh: () => Promise<void>
-}
-
-// src/store/useAppStore.ts
-interface AppState {
-  sidebarCollapsed: boolean
-  toggleSidebar: () => void
-}
-```
-
-**不使用 Zustand 管理的数据**：项目列表、用例列表、计划详情、草稿列表等所有服务端数据。
-
----
-
-## 7. 组件设计
-
-### 7.1 组件分层
-
-| 层级                  | 职责                         | 数据来源                  | 示例                       |
-| --------------------- | ---------------------------- | ------------------------- | -------------------------- |
-| **Page**              | 路由对应、布局组合、数据编排 | React Query hooks         | `CaseListPage`             |
-| **Feature Component** | 业务逻辑、用户交互           | Props + React Query hooks | `CreateCaseDrawer`         |
-| **Shared Component**  | 可复用 UI，无业务逻辑        | Props only                | `StatusTag`、`SearchTable` |
-
-### 7.2 核心 Page 组件
-
-```typescript
-// Page 组件职责：组合 hooks + 布局，不包含复杂逻辑
-function CaseListPage() {
-  const { projectId } = useParams()
-  const [filters, setFilters] = useState<CaseFilters>({})
-  const { data, isLoading } = useCaseList(projectId, filters)
-
-  return (
-    <div className="p-6">
-      <PageHeader title="测试用例" action={<CreateCaseButton />} />
-      <CaseFilterBar filters={filters} onChange={setFilters} />
-      <SearchTable
-        loading={isLoading}
-        data={data?.data ?? []}
-        total={data?.total ?? 0}
-        columns={caseColumns}
-      />
-    </div>
-  )
-}
-```
-
-### 7.3 核心 Feature Component
-
-```typescript
-// Feature Component：拥有自己的 React Query mutation
-function CreateCaseDrawer({ visible, onClose }: CreateCaseDrawerProps) {
-  const { projectId } = useParams()
-  const form = useForm<CreateTestCaseFormData>({
-    resolver: zodResolver(createCaseSchema),
-    defaultValues: { steps: [''] },
-  })
-  const createCase = useCreateTestCase()
-
-  const onSubmit = (data: CreateTestCaseFormData) => {
-    createCase.mutate(data, { onSuccess: onClose })
-  }
-
-  return (
-    <Drawer visible={visible} onClose={onClose} title="新建用例">
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        {/* Arco Form.Item + React Hook Form register */}
-      </form>
-    </Drawer>
-  )
-}
-```
-
-### 7.4 共享 Business Component
-
-```typescript
-// StatusTag：纯 UI，通过 props 驱动
-interface StatusTagProps {
-  status: string
-  category: StatusCategory
-  label?: string
-  size?: 'small' | 'default'
-}
-
-function StatusTag({ status, category, label, size }: StatusTagProps) {
-  const mapping = COLOR_MAP[category]?.[status]
-  if (!mapping) return null
-
-  return (
-    <Tag
-      size={size ?? 'small'}
-      className={cn(
-        'border-transparent',
-        category === 'confidence' && 'font-medium'
-      )}
-      style={{ color: mapping.color, backgroundColor: mapping.bg }}
-    >
-      {label ?? mapping.text}
-    </Tag>
-  )
-}
+Phase 1 基础设施 ──→ Phase 2 通用组件 ──→ Phase 3 项目管理 ──→ Phase 4 模块管理
+                                                                │
+                        ┌───────────────────────────────────────┤
+                        ▼                                       ▼
+                  Phase 5 知识库                           Phase 7 用例管理
+                        │                                       │
+                        ▼                                       ▼
+                  Phase 6 AI 生成 ──→ Phase 8 草稿箱 ──→ Phase 9 测试执行
+                                                                │
+                                                                ▼
+                                                         Phase 10 配置管理
 ```
 
 ---
 
-## 8. 副作用设计
+## Phase 1: 基础设施与认证 (P0)
 
-### 8.1 数据获取（全部使用 React Query）
+> **验收用例**: TC-A01 登录成功 / TC-A02 登录失败 / TC-A03 Token 刷新 / TC-A04 注册
 
-```typescript
-// ✅ 列表查询
-const { data, isLoading, error } = useProjectList({ keywords })
+### 1.1 类型定义
+- **文件**: `src/types/enums.ts` — 定义全部 12 个枚举（CaseStatus, CaseType, PlanStatus, Priority, ResultStatus, TaskStatus, DraftStatus, DocumentType, DocumentStatus, UserRole, Confidence, SceneType）
+- **文件**: `src/types/api.ts` — 定义所有 API 请求/响应类型（Project, Module, Document, DocumentChunk, GenerationTask, CaseDraft, TestCase, TestPlan, TestResult, ProjectStatistics, User 等）
 
-// ✅ 详情查询（依赖 ID）
-const { data } = useProjectDetail(projectId)
+### 1.2 基础设施层
+- **文件**: `src/lib/request.ts` — Axios 实例，Token 刷新（401 → refresh → 重放，并发排队），错误拦截
+- **文件**: `src/lib/query-client.ts` — React Query 全局配置（staleTime, retry, Query Key 工厂）
+- **文件**: `src/lib/utils.ts` — cn() 等工具函数
 
-// ✅ 条件查询（ID 存在时才发起）
-const { data } = useProjectStats(projectId)
+### 1.3 错误处理策略
 
-// ✅ 轮询（AI 任务状态）
-const { data } = usePollingTask(taskId)
-```
+统一 HTTP 错误处理，在 `src/lib/request.ts` 拦截器中实现：
 
-### 8.2 数据变更（全部使用 useMutation）
+| HTTP 状态码 | 处理方式 | UI 反馈 |
+|---|---|---|
+| 400 | 表单验证提示 | 字段下方红色错误 |
+| 401 | 跳转登录页 | 清除 token + redirect |
+| 403 | 无权限提示 | Notification.warning |
+| 404 | 404 页面 | "返回首页"按钮 |
+| 409 | 冲突提示 | 字段级错误 |
+| 500 | 服务器错误 | Notification.error + 重试按钮 |
 
-```typescript
-// ✅ 创建
-const createProject = useCreateProject()
-createProject.mutate({ name: 'ECommerce', prefix: 'ECO' })
+### 1.4 全局状态
+- **文件**: `src/store/useAppStore.ts` — Zustand: sidebarCollapsed, notifications
+- **文件**: `src/features/auth/hooks/useAuthStore.ts` — Zustand: tokens, user, login/logout
 
-// ✅ 更新（自动失效缓存）
-const updateCase = useUpdateTestCase()
-updateCase.mutate({ id: caseId, data: { title: '新标题' } })
-
-// ✅ 删除（乐观更新）
-const deleteProject = useDeleteProject()
-deleteProject.mutate(projectId)
-
-// ✅ 确认草稿
-const confirmDraft = useConfirmDraft()
-confirmDraft.mutate({ draftId: id, moduleId: 'usr-module-id' })
-```
-
-### 8.3 Token 刷新流程
-
-```
-Axios 拦截器检测 401
-  → 并发请求入队
-  → 用 refresh_token 调用 /auth/refresh
-  → 成功：更新 localStorage，重放队列中的请求
-  → 失败：清理 token，触发 onAuthExpired → 跳转 /login
-```
-
-**注意**：Token 刷新逻辑保留在 Axios 拦截器中（`src/lib/request.ts`），这是底层传输层职责，不通过 React Query 管理。
-
-### 8.4 禁止模式
-
-```typescript
-// ❌ 禁止：useEffect 中获取数据
-useEffect(() => {
-  fetchProjects()
-}, [])
-
-// ❌ 禁止：手动管理 loading 状态
-const [loading, setLoading] = useState(false)
-
-// ❌ 禁止：组件中直接调用 axios
-request.get('/projects')
-
-// ❌ 禁止：在 useEffect 中轮询
-useEffect(() => {
-  const timer = setInterval(() => refetch(), 3000)
-  return () => clearInterval(timer)
-}, [])
-```
+### 1.5 认证模块
+- **路由**: `/login`, `/register`
+- **页面**: LoginPage, RegisterPage（AuthLayout 左右分栏 55:45）
+- **组件**: LoginForm, LoginBanner, AuthProvider
+- **Hooks**: useAuth（login/register mutations）
+- **Services**: auth.ts（POST /auth/login, /auth/register, /auth/refresh）
+- **表单验证**: Zod schema（邮箱格式、密码 ≥8、用户名 3-32、确认密码一致）
+- **关键逻辑**: Token 刷新（401 自动重放）、来源路由保留
 
 ---
 
-## 9. TDD 计划
+## Phase 2: 通用组件 (P0)
 
-### 9.1 测试架构
+> 被后续所有 Phase 依赖，必须在业务模块之前完成。
 
-```
-tests/
-├── setup.ts                      # 测试入口（beforeEach cleanup）
-├── msw/
-│   ├── handlers/
-│   │   ├── auth.ts               # 认证接口 mock
-│   │   ├── projects.ts           # 项目接口 mock
-│   │   ├── testcases.ts          # 用例接口 mock
-│   │   ├── generation.ts         # 生成接口 mock
-│   │   └── drafts.ts             # 草稿接口 mock
-│   ├── server.ts                 # MSW setupServer
-│   └── browser.ts                # MSW setupWorker（开发调试用）
-│
-└── e2e/
-    └── core-flow.spec.ts         # Playwright 关键路径
-```
+### 2.1 StatusTag
+- **支持 type**: caseStatus | planStatus | taskStatus | draftStatus | priority | confidence | caseType | documentType | documentStatus
+- **色彩映射**: 根据 ux-design-spec.md §2.1 语义色表
+- **尺寸**: default(24px) / small(20px)
 
-### 9.2 单元/UI 测试矩阵
+### 2.2 SearchTable
+- 基于 Arco Table，行高 48px/36px(紧凑)，斑马纹，默认 20 条/页
 
-| 测试目标               | 测试内容                                 | Mock 策略                                        |
-| ---------------------- | ---------------------------------------- | ------------------------------------------------ |
-| **LoginPage**          | 渲染邮箱/密码输入框和登录按钮            | 无需 Mock                                        |
-| **LoginPage**          | 输入无效邮箱时显示验证错误               | 无需 Mock                                        |
-| **LoginPage**          | 提交后调用 login API，成功跳转 /projects | MSW mock `POST /auth/login` 200                  |
-| **LoginPage**          | 登录失败显示错误提示                     | MSW mock `POST /auth/login` 401                  |
-| **useProjectList**     | 返回项目列表数据                         | MSW mock `GET /projects`                         |
-| **useProjectList**     | 支持关键词搜索                           | MSW mock `GET /projects?keywords=xxx`            |
-| **useCreateProject**   | 创建成功后失效项目列表缓存               | MSW mock `POST /projects` 201                    |
-| **ProjectListPage**    | 渲染项目表格，含搜索和分页               | MSW mock `GET /projects`                         |
-| **CreateProjectModal** | 提交表单后关闭弹窗并刷新列表             | MSW mock `POST /projects` 201                    |
-| **useCaseList**        | 返回筛选后的用例列表                     | MSW mock `GET /testcases?project_id=xxx`         |
-| **CaseDetailPage**     | 显示用例详情和 AI 来源追溯               | MSW mock `GET /testcases/:id`                    |
-| **usePollingTask**     | pending 时每 3s 轮询                     | MSW mock 序列：pending → processing → completed  |
-| **DraftConfirmPage**   | 左右分栏布局，编辑+引用来源              | MSW mock `GET /generation/drafts/:id`            |
-| **useConfirmDraft**    | 确认后草稿状态变为 confirmed             | MSW mock `POST /generation/drafts/:id/confirm`   |
-| **useBatchConfirm**    | 批量确认返回成功/失败计数                | MSW mock `POST /generation/drafts/batch-confirm` |
-| **StatusTag**          | 根据 category+status 渲染正确颜色        | 无需 Mock（纯 UI）                               |
-| **SearchTable**        | 渲染分页表格，支持排序                   | 无需 Mock（纯 UI，传 props）                     |
-| **ArrayEditor**        | 添加/删除/拖拽排序行                     | 无需 Mock（纯 UI）                               |
+### 2.3 ArrayEditor
+- 序号 + 输入框 + 上移/下移/删除，底部虚线"添加"
+- 前置条件 min 0，测试步骤 min 1
 
-### 9.3 测试示例
+### 2.4 StatsCard
+- Arco Card + Statistic，左侧 4px 装饰线，数值 28px Bold tabular-nums，计数动画 800ms
 
-```typescript
-// tests/features/auth/LoginPage.test.tsx
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { http, HttpResponse } from 'msw'
-import { server } from '../../msw/server'
-import { LoginPage } from '@/features/auth/components/LoginPage'
+### 2.5 SplitPanel
+- 基于 Arco ResizeBox.Split，左默认 240px，拖拽条 2px→4px(#7B61FF) 悬浮效果
 
-function renderWithProviders(ui: React.ReactElement) {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        {ui}
-      </BrowserRouter>
-    </QueryClientProvider>
-  )
-}
-
-describe('LoginPage', () => {
-  it('should show validation error for invalid email', async () => {
-    renderWithProviders(<LoginPage />)
-    const user = userEvent.setup()
-
-    await user.type(screen.getByLabelText('邮箱'), 'invalid-email')
-    await user.click(screen.getByRole('button', { name: /登录/ }))
-
-    expect(screen.getByText(/请输入有效的邮箱地址/)).toBeInTheDocument()
-  })
-
-  it('should redirect to /projects on successful login', async () => {
-    server.use(
-      http.post('/api/v1/auth/login', () =>
-        HttpResponse.json({
-          access_token: 'mock-token',
-          refresh_token: 'mock-refresh',
-          user: { id: '1', username: 'admin', email: 'admin@test.com', role: 'admin' },
-        })
-      )
-    )
-
-    renderWithProviders(<LoginPage />)
-    const user = userEvent.setup()
-
-    await user.type(screen.getByLabelText('邮箱'), 'admin@test.com')
-    await user.type(screen.getByLabelText('密码'), 'Test1234')
-    await user.click(screen.getByRole('button', { name: /登录/ }))
-
-    expect(window.location.pathname).toBe('/projects')
-  })
-
-  it('should show error message on login failure', async () => {
-    server.use(
-      http.post('/api/v1/auth/login', () =>
-        HttpResponse.json({ error: '邮箱或密码错误' }, { status: 401 })
-      )
-    )
-
-    renderWithProviders(<LoginPage />)
-    const user = userEvent.setup()
-
-    await user.type(screen.getByLabelText('邮箱'), 'admin@test.com')
-    await user.type(screen.getByLabelText('密码'), 'wrong')
-    await user.click(screen.getByRole('button', { name: /登录/ }))
-
-    expect(screen.getByText('邮箱或密码错误')).toBeInTheDocument()
-  })
-})
-```
-
-### 9.4 E2E 关键路径
-
-```typescript
-// tests/e2e/core-flow.spec.ts (Playwright)
-test.describe('AI 生成核心流程', () => {
-  test('登录 → 创建项目 → 上传文档 → 发起生成 → 确认草稿', async ({ page }) => {
-    // 1. 登录
-    await page.goto('/login')
-    await page.fill('[aria-label="邮箱"]', 'admin@aitestos.com')
-    await page.fill('[aria-label="密码"]', 'Test1234')
-    await page.click('button:has-text("登录")')
-    await expect(page).toHaveURL('/projects')
-
-    // 2. 创建项目
-    await page.click('button:has-text("新建项目")')
-    await page.fill('[placeholder="项目名称"]', 'ECommerce')
-    await page.fill('[placeholder="项目前缀"]', 'ECO')
-    await page.click('button:has-text("确定")')
-    await expect(page.locator('text=ECommerce')).toBeVisible()
-
-    // 3. 进入项目 → 创建模块
-    await page.click('text=ECommerce')
-    await page.click('text=项目设置')
-    await page.click('text=模块管理')
-    // ... 后续步骤
-  })
-})
-```
+### 2.6 其他
+- ReferencePanel — 草稿引用来源展示
+- useFormError — 表单错误处理 hook
 
 ---
 
-## 10. 性能与可访问性
+## Phase 3: 项目管理 (P0)
 
-### 10.1 性能
+> **验收用例**: TC-P01 创建项目 / TC-P02 前缀重复 / TC-P03 仪表盘统计
 
-| 优化项                    | 策略                                               | 适用场景                               |
-| ------------------------- | -------------------------------------------------- | -------------------------------------- |
-| **路由懒加载**            | `React.lazy()` + `Suspense`                        | 所有 Page 组件                         |
-| **列表 key**              | 使用 `item.id`（UUID）                             | 所有 Table/List 渲染                   |
-| **虚拟滚动**              | 暂不引入，1000 条用例 < 2s 满足要求                | 若后续超阈值再引入 `@tanstack/virtual` |
-| **React.memo**            | 仅在 `StatusTag`、`SearchTable` 等高频渲染组件使用 | 避免不必要的重渲染                     |
-| **React Query staleTime** | 项目列表 5min，详情 2min，统计数据 1min            | 减少重复请求                           |
-| **图片**                  | 使用 `loading="lazy"`                              | 知识库文档缩略图                       |
-| **Bundle 分析**           | `vite-plugin-visualizer`                           | 构建后检查包体积                       |
+### 3.1 布局与路由
+- **文件**: `src/components/layout/AppLayout.tsx` — 侧边栏 + 内容区
+- **文件**: `src/components/layout/Sidebar.tsx` — 项目导航菜单（仪表盘/用例/计划/知识库/AI生成/草稿箱）
+- **文件**: `src/components/layout/Header.tsx` — 项目选择器 + 用户菜单 + 通知
+- **文件**: `src/router/RouteGuard.tsx` — 认证守卫 + 权限检查（admin+ 路由 requireAdmin 属性）
 
-### 10.2 可访问性
+### 3.2 项目列表页
+- **路由**: `/projects`
+- **页面**: ProjectListPage — 搜索 + Card 网格（3列）
+- **组件**: 项目卡片（颜色装饰条 + 前缀 Tag + 统计行 + 操作按钮）
+- **操作**: 卡片"进入"按钮跳转仪表盘，"设置"按钮进入项目设置
+- **空状态**: FolderOpen 图标 + "创建第一个项目"
 
-| 要求              | 实现                                           | 验证方式                   |
-| ----------------- | ---------------------------------------------- | -------------------------- |
-| **语义化 HTML**   | 使用 `<nav>`, `<main>`, `<article>`, `<aside>` | axe audit                  |
-| **aria-label**    | 所有按钮、链接、输入框添加描述性 label         | 人工 Review                |
-| **键盘导航**      | 侧边栏 `Tab` + `Enter`，表格 `Arrow` 键        | 手动测试                   |
-| **色彩对比度**    | 所有文字/背景组合 ≥ 4.5:1 (WCAG AA)            | UX 规范已验证              |
-| **Focus 管理**    | Modal 打开时 trap focus，关闭时恢复            | Testing Library `tab` 测试 |
-| **Screen Reader** | StatusTag 添加 `aria-label="状态：通过"`       | axe audit                  |
+### 3.3 创建项目模态框
+- **组件**: CreateProjectModal（600px）
+- **字段**: 名称(2-255)、前缀(2-4大写字母, `^[A-Z]+$`)、描述
+- **验证**: 前缀实时格式校验 + 失焦唯一性校验，409 字段级错误
+- **API**: `POST /projects`
 
----
+### 3.4 项目编辑/删除
+- **编辑**: 项目卡片"设置"或仪表盘操作按钮 → Modal（预填名称/前缀/描述）
+- **删除**: 仪表盘操作 → Popconfirm 确认 → `DELETE /projects/{id}` → 跳转项目列表
+- **API**: `PUT /projects/{id}`, `DELETE /projects/{id}`
 
-## 11. 任务清单
-
-### Phase 0: 基础设施（TDD 基座）
-
-| 优先级 | 任务                                                                                    | 路径                                     | AC                                                 |
-| ------ | --------------------------------------------------------------------------------------- | ---------------------------------------- | -------------------------------------------------- |
-| P0     | 安装依赖：@tanstack/react-query, react-hook-form, @testing-library/\*, msw, vitest, zod | `package.json`                           | `npm install` 无错误；`npm test` 可运行            |
-| P0     | 配置 Vitest                                                                             | `vitest.config.ts`                       | `npm test` 通过空测试                              |
-| P0     | 配置 MSW                                                                                | `tests/msw/server.ts`                    | handler 可拦截请求                                 |
-| P0     | 创建 React Query Client                                                                 | `src/lib/query-client.ts`                | 默认 staleTime 5min，retry 1 次                    |
-| P0     | 创建 Provider 嵌套                                                                      | `src/app/providers.tsx`                  | QueryClientProvider + Arco ConfigProvider 包裹     |
-| P0     | 类型定义                                                                                | `src/types/enums.ts`, `src/types/api.ts` | TypeScript 编译通过，无 any                        |
-| P0     | 修正 Axios 调用                                                                         | `src/lib/request.ts`                     | 所有 `<any, T>` → `<never, T>`；Token 刷新逻辑完整 |
-
-### Phase 1: 认证模块
-
-| 优先级 | 任务                   | 路径                                            | AC                                             |
-| ------ | ---------------------- | ----------------------------------------------- | ---------------------------------------------- |
-| P0     | Auth API service       | `src/features/auth/services/auth.ts`            | 类型安全，编译通过                             |
-| P0     | Auth Zustand store     | `src/features/auth/hooks/useAuthStore.ts`       | login/logout/refresh 正确操作 localStorage     |
-| P0     | `useLogin` hook + 测试 | `src/features/auth/hooks/useAuth.ts`            | 测试：成功登录更新 store，失败抛错             |
-| P0     | LoginPage + 测试       | `src/features/auth/components/LoginPage.tsx`    | 测试：渲染表单、校验邮箱、成功跳转、失败提示   |
-| P0     | RegisterPage + 测试    | `src/features/auth/components/RegisterPage.tsx` | 测试：渲染表单、字段校验、提交成功             |
-| P0     | RouteGuard + 测试      | `src/router/RouteGuard.tsx`                     | 测试：未认证跳转 /login，token 过期跳转 /login |
-| P0     | AuthLayout             | `src/components/layout/AuthLayout.tsx`          | 居中布局，无侧边栏                             |
-
-### Phase 2: 项目管理模块
-
-| 优先级 | 任务                       | 路径                                                      | AC                                                         |
-| ------ | -------------------------- | --------------------------------------------------------- | ---------------------------------------------------------- |
-| P0     | Projects API service       | `src/features/projects/services/projects.ts`              | 类型安全，与 OpenAPI 对齐                                  |
-| P0     | `useProjects` hooks + 测试 | `src/features/projects/hooks/useProjects.ts`              | 测试：列表查询、详情查询、创建/更新/删除 mutation          |
-| P0     | ProjectListPage + 测试     | `src/features/projects/components/ProjectListPage.tsx`    | 测试：渲染表格、搜索、分页、新建弹窗                       |
-| P0     | CreateProjectModal + 测试  | `src/features/projects/components/CreateProjectModal.tsx` | 测试：表单校验（名称/前缀必填，前缀 2-4 位大写）、提交成功 |
-| P0     | ProjectDashboard + 测试    | `src/features/projects/components/ProjectDashboard.tsx`   | 测试：渲染统计卡片、趋势图、最近任务                       |
-| P0     | StatsCard 组件 + 测试      | `src/components/business/StatsCard.tsx`                   | 测试：渲染标题、数值、趋势箭头                             |
-| P0     | Module API + hooks + 测试  | `src/features/modules/`                                   | 测试：CRUD 操作、列表按项目查询                            |
-| P0     | ModuleManagePage + 测试    | `src/features/modules/components/ModuleManagePage.tsx`    | 测试：模块列表、创建/删除                                  |
-
-### Phase 3: 知识库模块
-
-| 优先级 | 任务                        | 路径                                                        | AC                                    |
-| ------ | --------------------------- | ----------------------------------------------------------- | ------------------------------------- |
-| P0     | Documents API service       | `src/features/documents/services/documents.ts`              | 类型安全                              |
-| P0     | `useDocuments` hooks + 测试 | `src/features/documents/hooks/useDocuments.ts`              | 测试：列表查询、上传、删除、详情+分块 |
-| P0     | KnowledgeListPage + 测试    | `src/features/documents/components/KnowledgeListPage.tsx`   | 测试：文档列表、状态 Tag、上传弹窗    |
-| P0     | UploadDocumentModal + 测试  | `src/features/documents/components/UploadDocumentModal.tsx` | 测试：文件类型选择、名称输入、提交    |
-| P1     | DocumentDetailPage + 测试   | `src/features/documents/components/DocumentDetailPage.tsx`  | 测试：分块列表展示                    |
-
-### Phase 4: AI 生成模块（核心）
-
-| 优先级 | 任务                          | 路径                                                            | AC                                                    |
-| ------ | ----------------------------- | --------------------------------------------------------------- | ----------------------------------------------------- |
-| P0     | Generation API service        | `src/features/generation/services/generation.ts`                | 类型安全                                              |
-| P0     | `useGeneration` hooks + 测试  | `src/features/generation/hooks/useGeneration.ts`                | 测试：创建任务、查询任务、查询草稿                    |
-| P0     | `usePollingTask` hook + 测试  | `src/features/generation/hooks/usePollingTask.ts`               | 测试：pending 时轮询、completed 时停止                |
-| P0     | NewGenerationTaskPage + 测试  | `src/features/generation/components/NewGenerationTaskPage.tsx`  | 测试：模块选择、需求描述（≥10字）、高级选项折叠、提交 |
-| P0     | GenerationTaskListPage + 测试 | `src/features/generation/components/GenerationTaskListPage.tsx` | 测试：任务列表、状态 Tag、进度展示                    |
-| P1     | TaskDetailPage + 测试         | `src/features/generation/components/TaskDetailPage.tsx`         | 测试：草稿列表、置信度标签                            |
-
-### Phase 5: 草稿箱模块（核心）
-
-| 优先级 | 任务                       | 路径                                                  | AC                                          |
-| ------ | -------------------------- | ----------------------------------------------------- | ------------------------------------------- |
-| P0     | Drafts API service         | `src/features/drafts/services/drafts.ts`              | 类型安全                                    |
-| P0     | `useDrafts` hooks + 测试   | `src/features/drafts/hooks/useDrafts.ts`              | 测试：列表查询、确认、拒绝、批量确认        |
-| P0     | DraftListPage + 测试       | `src/features/drafts/components/DraftListPage.tsx`    | 测试：草稿列表、批量勾选、确认/拒绝操作     |
-| P0     | DraftConfirmPage + 测试    | `src/features/drafts/components/DraftConfirmPage.tsx` | 测试：左右分栏、编辑区、引用来源、确认/拒绝 |
-| P0     | SplitPanel 组件 + 测试     | `src/components/business/SplitPanel.tsx`              | 测试：拖拽分割、最小宽度                    |
-| P0     | ReferencePanel 组件 + 测试 | `src/components/business/ReferencePanel.tsx`          | 测试：引用块列表、查看原文                  |
-| P0     | ArrayEditor 组件 + 测试    | `src/components/business/ArrayEditor.tsx`             | 测试：添加/删除行、拖拽排序                 |
-
-### Phase 6: 测试用例管理
-
-| 优先级 | 任务                        | 路径                                                     | AC                                               |
-| ------ | --------------------------- | -------------------------------------------------------- | ------------------------------------------------ |
-| P0     | TestCases API service       | `src/features/testcases/services/testcases.ts`           | 类型安全                                         |
-| P0     | `useTestCases` hooks + 测试 | `src/features/testcases/hooks/useTestCases.ts`           | 测试：列表查询（含筛选）、详情、CRUD mutation    |
-| P0     | CaseListPage + 测试         | `src/features/testcases/components/CaseListPage.tsx`     | 测试：表格渲染、筛选栏（类型/优先级/状态）、分页 |
-| P0     | CaseDetailPage + 测试       | `src/features/testcases/components/CaseDetailPage.tsx`   | 测试：用例信息展示、AI 元数据展示、编号显示      |
-| P0     | CreateCaseDrawer + 测试     | `src/features/testcases/components/CreateCaseDrawer.tsx` | 测试：表单校验、步骤编辑器、提交                 |
-| P0     | StatusTag 组件 + 测试       | `src/components/business/StatusTag.tsx`                  | 测试：各 category+status 颜色映射正确            |
-| P0     | SearchTable 组件 + 测试     | `src/components/business/SearchTable.tsx`                | 测试：渲染表格、分页、loading/error 状态         |
-
-### Phase 7: 测试计划与执行
-
-| 优先级 | 任务                     | 路径                                                  | AC                                              |
-| ------ | ------------------------ | ----------------------------------------------------- | ----------------------------------------------- |
-| P0     | Plans API service        | `src/features/plans/services/plans.ts`                | 类型安全                                        |
-| P0     | `usePlans` hooks + 测试  | `src/features/plans/hooks/usePlans.ts`                | 测试：列表、详情、创建、添加/移除用例、录入结果 |
-| P1     | PlanListPage + 测试      | `src/features/plans/components/PlanListPage.tsx`      | 测试：计划列表、状态筛选                        |
-| P1     | NewPlanPage + 测试       | `src/features/plans/components/NewPlanPage.tsx`       | 测试：创建表单、用例选择                        |
-| P1     | PlanDetailPage + 测试    | `src/features/plans/components/PlanDetailPage.tsx`    | 测试：用例列表、执行统计、结果录入弹窗          |
-| P1     | ResultRecordModal + 测试 | `src/features/plans/components/ResultRecordModal.tsx` | 测试：状态选择、备注输入、提交                  |
-
-### Phase 8: 全局组件与集成
-
-| 优先级 | 任务             | 路径                                  | AC                                       |
-| ------ | ---------------- | ------------------------------------- | ---------------------------------------- |
-| P0     | AppLayout + 测试 | `src/components/layout/AppLayout.tsx` | 测试：侧边栏+顶栏+内容区布局             |
-| P0     | Sidebar + 测试   | `src/components/layout/Sidebar.tsx`   | 测试：菜单渲染、选中态、折叠、草稿 Badge |
-| P0     | Header + 测试    | `src/components/layout/Header.tsx`    | 测试：面包屑、通知图标、用户下拉         |
-| P0     | 路由配置         | `src/router/index.tsx`                | 所有路由可访问，lazy loading 正常        |
-| P0     | 404 页面         | `src/components/NotFoundPage.tsx`     | 未知路由显示 404                         |
-| P1     | 主题配置         | `src/styles/theme.css`                | Arco 品牌色 #7B61FF 生效                 |
-
-### Phase 9: E2E 与验收
-
-| 优先级 | 任务                 | 路径                               | AC                                       |
-| ------ | -------------------- | ---------------------------------- | ---------------------------------------- |
-| P0     | E2E: 登录流程        | `tests/e2e/auth.spec.ts`           | 登录成功跳转、失败提示                   |
-| P0     | E2E: AI 生成核心流程 | `tests/e2e/core-flow.spec.ts`      | 登录→创建项目→发起生成→确认草稿→验证编号 |
-| P1     | E2E: 测试计划执行    | `tests/e2e/plan-execution.spec.ts` | 创建计划→关联用例→录入结果→统计更新      |
+### 3.5 项目仪表盘
+- **路由**: `/projects/:projectId`
+- **页面**: ProjectDashboard — 标题行 + 4 统计卡片 + 趋势图(60%) + 最近任务(40%)
+- **统计卡片**: 用例总数、通过率、覆盖率、AI 生成数（左侧 4px 装饰线，计数动画 800ms）
+- **新项目引导**: ❶上传文档 → ❷AI生成 → ❸创建计划
+- **操作按钮**: 上传文档 / 发起生成 / 新建用例
+- **API**: `GET /projects/{id}/stats`
 
 ---
 
-## ✅ Self Review
+## Phase 4: 模块管理 (P0)
 
-| 检查项          | 状态 | 说明                                                           |
-| --------------- | ---- | -------------------------------------------------------------- |
-| 符合 React 宪法 | ✅   | 无过度抽象、状态本地化、Hook 单一职责                          |
-| 避免过度设计    | ✅   | 三层架构（Component → Hook → API），Feature-Based 但不额外嵌套 |
-| TDD-ready       | ✅   | 每个任务包含测试要求，MSW 覆盖所有 API mock                    |
-| 完全类型安全    | ✅   | 禁止 any，枚举和接口完整定义，Zod 校验运行时类型               |
-| 数据获取规范    | ✅   | 全部使用 React Query，禁止 useEffect + fetch                   |
-| 全局状态最小化  | ✅   | 仅 auth token 和 sidebar 用 Zustand                            |
-| 组件职责单一    | ✅   | Page 编排、Feature 交互、Shared 纯 UI，三层清晰                |
-| 依赖方向正确    | ✅   | 单向依赖：Component → Hook → Service → Request，无循环         |
+### 4.1 模块管理页
+- **路由**: `/projects/:projectId/settings/modules`（权限 admin+）
+- **布局**: SplitPanel — 左 280px 模块树(Arco Tree) + 右编辑区
+- **操作**:
+  - 新增：左侧底部"新增模块"按钮 → 弹出表单
+  - 编辑：点击模块节点 → 右侧编辑表单（名称、缩写、描述）
+  - 删除：悬浮删除图标 → Modal 输入模块名称确认（提示级联删除用例）
+- **API**: `GET/POST /projects/{id}/modules`, `DELETE /modules/{id}`
+- **注意**: 缺少 `PUT /modules/{id}`，需后端补充（已列入缺失 API 清单）
+
+---
+
+## Phase 5: 知识库 (P0)
+
+> **验收用例**: TC-K01 上传文档 / TC-K02 文档详情与分块
+
+### 5.1 文档列表页
+- **路由**: `/projects/:projectId/knowledge`
+- **布局**: 筛选栏（类型/状态/搜索）+ 表格
+- **表格**: 文档名称(前缀类型图标) | 类型 | 状态(StatusTag, processing 辉光动画) | 分块数 | 上传时间 | 操作
+- **空状态**: FileText 图标 + "暂无文档" + "上传文档"按钮
+- **API**: `GET /knowledge/documents`
+
+### 5.2 文档上传模态框
+- **组件**: UploadDocumentModal（600px）
+- **字段**: 名称、类型(PRD/Figma/API Spec/Swagger/Markdown)、文件拖拽上传
+- **文件限制**: PRD=.docx/.pdf/.md, API=.json/.yaml, ≤50MB
+- **API**: `POST /knowledge/documents`
+
+### 5.3 文档详情页
+- **路由**: `/projects/:projectId/knowledge/:docId`
+- **布局**: SplitPanel — 左 300px 信息面板 + 右分块列表
+- **左侧**: 文档名称(h2) + 类型 Tag + 状态 Tag + 上传人/时间 + 分块数 + Steps 状态流
+- **右侧分块列表**: 序号 + 内容预览(3行截断) + 展开按钮 + 引用计数(链接图标)
+- **API**: `GET /knowledge/documents/{id}`, `GET /knowledge/documents/{id}/chunks`
+
+### 5.4 Figma 集成页
+- **路由**: `/projects/:projectId/knowledge/figma`
+- **布局**: 全页面表单，分区域
+- **区域 1 连接配置**: 认证方式(Radio: 个人令牌/OAuth 2.0) + 令牌(Input.Password) + 测试连接按钮
+- **区域 2 导入文件**: Figma URL(Input) + 解析(Button)
+- **区域 3 节点选择**: Arco Tree(带 Checkbox) + 底部取消/"确认导入"
+- **对应 US**: US-2.2 关联 Figma 设计稿
+
+---
+
+## Phase 6: AI 生成模块 (P0 核心)
+
+> 核心差异化功能。AI 视觉特征：品牌紫色辉光、Sparkles 图标、AI Gradient 按钮、glow-pulse 动画。
+>
+> **验收用例**: TC-G01 生成任务(充足) / TC-G02 生成任务(为空) / TC-G03 查看草稿
+
+### 6.1 生成任务列表页
+- **路由**: `/projects/:projectId/generation`
+- **特征**: "新建生成任务"按钮 AI Gradient + Sparkles 图标，Processing 行辉光脉冲 + 紫色背景
+- **操作**: 双击行进入详情，failed 状态显示"重试"按钮(Popconfirm 确认)
+- **API**: `GET /generation/tasks`（**缺失，需后端补充**）
+
+### 6.2 新建生成任务页
+- **路由**: `/projects/:projectId/generation/new`
+- **布局**: 居中表单(max-width 720px)
+- **知识库就绪度指示器**（页面顶部）:
+  - 充足(绿): "N 份文档 · M 个分块 · 就绪"
+  - 不足(黄): "N 份文档 · M 个分块 · 内容有限" + 弹窗警告，用户确认后可继续
+  - 为空(红): "请先上传需求文档" + 禁用提交按钮
+- **RAG 降级策略**:
+  - 知识库为空 → 禁止生成，禁用按钮
+  - 检索结果 < 1 个文档块 → 弹窗提示"知识库内容不足，生成质量可能较低"，用户确认后继续，置信度强制为"低"
+- **字段**: 目标模块(Select)、需求描述(TextArea, ≥10字)、用例数量(1-20, 默认5)
+- **高级选项**(Collapse 默认折叠): 场景类型、优先级偏好、用例类型、生成模式
+- **API**: `POST /generation/tasks`
+
+### 6.3 任务详情页
+- **路由**: `/projects/:projectId/generation/:taskId`
+- **状态卡片**: pending(Spin + 边框微弱 Glow) / processing(Progress+shimmer+轮询5s+glow-pulse) / completed(spring 庆祝动画) / failed(Alert+重试按钮)
+- **草稿列表**: ai-reveal 揭示动画(交错80ms)，工具栏：全选+批量确认(AI Gradient)+批量拒绝
+- **API**: `GET /generation/tasks/{id}`(轮询), `GET /generation/tasks/{id}/drafts`
+
+---
+
+## Phase 7: 用例管理 (P0)
+
+> **验收用例**: TC-C01 创建用例 / TC-C02 AI用例详情 / TC-C03 编号验证
+
+### 7.1 用例库列表页
+- **路由**: `/projects/:projectId/cases`
+- **布局**: SplitPanel — 左 240px 模块树("全部"+各模块名称+用例数 Badge) + 右表格
+- **工具栏**: 搜索 + 状态/类型/优先级筛选(Select) + 新建(primary) + 导入 + 导出(default)
+- **表格**: Checkbox(48px) | 编号(200px monospace) | 标题(弹性) | 类型 Tag(100px) | 优先级 Tag(80px) | 状态 Tag(80px) | 创建人(80px) | 更新时间(160px) | 操作(100px)
+- **批量操作栏**(选中行后浮现): 修改优先级 / 修改状态 / 加入计划 / 删除
+- **导入**: Modal → Upload(drag, .xlsx/.csv) + 模板下载 → `POST /testcases/import`
+- **导出**: Dropdown → 全部/已选中/筛选结果 → `POST /testcases/export` → .xlsx 下载
+- **空状态**: FileCheck 图标 + "手动创建"(primary) + "使用 AI 生成"(AI Gradient)
+- **API**: `GET /testcases`
+
+### 7.2 创建用例抽屉
+- **组件**: CreateCaseDrawer（640px 右侧 Drawer）
+- **字段**: 目标模块(Select) | 标题(2-500) | 前置条件(ArrayEditor, min 0) | 测试步骤(ArrayEditor, min 1) | 预期结果(TextArea) | 用例类型(Select) | 优先级(Select, P0-P3)
+- **API**: `POST /testcases`
+
+### 7.3 用例编辑
+- **触发**: 用例详情页点击"编辑" → Drawer（复用 CreateCaseDrawer 组件，预填数据）
+- **API**: `PUT /testcases/{id}`
+
+### 7.4 用例复制
+- **触发**: 用例详情页点击"复制" → 打开新建 Drawer，预填源用例所有字段（标题前缀"[副本]"）
+- **实现**: 复用 CreateCaseDrawer，传入初始值
+- **API**: `POST /testcases`
+
+### 7.5 用例详情页
+- **路由**: `/projects/:projectId/cases/:caseId`
+- **页头**: 返回链接 + 编号(monospace h1) + 标题 + 状态 Tag(大号) + 编辑/复制/删除按钮
+- **基本信息卡片**: 3列网格（类型、优先级、模块、创建人、创建/更新时间）
+- **AI 元数据区**(Collapse，仅 AI 生成用例显示):
+  - 标题栏：`rgba(123,97,255,0.06)` 紫色背景 + Sparkles 图标
+  - 内容：生成任务 ID(可点击链接) + 置信度 StatusTag + 引用文档块(相似度着色) + 模型版本 + 生成时间
+  - 源文档已变更 → ⚠️ Alert(warning)
+  - 源文档已删除 → Alert(error) + "移除引用"按钮
+- **执行历史**: 表格 — 计划名称(可点击跳转) | 执行结果 StatusTag | 执行人 | 时间 | 备注
+- **API**: `GET /testcases/{id}`, `PUT /testcases/{id}`, `DELETE /testcases/{id}`
+
+---
+
+## Phase 8: 草稿箱 (P0)
+
+> **验收用例**: TC-D01 单条确认 / TC-D02 批量确认 / TC-D03 拒绝草稿
+
+### 8.1 草稿列表页
+- **路由**: `/drafts`（全局视图，跨项目）
+- **筛选**: 项目(Select, 随模块联动) + 模块(Select) + 状态(Select: 待处理/已确认/已拒绝) + 搜索(Input)
+- **侧边栏 Badge**: pending 数量，品牌紫色，每 30s 刷新
+- **API**: `GET /drafts`（**缺失，需后端补充**）
+
+### 8.2 草稿确认页 ⭐ 核心页面
+- **路由**: `/drafts/:draftId`
+- **导航栏**: 返回链接 + "第N/M条"进度 + 圆点导航(当前紫色高亮) + 键盘←/→切换(未聚焦输入框时)
+- **布局**: 左 60% 编辑区（精准工作区风格） + 右 40% 引用来源（AI 辉光风格，紫色底色 `rgba(123,97,255,0.03)`）
+- **左侧编辑字段**: 标题(Input) | 前置条件(ArrayEditor) | 测试步骤(ArrayEditor) | 预期结果(TextArea) | 类型(Select) | 优先级(Select)
+- **右侧引用来源**: 文档标题(链接) + 类型 Tag + 相似度(>0.8绿/0.5-0.8黄/<0.5红) + 引用原文(灰色背景,5行截断) + "查看原文"链接。无引用时："此草稿未引用知识库内容"
+- **底部操作栏**(固定底部):
+
+  | 按钮 | 类型 | 行为 |
+  |---|---|---|
+  | 拒绝 | danger | Modal: 原因(Radio: 重复/无关/低质量/其他) + 反馈(TextArea) → `POST /generation/drafts/{id}/reject` |
+  | 保存修改 | default | 前端 React state 暂存编辑内容，不调用 API，切换草稿时自动恢复 |
+  | 确认并转为正式用例 | primary(AI Gradient) | Modal: 选择目标模块(Select) → `POST /generation/drafts/{id}/confirm` → Message.success("用例 {number} 已创建") → 跳转用例详情页 |
+
+- **切换保护**: 切换草稿/关闭页面前，如有未保存编辑，弹出确认 Dialog
+- **切换前自动保存**: 当前编辑内容暂存于 React state
+
+---
+
+## Phase 9: 测试执行 (P1)
+
+> **验收用例**: TC-PL01 创建计划 / TC-PL02 录入结果 / TC-PL03 状态流转
+
+### 9.1 计划列表页
+- **路由**: `/projects/:projectId/plans`
+- **表格**: 计划名称(可点击) | 状态 StatusTag | 用例数 | 通过率(百分比+迷你进度条) | 创建人 | 创建时间 | 操作
+- **API**: `GET /plans`
+
+### 9.2 新建计划页
+- **路由**: `/projects/:projectId/plans/new`
+- **布局**: SplitPanel — 左表单(名称 Input 必填 2-255字符 + 描述 TextArea 选填) + 右用例选择面板
+- **右侧用例选择**(Tab 切换):
+  - "可选用例" Tab：模块/类型/优先级筛选 + Checkbox 表格
+  - "已选用例" Tab：已选列表 + 移除按钮 + Badge 显示数量
+- **API**: `POST /plans`
+
+### 9.3 计划详情页
+- **路由**: `/projects/:projectId/plans/:planId`
+- **操作按钮**(按状态变化):
+
+  | 当前状态 | 可用操作 |
+  |---|---|
+  | draft | 编辑 + 开始执行(primary) + 删除(danger) |
+  | active | 编辑 + 标记完成(primary) |
+  | completed | 重新执行 + 归档(primary) |
+  | archived | 取消归档 |
+
+- **统计卡片**(5列): 总用例(灰线) + 通过(绿线) + 失败(红线) + 阻塞(橙线) + 跳过(灰线)
+- **执行进度条**: Arco Progress，品牌紫色
+- **用例执行表格**(紧凑变体 36px 行高):
+  - Checkbox | 编号 | 标题 | 类型+优先级 | 执行结果(StatusTag/内联Select) | 执行人 | 时间 | "录入"按钮
+- **快捷录入**: 点击执行结果列 → 内联 Select → 选择值自动提交 → 整行闪烁对应色 → Toast "已录入：通过" + "撤销"链接(3s 内)
+- **详细录入**: 点击"录入" → Modal(500px) — 用例信息(只读) + 执行结果(Radio) + 备注(TextArea)
+- **批量录入**: 选中多条 → "批量录入" → Modal — 结果选择(Radio) + 备注 → 批量调用
+- **API**: `GET /plans/{id}`, `POST /plans/{id}/results`, `PATCH /plans/{id}/status`
+
+---
+
+## Phase 10: 配置管理 (P1)
+
+### 10.1 配置管理页
+- **路由**: `/projects/:projectId/settings/configs`（权限 admin+）
+- **布局**: 工具栏 + 表格
+- **操作**:
+  - 新增/编辑: Modal(500px) — 键名 + 值(JSON, JsonEditor) + 描述
+  - 删除: Popconfirm 确认
+  - 导入 JSON: Modal — 粘贴 JSON + 预览 + 确认
+  - 导出 JSON: 直接下载
+- **API**: `GET/PUT /projects/{id}/configs/{key}`, `POST /projects/{id}/configs/import`, `GET /projects/{id}/configs/export`
+
+---
+
+## 前端路由完整清单
+
+| 路由 | 页面组件 | Phase | 权限 |
+|---|---|---|---|
+| `/login` | LoginPage | 1 | 公开 |
+| `/register` | RegisterPage | 1 | 公开 |
+| `/projects` | ProjectListPage | 3 | 登录 |
+| `/projects/:projectId` | ProjectDashboard | 3 | 登录 |
+| `/projects/:projectId/settings/modules` | ModuleManagePage | 4 | admin+ |
+| `/projects/:projectId/configs` | ConfigManagePage | 10 | admin+ |
+| `/projects/:projectId/knowledge` | KnowledgeListPage | 5 | 登录 |
+| `/projects/:projectId/knowledge/:docId` | DocumentDetailPage | 5 | 登录 |
+| `/projects/:projectId/knowledge/figma` | FigmaIntegrationPage | 5 | admin+ |
+| `/projects/:projectId/generation` | GenerationTaskListPage | 6 | 登录 |
+| `/projects/:projectId/generation/new` | NewGenerationTaskPage | 6 | 登录 |
+| `/projects/:projectId/generation/:taskId` | TaskDetailPage | 6 | 登录 |
+| `/drafts` | DraftListPage | 8 | 登录 |
+| `/drafts/:draftId` | DraftConfirmPage | 8 | 登录 |
+| `/projects/:projectId/cases` | CaseListPage | 7 | 登录 |
+| `/projects/:projectId/cases/:caseId` | CaseDetailPage | 7 | 登录 |
+| `/projects/:projectId/plans` | PlanListPage | 9 | 登录 |
+| `/projects/:projectId/plans/new` | NewPlanPage | 9 | 登录 |
+| `/projects/:projectId/plans/:planId` | PlanDetailPage | 9 | 登录 |
+
+---
+
+## 缺失 API 清单（需后端补充）
+
+| 功能 | 端点 | 方法 | 说明 |
+|---|---|---|---|
+| 生成任务列表 | `GET /generation/tasks` | GET | project_id, status, offset, limit |
+| 全局草稿列表 | `GET /drafts` | GET | project_id, module_id, status, keywords, offset, limit |
+| 模块编辑 | `PUT /projects/{id}/modules/{moduleId}` | PUT | name, abbreviation, description |
+| 计划状态变更 | `PATCH /plans/{id}/status` | PATCH | status |
+| 用例导入 | `POST /testcases/import` | POST | multipart/form-data |
+| 用例导出 | `POST /testcases/export` | POST | project_id, filters, format |
+
+---
+
+## 设计令牌速查
+
+| 类别 | 值 |
+|---|---|
+| 品牌色 | Primary `#7B61FF` |
+| AI Glow | `rgba(123,97,255,0.15)` |
+| AI Gradient | `linear-gradient(135deg, #7B61FF, #9B7BFF)` |
+| 标题字体 | DM Sans |
+| 编号字体 | JetBrains Mono (monospace) |
+| 间距基础 | 4px，常用 8/12/16/20/24px |
+
+---
+
+## 验证方式
+
+1. `make check` — lint + format + type-check 全通过
+2. `make test` — 所有单元测试通过（每个 Hook/Service 必须有测试）
+3. `make build` — 生产构建无错误
+4. 逐页面验收：对照 spec §7 验收测试用例
+
+| TC 编号 | 验收项 | 对应 Phase |
+|---|---|---|
+| TC-A01 | 用户登录成功 | Phase 1 |
+| TC-A02 | 登录失败 | Phase 1 |
+| TC-A03 | Token 自动刷新 | Phase 1 |
+| TC-A04 | 用户注册 | Phase 1 |
+| TC-P01 | 创建项目 | Phase 3 |
+| TC-P02 | 项目前缀重复 | Phase 3 |
+| TC-P03 | 项目仪表盘统计 | Phase 3 |
+| TC-K01 | 上传文档 | Phase 5 |
+| TC-K02 | 文档详情与分块 | Phase 5 |
+| TC-G01 | 创建生成任务(充足) | Phase 6 |
+| TC-G02 | 创建生成任务(为空) | Phase 6 |
+| TC-G03 | 查看草稿 | Phase 6 |
+| TC-D01 | 单条确认草稿 | Phase 8 |
+| TC-D02 | 批量确认草稿 | Phase 8 |
+| TC-D03 | 拒绝草稿 | Phase 8 |
+| TC-C01 | 创建用例(手动) | Phase 7 |
+| TC-C02 | AI 用例详情 | Phase 7 |
+| TC-C03 | 编号验证 | Phase 7 |
+| TC-PL01 | 创建测试计划 | Phase 9 |
+| TC-PL02 | 录入执行结果 | Phase 9 |
+| TC-PL03 | 计划状态流转 | Phase 9 |

@@ -115,8 +115,9 @@ request.interceptors.response.use(
 
     // Handle 401 Unauthorized - Token refresh
     // Skip token refresh for login/register endpoints (they handle 401 as authentication failure)
-    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
-                           originalRequest.url?.includes('/auth/register')
+    const isAuthEndpoint =
+      originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/register')
 
     if (
       error.response?.status === 401 &&

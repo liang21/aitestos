@@ -3,11 +3,11 @@
 | 项目       | 内容                                             |
 | ---------- | ------------------------------------------------ |
 | 产品名称   | Aitestos 智能测试管理平台                        |
-| 文档版本   | v1.1                                             |
+| 文档版本   | v2.0                                             |
 | 文档状态   | 正式发布                                         |
-| 最后更新   | 2026-04-16                                       |
+| 最后更新   | 2026-04-27                                       |
 | 文档所有者 | 前端开发团队                                     |
-| 关联规范   | UX 设计规范 v1.0 · 产品 PRD v2.1 · OpenAPI 3.0.3 |
+| 关联规范   | UX 设计规范 v2.0 · 产品 PRD v2.1 · OpenAPI 3.0.3 · CLAUDE.md · constitution.md |
 
 ---
 
@@ -15,93 +15,84 @@
 
 ## 1.1 目录结构
 
+> **架构决策**: 采用 Feature-Based 架构，每个业务模块内聚 components/hooks/services，与 CLAUDE.md §6 对齐。
+
 ```
 src/
-├── api/                        # API 请求模块
-│   ├── auth.ts                 # 认证接口
-│   ├── projects.ts             # 项目管理接口
-│   ├── modules.ts              # 模块管理接口
-│   ├── configs.ts              # 项目配置接口
-│   ├── testcases.ts            # 测试用例接口
-│   ├── plans.ts                # 测试计划接口
-│   ├── generation.ts           # AI 生成接口
-│   └── documents.ts            # 知识库文档接口
-├── assets/                     # 静态资源
-│   └── images/                 # 图片资源
-├── components/                 # 通用组件
-│   ├── business/               # 业务组件
-│   │   ├── StatusTag.tsx        # 状态标签（统一色彩映射）
-│   │   ├── ArrayEditor.tsx      # 数组编辑器（前置条件/步骤）
-│   │   ├── SearchTable.tsx      # 搜索筛选表格
-│   │   ├── StatsCard.tsx        # 统计卡片
-│   │   ├── SplitPanel.tsx       # 分栏面板
-│   │   ├── ReferencePanel.tsx   # 引用来源面板
-│   │   ├── CaseSelector.tsx     # 用例选择器
-│   │   └── JsonEditor.tsx       # JSON 编辑器
-│   └── layout/                 # 布局组件
-│       ├── AppLayout.tsx        # 应用主布局
-│       ├── Sidebar.tsx          # 侧边栏导航
-│       ├── Header.tsx           # 顶部导航栏
-│       └── AuthLayout.tsx       # 认证页布局
-├── hooks/                      # 自定义 Hooks
-│   ├── useAuth.ts              # 认证 Hook
-│   ├── useProject.ts           # 当前项目 Hook
-│   └── usePolling.ts           # 轮询 Hook
-├── pages/                      # 页面组件
-│   ├── auth/                   # 认证页面
-│   │   ├── LoginPage.tsx
-│   │   └── RegisterPage.tsx
-│   ├── projects/               # 项目页面
-│   │   ├── ProjectListPage.tsx
-│   │   ├── ProjectDashboard.tsx
-│   │   └── CreateProjectModal.tsx
-│   ├── knowledge/              # 知识库页面
-│   │   ├── KnowledgeListPage.tsx
-│   │   ├── DocumentDetailPage.tsx
-│   │   ├── FigmaIntegrationPage.tsx
-│   │   └── UploadDocumentModal.tsx
-│   ├── generation/             # AI 生成页面
-│   │   ├── GenerationTaskListPage.tsx
-│   │   ├── NewGenerationTaskPage.tsx
-│   │   └── TaskDetailPage.tsx
-│   ├── drafts/                 # 草稿箱页面
-│   │   ├── DraftListPage.tsx
-│   │   └── DraftConfirmPage.tsx
-│   ├── cases/                  # 测试用例页面
-│   │   ├── CaseListPage.tsx
-│   │   ├── CaseDetailPage.tsx
-│   │   └── CreateCaseDrawer.tsx
-│   ├── plans/                  # 测试计划页面
-│   │   ├── PlanListPage.tsx
-│   │   ├── NewPlanPage.tsx
-│   │   ├── PlanDetailPage.tsx
-│   │   └── ResultRecordModal.tsx
-│   └── settings/               # 项目设置页面
-│       ├── ProjectSettingsPage.tsx
-│       ├── ModuleManagePage.tsx
-│       └── ConfigManagePage.tsx
-├── router/                     # 路由配置
-│   ├── index.tsx               # 路由定义
-│   └── RouteGuard.tsx          # 路由守卫
-├── store/                      # Zustand 状态管理
-│   ├── useAuthStore.ts         # 认证状态
-│   ├── useAppStore.ts          # 全局 UI 状态
-│   ├── useProjectStore.ts      # 当前项目状态
-│   └── useDraftStore.ts        # 草稿箱状态
-├── styles/                     # 全局样式
-│   ├── theme.css               # 主题变量
-│   └── global.css               # 全局样式
-├── types/                      # TypeScript 类型定义
-│   ├── api.ts                  # API 请求/响应类型
-│   ├── enums.ts                # 枚举类型
-│   └── models.ts               # 数据模型类型
-├── lib/                        # 工具库
-│   ├── request.ts              # Axios 实例
-│   └── utils.ts                # 通用工具函数
-├── App.tsx                     # 应用入口
-├── main.tsx                    # 渲染入口
-└── index.css                   # 全局 CSS
+├── app/                          # 应用入口
+│   ├── App.tsx                   # 根组件（ConfigProvider + RouterProvider）
+│   ├── main.tsx                  # 渲染入口
+│   └── providers.tsx             # QueryClientProvider + ConfigProvider
+├── router/                       # 路由配置
+│   ├── index.tsx                 # 路由定义（lazy loading）
+│   └── RouteGuard.tsx            # 认证/权限守卫
+├── lib/                          # 基础设施
+│   ├── request.ts                # Axios 实例（Token 刷新、错误拦截、typed wrappers）
+│   ├── query-client.ts           # React Query 全局配置
+│   └── utils.ts                  # cn() 等工具函数
+├── types/                        # 全局类型（可被所有层引用，禁止引用业务代码）
+│   ├── enums.ts                  # 枚举/字面量联合类型
+│   └── api.ts                    # API 请求/响应类型
+├── features/                     # 业务功能模块 (Feature-Based)
+│   ├── auth/                     # 认证
+│   │   ├── components/           # LoginPage, RegisterPage
+│   │   ├── hooks/                # useAuthStore (Zustand)
+│   │   ├── schema/               # loginSchema, registerSchema (Zod)
+│   │   └── services/             # auth.ts (API function)
+│   ├── projects/                 # 项目管理
+│   │   ├── components/           # ProjectListPage, ProjectDashboard, CreateProjectModal
+│   │   ├── hooks/                # useProjects (query keys + useQuery/useMutation)
+│   │   └── services/             # projects.ts
+│   ├── modules/                  # 模块管理
+│   │   ├── components/           # ModuleManagePage
+│   │   ├── hooks/                # useModules
+│   │   └── services/             # modules.ts
+│   ├── testcases/                # 测试用例
+│   │   ├── components/           # CaseListPage, CaseDetailPage, CreateCaseDrawer
+│   │   ├── hooks/                # useTestCases
+│   │   └── services/             # testcases.ts
+│   ├── plans/                    # 测试计划
+│   │   ├── components/           # PlanListPage, NewPlanPage, PlanDetailPage, ResultRecordModal
+│   │   ├── hooks/                # usePlans
+│   │   └── services/             # plans.ts
+│   ├── generation/               # AI 生成
+│   │   ├── components/           # GenerationTaskListPage, NewGenerationTaskPage, TaskDetailPage
+│   │   ├── hooks/                # useGeneration, usePollingTask
+│   │   └── services/             # generation.ts
+│   ├── drafts/                   # 草稿箱
+│   │   ├── components/           # DraftListPage, DraftConfirmPage
+│   │   ├── hooks/                # useDrafts
+│   │   └── services/             # drafts.ts
+│   ├── documents/                # 知识库
+│   │   ├── components/           # KnowledgeListPage, DocumentDetailPage, UploadDocumentModal
+│   │   ├── hooks/                # useDocuments
+│   │   └── services/             # documents.ts
+│   └── configs/                  # 项目配置
+│       ├── components/           # ConfigManagePage
+│       ├── hooks/                # useConfigs
+│       └── services/             # configs.ts
+├── components/                   # 跨 Feature 共享组件
+│   ├── layout/                   # AppLayout, Sidebar, Header, AuthLayout
+│   ├── business/                 # StatusTag, SearchTable, ArrayEditor, StatsCard, SplitPanel 等
+│   ├── ErrorBoundary.tsx         # 全局错误边界
+│   └── NotFoundPage.tsx          # 404 页面
+├── store/                        # 全局 Zustand store（仅 UI 状态）
+│   └── useAppStore.ts            # sidebarCollapsed + toggleSidebar
+├── hooks/                        # 跨 Feature 共享 hooks
+│   ├── useDebounce.ts
+│   └── useMutationErrorHandler.ts
+└── styles/                       # 全局样式
+    └── theme.css                 # Tailwind @theme + Arco 主题变量
 ```
+
+### 依赖规则
+
+- **Page → Feature hooks → Feature services → `@/lib/request`**
+- `components/` 禁止引用 `features/` 的任何内容
+- `services/` 禁止引用 `store/` 或 `hooks/`
+- Feature A 禁止引用 Feature B 的内部文件
+- `@/types` 可被所有层引用，但自身禁止引用任何业务代码
+- `@/lib` 可被 services/hooks 引用，禁止反向依赖
 
 ## 1.2 构建配置
 
@@ -182,7 +173,7 @@ VITE_API_BASE_URL=https://api.aitestos.com/api/v1
 
 ```tsx
 import { Navigate, useLocation } from 'react-router-dom'
-import { useAuthStore } from '@/store/useAuthStore'
+import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
 
 interface RouteGuardProps {
   children: React.ReactNode
@@ -245,159 +236,198 @@ export function NotFoundPage() {
 ### src/router/index.tsx
 
 ```tsx
-import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { AppLayout } from '@/components/layout/AppLayout'
-import { AuthLayout } from '@/components/layout/AuthLayout'
 import { RouteGuard } from './RouteGuard'
-
-// 懒加载页面组件
-const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
-const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
-const ProjectListPage = lazy(() => import('@/pages/projects/ProjectListPage'))
-const ProjectDashboard = lazy(() => import('@/pages/projects/ProjectDashboard'))
-const KnowledgeListPage = lazy(
-  () => import('@/pages/knowledge/KnowledgeListPage')
-)
-const DocumentDetailPage = lazy(
-  () => import('@/pages/knowledge/DocumentDetailPage')
-)
-const FigmaIntegrationPage = lazy(
-  () => import('@/pages/knowledge/FigmaIntegrationPage')
-)
-const GenerationTaskListPage = lazy(
-  () => import('@/pages/generation/GenerationTaskListPage')
-)
-const NewGenerationTaskPage = lazy(
-  () => import('@/pages/generation/NewGenerationTaskPage')
-)
-const TaskDetailPage = lazy(() => import('@/pages/generation/TaskDetailPage'))
-const DraftListPage = lazy(() => import('@/pages/drafts/DraftListPage'))
-const DraftConfirmPage = lazy(() => import('@/pages/drafts/DraftConfirmPage'))
-const CaseListPage = lazy(() => import('@/pages/cases/CaseListPage'))
-const CaseDetailPage = lazy(() => import('@/pages/cases/CaseDetailPage'))
-const PlanListPage = lazy(() => import('@/pages/plans/PlanListPage'))
-const NewPlanPage = lazy(() => import('@/pages/plans/NewPlanPage'))
-const PlanDetailPage = lazy(() => import('@/pages/plans/PlanDetailPage'))
-const ProjectSettingsPage = lazy(
-  () => import('@/pages/settings/ProjectSettingsPage')
-)
-const ModuleManagePage = lazy(() => import('@/pages/settings/ModuleManagePage'))
-const ConfigManagePage = lazy(() => import('@/pages/settings/ConfigManagePage'))
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
-
-function LazyPage({
-  Component,
-}: {
-  Component: React.LazyExoticComponent<React.ComponentType>
-}) {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <Component />
-    </Suspense>
-  )
-}
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { AppLayout } from '@/components/layout/AppLayout'
 
 export const router = createBrowserRouter([
-  // 认证页面
+  // 认证页面（无布局壳，包裹 ErrorBoundary）
   {
-    element: <AuthLayout />,
-    children: [
-      { path: '/login', element: <LazyPage Component={LoginPage} /> },
-      { path: '/register', element: <LazyPage Component={RegisterPage} /> },
-    ],
+    path: '/login',
+    lazy: () =>
+      import('@/features/auth/components/LoginPage').then((m) => ({
+        Component: () => (
+          <ErrorBoundary>
+            <m.LoginPage />
+          </ErrorBoundary>
+        ),
+      })),
+  },
+  {
+    path: '/register',
+    lazy: () =>
+      import('@/features/auth/components/RegisterPage').then((m) => ({
+        Component: () => (
+          <ErrorBoundary>
+            <m.RegisterPage />
+          </ErrorBoundary>
+        ),
+      })),
   },
   // 需认证页面
   {
     element: (
-      <RouteGuard>
-        <AppLayout />
-      </RouteGuard>
+      <ErrorBoundary>
+        <RouteGuard>
+          <AppLayout />
+        </RouteGuard>
+      </ErrorBoundary>
     ),
     children: [
-      { path: '/projects', element: <LazyPage Component={ProjectListPage} /> },
+      { index: true, element: <Navigate to="/projects" replace /> },
       {
-        path: '/projects/:id',
-        element: <LazyPage Component={ProjectDashboard} />,
+        path: 'projects',
+        lazy: () =>
+          import('@/features/projects/components/ProjectListPage').then((m) => ({
+            Component: m.ProjectListPage,
+          })),
       },
       {
-        path: '/projects/:id/knowledge',
-        element: <LazyPage Component={KnowledgeListPage} />,
+        path: 'projects/:id',
+        lazy: () =>
+          import('@/features/projects/components/ProjectDashboard').then((m) => ({
+            Component: m.ProjectDashboard,
+          })),
       },
       {
-        path: '/projects/:id/knowledge/figma',
-        element: <LazyPage Component={FigmaIntegrationPage} />,
+        path: 'projects/:id/knowledge',
+        lazy: () =>
+          import('@/features/documents/components/KnowledgeListPage').then((m) => ({
+            Component: m.KnowledgeListPage,
+          })),
       },
       {
-        path: '/projects/:id/knowledge/:docId',
-        element: <LazyPage Component={DocumentDetailPage} />,
+        path: 'projects/:id/knowledge/figma',
+        lazy: () =>
+          import('@/features/documents/components/FigmaIntegrationPage').then((m) => ({
+            Component: m.FigmaIntegrationPage,
+          })),
       },
       {
-        path: '/projects/:id/generation',
-        element: <LazyPage Component={GenerationTaskListPage} />,
+        path: 'projects/:id/knowledge/:docId',
+        lazy: () =>
+          import('@/features/documents/components/DocumentDetailPage').then((m) => ({
+            Component: m.DocumentDetailPage,
+          })),
       },
       {
-        path: '/projects/:id/generation/new',
-        element: <LazyPage Component={NewGenerationTaskPage} />,
+        path: 'projects/:id/generation',
+        lazy: () =>
+          import('@/features/generation/components/GenerationTaskListPage').then(
+            (m) => ({ Component: m.GenerationTaskListPage })
+          ),
       },
       {
-        path: '/projects/:id/generation/:taskId',
-        element: <LazyPage Component={TaskDetailPage} />,
-      },
-      { path: '/drafts', element: <LazyPage Component={DraftListPage} /> },
-      {
-        path: '/drafts/:draftId',
-        element: <LazyPage Component={DraftConfirmPage} />,
+        path: 'projects/:id/generation/new',
+        lazy: () =>
+          import('@/features/generation/components/NewGenerationTaskPage').then(
+            (m) => ({ Component: m.NewGenerationTaskPage })
+          ),
       },
       {
-        path: '/projects/:id/cases',
-        element: <LazyPage Component={CaseListPage} />,
+        path: 'projects/:id/generation/:taskId',
+        lazy: () =>
+          import('@/features/generation/components/TaskDetailPage').then((m) => ({
+            Component: m.TaskDetailPage,
+          })),
       },
       {
-        path: '/projects/:id/cases/:caseId',
-        element: <LazyPage Component={CaseDetailPage} />,
+        path: 'drafts',
+        lazy: () =>
+          import('@/features/drafts/components/DraftListPage').then((m) => ({
+            Component: m.DraftListPage,
+          })),
       },
       {
-        path: '/projects/:id/plans',
-        element: <LazyPage Component={PlanListPage} />,
+        path: 'drafts/:draftId',
+        lazy: () =>
+          import('@/features/drafts/components/DraftConfirmPage').then((m) => ({
+            Component: m.DraftConfirmPage,
+          })),
       },
       {
-        path: '/projects/:id/plans/new',
-        element: <LazyPage Component={NewPlanPage} />,
+        path: 'projects/:id/cases',
+        lazy: () =>
+          import('@/features/testcases/components/CaseListPage').then((m) => ({
+            Component: m.CaseListPage,
+          })),
       },
       {
-        path: '/projects/:id/plans/:planId',
-        element: <LazyPage Component={PlanDetailPage} />,
+        path: 'projects/:id/cases/:caseId',
+        lazy: () =>
+          import('@/features/testcases/components/CaseDetailPage').then((m) => ({
+            Component: m.CaseDetailPage,
+          })),
       },
       {
-        path: '/projects/:id/settings',
+        path: 'projects/:id/plans',
+        lazy: () =>
+          import('@/features/plans/components/PlanListPage').then((m) => ({
+            Component: m.PlanListPage,
+          })),
+      },
+      {
+        path: 'projects/:id/plans/new',
+        lazy: () =>
+          import('@/features/plans/components/NewPlanPage').then((m) => ({
+            Component: m.NewPlanPage,
+          })),
+      },
+      {
+        path: 'projects/:id/plans/:planId',
+        lazy: () =>
+          import('@/features/plans/components/PlanDetailPage').then((m) => ({
+            Component: m.PlanDetailPage,
+          })),
+      },
+      {
+        path: 'projects/:id/settings',
         element: (
           <RouteGuard requireAdmin>
-            <LazyPage Component={ProjectSettingsPage} />
+            {/*
+              设置页使用 Element 而非 lazy，因为需要 RouteGuard 包裹。
+              也可以在 lazy 回调中包裹 RouteGuard。
+            */}
           </RouteGuard>
         ),
+        children: [
+          {
+            index: true,
+            lazy: () =>
+              import('@/features/configs/components/ConfigManagePage').then((m) => ({
+                Component: m.ConfigManagePage,
+              })),
+          },
+        ],
       },
       {
-        path: '/projects/:id/settings/modules',
-        element: (
-          <RouteGuard requireAdmin>
-            <LazyPage Component={ModuleManagePage} />
-          </RouteGuard>
-        ),
+        path: 'projects/:id/settings/modules',
+        element: <RouteGuard requireAdmin>{null}</RouteGuard>,
+        children: [
+          {
+            index: true,
+            lazy: () =>
+              import('@/features/modules/components/ModuleManagePage').then((m) => ({
+                Component: m.ModuleManagePage,
+              })),
+          },
+        ],
       },
       {
-        path: '/projects/:id/settings/configs',
-        element: (
-          <RouteGuard requireAdmin>
-            <LazyPage Component={ConfigManagePage} />
-          </RouteGuard>
-        ),
+        path: '*',
+        element: <Navigate to="/projects" replace />,
       },
     ],
   },
-  // 兜底
-  { path: '/', element: <Navigate to="/projects" replace /> },
-  { path: '*', element: <LazyPage Component={NotFoundPage} /> },
+  // 404 兜底
+  {
+    path: '*',
+    lazy: () =>
+      import('@/components/NotFoundPage').then((m) => ({
+        Component: m.NotFoundPage,
+      })),
+  },
 ])
 ```
 
@@ -405,29 +435,55 @@ export const router = createBrowserRouter([
 
 # 第三章：状态管理设计
 
-## 3.1 Store 架构
+> **架构决策**: Zustand 仅管理纯 UI 状态（sidebar 折叠）和认证 token。所有服务端数据通过 React Query 管理。宪法 §4.1/§4.2 强制要求。
+
+## 3.1 状态管理职责划分
 
 ```
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│ useAuthStore │  │ useAppStore  │  │useProjectStore│  │useDraftStore │
-│              │  │              │  │              │  │              │
-│ user         │  │sidebarColl-  │  │currentProject│  │pendingCount  │
-│ token        │  │  apsed       │  │              │  │              │
-│ refreshTok-  │  │notifications │  │set...()      │  │fetchPending  │
-│  en          │  │pendingDraft  │  │clear...()    │  │  Count()     │
-│ login()      │  │  Count       │  │              │  │              │
-│ logout()     │  │toggleSidebar │  │              │  │              │
-│ refresh()    │  │              │  │              │  │              │
-└──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘
-      localStorage     组件 state       URL params        API 轮询
+┌──────────────┐  ┌────────────────────────────────────────────────┐
+│ useAppStore  │  │ features/auth/hooks/useAuthStore               │
+│ (全局 Zustand)│  │ (Feature 级 Zustand — 唯一存 token 的例外)     │
+│              │  │                                                │
+│ sidebarColl- │  │ user / token / refreshToken / isAuthenticated  │
+│  apsed       │  │ initialize() / login() / logout() / setTokens()│
+│ toggleSidebar│  │                                                │
+│ setSidebar-  │  │ Token 持久化: localStorage                     │
+│  Collapsed() │  │                                                │
+└──────────────┘  └────────────────────────────────────────────────┘
+  纯 UI 状态                 认证状态（允许跨 Feature 访问）
+
+其余所有服务端数据 → React Query (useQuery / useMutation)
 ```
 
-## 3.2 useAuthStore
+## 3.2 useAppStore — 全局 UI 状态（仅此一个全局 store）
 
 ```typescript
-// src/store/useAuthStore.ts
+// src/store/useAppStore.ts
 import { create } from 'zustand'
-import { authApi } from '@/api/auth'
+
+interface AppState {
+  sidebarCollapsed: boolean
+  toggleSidebar: () => void
+  setSidebarCollapsed: (collapsed: boolean) => void
+}
+
+export const useAppStore = create<AppState>((set) => ({
+  sidebarCollapsed: typeof window !== 'undefined' ? window.innerWidth < 1280 : false,
+
+  toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+}))
+```
+
+> **禁止存入 useAppStore 的数据**: notifications、pendingDraftCount、currentProject — 这些都是服务端数据，必须通过 React Query 管理。
+
+## 3.3 useAuthStore — 认证状态（Feature 级）
+
+> UX 规范：§6.1 认证流程
+
+```typescript
+// src/features/auth/hooks/useAuthStore.ts
+import { create } from 'zustand'
 import type { UserJSON } from '@/types/api'
 
 interface AuthState {
@@ -435,204 +491,226 @@ interface AuthState {
   token: string | null
   refreshToken: string | null
   isAuthenticated: boolean
+  isInitialized: boolean
 
+  initialize: () => void
   login: (email: string, password: string) => Promise<void>
-  register: (data: {
-    username: string
-    email: string
-    password: string
-    role: string
-  }) => Promise<void>
   logout: () => void
-  refresh: () => Promise<void>
+  setTokens: (accessToken: string, refreshToken: string) => void
   setUser: (user: UserJSON) => void
+}
+
+// Token 持久化接口（便于测试和 SSR 兼容）
+const tokenStorage = {
+  getItem: (key: string): string | null => {
+    try { return localStorage.getItem(key) } catch { return null }
+  },
+  setItem: (key: string, value: string): void => {
+    try { localStorage.setItem(key, value) } catch { /* 静默 */ }
+  },
+  removeItem: (key: string): void => {
+    try { localStorage.removeItem(key) } catch { /* 静默 */ }
+  },
+}
+
+// JWT 过期检查
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.exp ? Date.now() >= payload.exp * 1000 : true
+  } catch { return true }
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  token: localStorage.getItem('token'),
-  refreshToken: localStorage.getItem('refresh_token'),
-  isAuthenticated: !!localStorage.getItem('token'),
+  token: null,
+  refreshToken: null,
+  isAuthenticated: false,
+  isInitialized: false,
 
-  login: async (email, password) => {
-    const res = await authApi.login({ email, password })
-    localStorage.setItem('token', res.access_token)
-    localStorage.setItem('refresh_token', res.refresh_token)
+  // 从 localStorage 恢复认证状态
+  initialize: () => {
+    const accessToken = tokenStorage.getItem('access_token')
+    const refreshToken = tokenStorage.getItem('refresh_token')
+
+    if (!accessToken || !refreshToken || isTokenExpired(accessToken)) {
+      tokenStorage.removeItem('access_token')
+      tokenStorage.removeItem('refresh_token')
+      set({ isInitialized: true })
+      return
+    }
+
     set({
-      user: res.user,
-      token: res.access_token,
-      refreshToken: res.refresh_token,
+      token: accessToken,
+      refreshToken,
       isAuthenticated: true,
+      isInitialized: true,
     })
   },
 
-  register: async (data) => {
-    await authApi.register(data)
+  // 登录：动态导入 authApi 避免循环依赖
+  login: async (email: string, password: string) => {
+    const { authApi } = await import('../services/auth')
+    const response = await authApi.login({ email, password })
+
+    tokenStorage.setItem('access_token', response.access_token)
+    tokenStorage.setItem('refresh_token', response.refresh_token)
+
+    set({
+      user: response.user,
+      token: response.access_token,
+      refreshToken: response.refresh_token,
+      isAuthenticated: true,
+      isInitialized: true,
+    })
   },
 
   logout: () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('refresh_token')
+    tokenStorage.removeItem('access_token')
+    tokenStorage.removeItem('refresh_token')
     set({ user: null, token: null, refreshToken: null, isAuthenticated: false })
   },
 
-  refresh: async () => {
-    const { refreshToken } = get()
-    if (!refreshToken) return
-    try {
-      const res = await authApi.refresh({ refresh_token: refreshToken })
-      localStorage.setItem('token', res.access_token)
-      localStorage.setItem('refresh_token', res.refresh_token)
-      set({
-        token: res.access_token,
-        refreshToken: res.refresh_token,
-        user: res.user,
-      })
-    } catch {
-      get().logout()
-    }
+  // 由 request.ts 拦截器调用，保持 store 与 localStorage 同步
+  setTokens: (accessToken: string, newRefreshToken: string) => {
+    tokenStorage.setItem('access_token', accessToken)
+    tokenStorage.setItem('refresh_token', newRefreshToken)
+    set({ token: accessToken, refreshToken: newRefreshToken })
   },
 
-  setUser: (user) => set({ user }),
+  setUser: (user: UserJSON) => set({ user }),
 }))
 ```
 
-## 3.3 useAppStore
+## 3.4 React Query 模式指南
+
+> **宪法 §4.1**: 所有服务端数据必须通过 React Query 获取和变更。
+
+### Query Key 工厂模式
+
+每个 feature 的 hooks 文件中定义 query key 工厂，确保缓存粒度精确：
 
 ```typescript
-// src/store/useAppStore.ts
-import { create } from 'zustand'
+// src/features/projects/hooks/useProjects.ts
+export const projectKeys = {
+  all: ['projects'] as const,
+  lists: () => [...projectKeys.all, 'list'] as const,
+  list: (params: Record<string, unknown>) => [...projectKeys.lists(), params] as const,
+  details: () => [...projectKeys.all, 'detail'] as const,
+  detail: (id: string) => [...projectKeys.details(), id] as const,
+  stats: (id: string) => [...projectKeys.all, 'stats', id] as const,
+}
+```
 
-interface Notification {
-  id: string
-  type: 'ai_complete' | 'doc_complete' | 'doc_failed' | 'case_updated'
-  title: string
-  content: string
-  read: boolean
-  actionUrl: string
-  createdAt: string
+### 查询 Hook 模式
+
+```typescript
+// 列表查询
+export function useProjectList(params?: { keywords?: string; offset?: number; limit?: number }) {
+  return useQuery({
+    queryKey: projectKeys.list(params ?? {}),
+    queryFn: () => projectsApi.list(params),
+  })
 }
 
-interface AppState {
-  sidebarCollapsed: boolean
-  notifications: Notification[]
-  notificationCount: number
-  pendingDraftCount: number
+// 详情查询（enabled 守卫防止无效请求）
+export function useProjectDetail(id: string) {
+  return useQuery({
+    queryKey: projectKeys.detail(id),
+    queryFn: () => projectsApi.get(id),
+    enabled: !!id,
+  })
+}
+```
 
-  toggleSidebar: () => void
-  setSidebarCollapsed: (collapsed: boolean) => void
-  addNotification: (n: Notification) => void
-  markAllRead: () => void
-  markRead: (id: string) => void
-  setNotificationCount: (count: number) => void
-  setPendingDraftCount: (count: number) => void
+### 变更 Hook 模式
+
+```typescript
+// 创建 + 自动刷新列表缓存
+export function useCreateProject() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: CreateProjectRequest) => projectsApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() })
+    },
+  })
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  sidebarCollapsed: window.innerWidth < 1280,
-  notifications: [],
-  notificationCount: 0,
-  pendingDraftCount: 0,
+// 更新 + 刷新详情和列表缓存
+export function useUpdateProject() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateProjectRequest }) =>
+      projectsApi.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(variables.id) })
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() })
+    },
+  })
+}
+```
 
-  toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
-  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-  addNotification: (n) =>
-    set((s) => ({
-      notifications: [n, ...s.notifications].slice(0, 10),
-      notificationCount: s.notificationCount + 1,
-    })),
-  markAllRead: () =>
-    set((s) => ({
-      notifications: s.notifications.map((n) => ({ ...n, read: true })),
-      notificationCount: 0,
-    })),
-  markRead: (id) =>
-    set((s) => ({
-      notifications: s.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
-      ),
-      notificationCount: Math.max(0, s.notificationCount - 1),
-    })),
-  setNotificationCount: (count) => set({ notificationCount: count }),
-  setPendingDraftCount: (count) => set({ pendingDraftCount: count }),
+### 轮询模式（替代自定义 usePolling hook）
 
-  // 获取待处理草稿数（合并原 useDraftStore 逻辑）
-  fetchPendingDraftCount: async () => {
-    try {
+```typescript
+// 使用 refetchInterval 实现任务轮询，任务完成后自动停止
+export function useTaskDetail(id: string) {
+  return useQuery({
+    queryKey: generationKeys.task(id),
+    queryFn: () => generationApi.getTask(id),
+    enabled: !!id,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status
+      return status === 'pending' || status === 'processing' ? 5000 : false
+    },
+  })
+}
+```
+
+### 各 Feature Query Key 清单
+
+| Feature | Key 工厂 | 包含 |
+|---------|---------|------|
+| projects | `projectKeys` | all, lists, list(params), details, detail(id), stats(id) |
+| modules | `moduleKeys` | all, list(projectId), detail(id) |
+| testcases | `caseKeys` | all, lists, list(params), details, detail(id) |
+| plans | `planKeys` | all, lists, list(params), details, detail(id), results(planId) |
+| generation | `generationKeys` | all, tasks, list(params), task(id), drafts(taskId) |
+| drafts | `draftKeys` | all, lists, list(params), detail(id), pendingCount |
+| documents | `documentKeys` | all, lists, list(params), details, detail(id), chunks(docId) |
+| configs | `configKeys` | all, list(projectId) |
+```
+
+### useDraftCount — 草稿未处理计数（Sidebar Badge）
+
+> 用于 Sidebar 草稿箱 Badge 显示，数据通过 React Query 定时刷新。
+
+```typescript
+// src/features/drafts/hooks/useDrafts.ts
+import { useQuery } from '@tanstack/react-query'
+import { generationApi } from '../services/generation'
+
+export const draftKeys = {
+  all: ['drafts'] as const,
+  lists: () => [...draftKeys.all, 'list'] as const,
+  list: (params: Record<string, unknown>) => [...draftKeys.lists(), params] as const,
+  detail: (id: string) => [...draftKeys.all, 'detail', id] as const,
+  pendingCount: () => [...draftKeys.all, 'pendingCount'] as const,
+}
+
+/** 获取未处理草稿数量，用于 Sidebar Badge */
+export function useDraftCount() {
+  return useQuery({
+    queryKey: draftKeys.pendingCount(),
+    queryFn: async () => {
       const res = await generationApi.getDrafts({ status: 'pending', limit: 1 })
-      set({ pendingDraftCount: res.total })
-    } catch {
-      // 静默失败，不影响主流程
-    }
-  },
-}))
-```
-
-> **注意**：`useAppStore` 已合并 `fetchPendingDraftCount` 方法，消除了原先 `useDraftStore` 跨 store 直接调用 `useAppStore.getState()` 的耦合问题。如仍需独立 `useDraftStore`，应改为通过组件层桥接而非 store 内部直接引用。
-
-## 3.4 useProjectStore
-
-```typescript
-// src/store/useProjectStore.ts
-import { create } from 'zustand'
-import { projectsApi } from '@/api/projects'
-import type { Project } from '@/types/api'
-
-interface ProjectState {
-  currentProject: Pick<Project, 'id' | 'name' | 'prefix'> | null
-  setCurrentProject: (project: Pick<Project, 'id' | 'name' | 'prefix'>) => void
-  clearCurrentProject: () => void
-  fetchProject: (id: string) => Promise<void>
+      return res.total
+    },
+    refetchInterval: 30_000, // 每 30 秒刷新
+    staleTime: 15_000,
+  })
 }
-
-export const useProjectStore = create<ProjectState>((set) => ({
-  currentProject: null,
-
-  setCurrentProject: (project) => set({ currentProject: project }),
-
-  clearCurrentProject: () => set({ currentProject: null }),
-
-  fetchProject: async (id) => {
-    const project = await projectsApi.get(id)
-    set({
-      currentProject: {
-        id: project.id,
-        name: project.name,
-        prefix: project.prefix,
-      },
-    })
-  },
-}))
-```
-
-## 3.5 useDraftStore
-
-```typescript
-// src/store/useDraftStore.ts
-import { create } from 'zustand'
-import { generationApi } from '@/api/generation'
-import { useAppStore } from './useAppStore'
-
-interface DraftState {
-  pendingCount: number
-  fetchPendingCount: () => Promise<void>
-}
-
-export const useDraftStore = create<DraftState>((set) => ({
-  pendingCount: 0,
-
-  fetchPendingCount: async () => {
-    try {
-      // 注意：GET /drafts API 待后端补充
-      const res = await generationApi.getDrafts({ status: 'pending', limit: 1 })
-      const count = res.total
-      set({ pendingCount: count })
-      useAppStore.getState().setPendingDraftCount(count)
-    } catch {
-      // 静默失败，不影响主流程
-    }
-  },
-}))
 ```
 
 ---
@@ -641,39 +719,48 @@ export const useDraftStore = create<DraftState>((set) => ({
 
 ## 4.1 Axios 配置
 
+> **宪法 §3.2**: 禁止 `any`。提供类型安全的 wrapper 函数，用 `<never, T>` 替代 `<any, T>`。
+
 ### src/lib/request.ts
 
 ```typescript
-import axios, { type InternalAxiosRequestConfig } from 'axios'
-import { Message } from '@arco-design/web-react'
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
 const request = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
-  timeout: 30000,
+  timeout: 10000,
 })
 
 // ==================== Token 刷新机制 ====================
 
+interface QueuedRequest {
+  request: InternalAxiosRequestConfig
+  resolve: (value: unknown) => void
+  reject: (reason: unknown) => void
+}
+
 let isRefreshing = false
-let pendingRequests: Array<(token: string) => void> = []
+const pendingRequests: QueuedRequest[] = []
 
-// 使用 WeakMap 追踪已重试的请求，避免在 config 对象上挂载自定义属性
-const retriedRequests = new WeakSet<InternalAxiosRequestConfig>()
+let authExpiredHandler: (() => void) | null = null
+let tokenUpdatedHandler: ((accessToken: string, refreshToken: string) => void) | null = null
 
-// 全局认证过期回调，由 App 层注册（避免在 Axios 中直接使用 window.location）
-let onAuthExpired: (() => void) | null = null
+export function setAuthExpiredHandler(handler: () => void) { authExpiredHandler = handler }
+export function setTokenUpdatedHandler(handler: (a: string, r: string) => void) {
+  tokenUpdatedHandler = handler
+}
 
-export function registerAuthExpiredHandler(handler: () => void) {
-  onAuthExpired = handler
+const tokenStorage = {
+  getItem: (key: string): string | null => { try { return localStorage.getItem(key) } catch { return null } },
+  setItem: (key: string, value: string): void => { try { localStorage.setItem(key, value) } catch { } },
+  removeItem: (key: string): void => { try { localStorage.removeItem(key) } catch { } },
 }
 
 // ==================== 请求拦截器 ====================
 
 request.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
+  const token = tokenStorage.getItem('access_token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
@@ -681,88 +768,75 @@ request.interceptors.request.use((config) => {
 
 request.interceptors.response.use(
   (response) => response.data,
-  async (error) => {
-    const originalRequest = error.config
-    const status = error.response?.status
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean; _queued?: boolean }
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register')
 
-    // --- 401 Token 刷新 ---
-    if (status === 401 && !retriedRequests.has(originalRequest)) {
-      const refreshToken = localStorage.getItem('refresh_token')
-      if (!refreshToken) {
-        onAuthExpired?.()
-        return Promise.reject(error)
-      }
-
-      // 并发请求排队等待刷新完成
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
-        return new Promise((resolve) => {
-          pendingRequests.push((token: string) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`
-            resolve(request(originalRequest))
-          })
-        })
+        if (originalRequest._queued) return Promise.reject(error)
+        originalRequest._queued = true
+        return new Promise((resolve, reject) => { pendingRequests.push({ request: originalRequest, resolve, reject }) })
       }
-
+      originalRequest._retry = true
       isRefreshing = true
-      retriedRequests.add(originalRequest)
-
+      const refreshToken = tokenStorage.getItem('refresh_token')
+      if (!refreshToken) { authExpiredHandler?.(); pendingRequests.forEach(({ reject }) => reject(error)); pendingRequests.length = 0; return Promise.reject(error) }
       try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/auth/refresh`,
-          { refresh_token: refreshToken }
-        )
-        const newToken = res.data.access_token
-        localStorage.setItem('token', newToken)
-        localStorage.setItem('refresh_token', res.data.refresh_token)
-
-        // 释放等待队列
-        pendingRequests.forEach((cb) => cb(newToken))
-        pendingRequests = []
-
-        // 重试原请求（携带完整配置）
-        originalRequest.headers.Authorization = `Bearer ${newToken}`
+        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/auth/refresh`, { refresh_token: refreshToken }, { headers: { 'Content-Type': 'application/json' } })
+        const { access_token, refresh_token: newRefreshToken } = response.data
+        tokenStorage.setItem('access_token', access_token); tokenStorage.setItem('refresh_token', newRefreshToken)
+        tokenUpdatedHandler?.(access_token, newRefreshToken)
+        await Promise.allSettled(pendingRequests.map(async ({ request: q, resolve }) => { if (q.headers) q.headers.Authorization = `Bearer ${access_token}`; resolve(await request(q)) }))
+        pendingRequests.length = 0
+        if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${access_token}`
         return request(originalRequest)
-      } catch {
-        localStorage.removeItem('token')
-        localStorage.removeItem('refresh_token')
-        onAuthExpired?.()
-        return Promise.reject(error)
-      } finally {
-        isRefreshing = false
-      }
+      } catch (refreshError) {
+        tokenStorage.removeItem('access_token'); tokenStorage.removeItem('refresh_token')
+        authExpiredHandler?.(); pendingRequests.forEach(({ reject }) => reject(refreshError)); pendingRequests.length = 0
+        return Promise.reject(refreshError)
+      } finally { isRefreshing = false }
     }
-
-    // --- 其他错误 ---
-    if (status === 403) {
-      Message.warning('无操作权限')
-    } else if (status === 404) {
-      // 由页面组件自行处理，展示"资源不存在"
-    } else if (status === 500) {
-      Message.error('服务器异常，请稍后重试')
-    }
-
     return Promise.reject(error)
   }
 )
 
+// ==================== 类型安全的 API Wrappers ====================
+
+export function get<TResponse>(url: string, config?: InternalAxiosRequestConfig) {
+  return request.get<never, TResponse>(url, config)
+}
+export function post<TRequest, TResponse>(url: string, data?: TRequest, config?: InternalAxiosRequestConfig) {
+  return request.post<never, TResponse>(url, data, config)
+}
+export function put<TRequest, TResponse>(url: string, data?: TRequest, config?: InternalAxiosRequestConfig) {
+  return request.put<never, TResponse>(url, data, config)
+}
+export function patch<TRequest, TResponse>(url: string, data?: TRequest, config?: InternalAxiosRequestConfig) {
+  return request.patch<never, TResponse>(url, data, config)
+}
+export function del<TResponse>(url: string, config?: InternalAxiosRequestConfig) {
+  return request.delete<never, TResponse>(url, config)
+}
+
 export default request
 ```
 
-### App.tsx 中注册认证过期回调
+### App 层注册认证回调
 
-```tsx
-// 在 App.tsx 中，通过 router.navigate 实现无刷新跳转
-import { registerAuthExpiredHandler } from '@/lib/request'
-import { router } from '@/router'
-import { useAuthStore } from '@/store/useAuthStore'
+```typescript
+// src/app/App.tsx
+import { setAuthExpiredHandler, setTokenUpdatedHandler } from '@/lib/request'
+import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
 
-// 在 App 绽数体或模块顶层调用
-registerAuthExpiredHandler(() => {
+setAuthExpiredHandler(() => {
   useAuthStore.getState().logout()
-  router.navigate('/login', { replace: true })
+  window.location.href = '/login'
+})
+setTokenUpdatedHandler((accessToken, refreshToken) => {
+  useAuthStore.getState().setTokens(accessToken, refreshToken)
 })
 ```
-
 ## 4.2 TypeScript 类型定义
 
 ### src/types/enums.ts
@@ -920,6 +994,12 @@ export interface Module {
 export interface CreateModuleRequest {
   name: string
   abbreviation: string
+  description?: string
+}
+
+export interface UpdateModuleRequest {
+  name?: string
+  abbreviation?: string
   description?: string
 }
 
@@ -1184,10 +1264,10 @@ export interface TrendData {
 
 ## 4.3 API 模块
 
-### src/api/auth.ts
+### src/features/auth/services/auth.ts
 
 ```typescript
-import request from '@/lib/request'
+import { post } from '@/lib/request'
 import type {
   LoginRequest,
   LoginResponse,
@@ -1198,20 +1278,20 @@ import type {
 
 export const authApi = {
   login: (data: LoginRequest) =>
-    request.post<any, LoginResponse>('/auth/login', data),
+    post<LoginRequest, LoginResponse>('/auth/login', data),
 
   register: (data: RegisterRequest) =>
-    request.post<any, UserJSON>('/auth/register', data),
+    post<RegisterRequest, UserJSON>('/auth/register', data),
 
   refresh: (data: RefreshTokenRequest) =>
-    request.post<any, LoginResponse>('/auth/refresh', data),
+    post<RefreshTokenRequest, LoginResponse>('/auth/refresh', data),
 }
 ```
 
-### src/api/projects.ts
+### src/features/projects/services/projects.ts
 
 ```typescript
-import request from '@/lib/request'
+import { get, post, put, del } from '@/lib/request'
 import type {
   Project,
   ProjectDetail,
@@ -1223,95 +1303,100 @@ import type {
 
 export const projectsApi = {
   list: (params?: { offset?: number; limit?: number; keywords?: string }) =>
-    request.get<any, ProjectListResponse>('/projects', { params }),
+    get<ProjectListResponse>('/projects', { params }),
 
-  get: (id: string) => request.get<any, ProjectDetail>(`/projects/${id}`),
+  get: (id: string) => get<ProjectDetail>(`/projects/${id}`),
 
   create: (data: CreateProjectRequest) =>
-    request.post<any, Project>('/projects', data),
+    post<CreateProjectRequest, Project>('/projects', data),
 
   update: (id: string, data: UpdateProjectRequest) =>
-    request.put<any, Project>(`/projects/${id}`, data),
+    put<UpdateProjectRequest, Project>(`/projects/${id}`, data),
 
-  delete: (id: string) => request.delete(`/projects/${id}`),
+  delete: (id: string) => del<void>(`/projects/${id}`),
 
   getStats: (id: string) =>
-    request.get<any, ProjectStatistics>(`/projects/${id}/stats`),
+    get<ProjectStatistics>(`/projects/${id}/stats`),
 }
 ```
 
-### src/api/modules.ts
+### src/features/modules/services/modules.ts
 
 ```typescript
-import request from '@/lib/request'
-import type { Module, CreateModuleRequest } from '@/types/api'
+import { get, post, put, del } from '@/lib/request'
+import type { Module, CreateModuleRequest, UpdateModuleRequest } from '@/types/api'
 
 export const modulesApi = {
   list: (projectId: string) =>
-    request.get<any, Module[]>(`/projects/${projectId}/modules`),
+    get<Module[]>(`/projects/${projectId}/modules`),
 
   create: (projectId: string, data: CreateModuleRequest) =>
-    request.post<any, Module>(`/projects/${projectId}/modules`, data),
+    post<CreateModuleRequest, Module>(`/projects/${projectId}/modules`, data),
 
   update: (
     projectId: string,
     moduleId: string,
     data: Partial<CreateModuleRequest>
   ) =>
-    request.put<any, Module>(
+    put<UpdateModuleRequest, Module>(
       `/projects/${projectId}/modules/${moduleId}`,
       data
     ),
 
-  delete: (moduleId: string) => request.delete(`/modules/${moduleId}`),
+  delete: (moduleId: string) => del<void>(`/modules/${moduleId}`),
 }
 ```
 
-### src/api/configs.ts
+### src/features/configs/services/configs.ts
 
 ```typescript
-import request from '@/lib/request'
+import { get, post, put, del } from '@/lib/request'
 import type { ProjectConfig } from '@/types/api'
+
+interface ConfigExportItem {
+  key: string
+  value: Record<string, unknown>
+  description?: string
+}
+
+interface ConfigImportResult {
+  imported: number
+  failed: number
+  errors: string[]
+}
+
+interface ConfigImportRequest {
+  configs: ConfigExportItem[]
+}
 
 export const configsApi = {
   list: (projectId: string) =>
-    request.get<any, ProjectConfig[]>(`/projects/${projectId}/configs`),
+    get<ProjectConfig[]>(`/projects/${projectId}/configs`),
 
   set: (projectId: string, key: string, value: Record<string, unknown>) =>
-    request.put(`/projects/${projectId}/configs/${key}`, { value }),
+    put<{ value: Record<string, unknown> }, void>(
+      `/projects/${projectId}/configs/${key}`,
+      { value }
+    ),
 
   delete: (projectId: string, key: string) =>
-    request.delete(`/projects/${projectId}/configs/${key}`),
+    del<void>(`/projects/${projectId}/configs/${key}`),
 
-  import: (
-    projectId: string,
-    configs: Array<{
-      key: string
-      value: Record<string, unknown>
-      description?: string
-    }>
-  ) =>
-    request.post<any, { imported: number; failed: number; errors: string[] }>(
+  import: (projectId: string, configs: ConfigExportItem[]) =>
+    post<ConfigImportRequest, ConfigImportResult>(
       `/projects/${projectId}/configs/import`,
       { configs }
     ),
 
   export: (projectId: string) =>
-    request.get<
-      any,
-      Array<{
-        key: string
-        value: Record<string, unknown>
-        description?: string
-      }>
-    >(`/projects/${projectId}/configs/export`),
+    get<ConfigExportItem[]>(`/projects/${projectId}/configs/export`),
 }
 ```
 
-### src/api/testcases.ts
+### src/features/testcases/services/testcases.ts
 
 ```typescript
-import request from '@/lib/request'
+import { get, post, put, del } from '@/lib/request'
 import type {
   TestCase,
   CaseDetail,
@@ -1336,24 +1421,24 @@ interface TestCaseListParams {
 
 export const testcasesApi = {
   list: (params: TestCaseListParams) =>
-    request.get<any, TestCaseListResponse>('/testcases', { params }),
+    get<TestCaseListResponse>('/testcases', { params }),
 
-  get: (id: string) => request.get<any, CaseDetail>(`/testcases/${id}`),
+  get: (id: string) => get<CaseDetail>(`/testcases/${id}`),
 
   create: (data: CreateTestCaseRequest) =>
-    request.post<any, TestCase>('/testcases', data),
+    post<CreateTestCaseRequest, TestCase>('/testcases', data),
 
   update: (id: string, data: UpdateTestCaseRequest) =>
-    request.put<any, TestCase>(`/testcases/${id}`, data),
+    put<UpdateTestCaseRequest, TestCase>(`/testcases/${id}`, data),
 
-  delete: (id: string) => request.delete(`/testcases/${id}`),
+  delete: (id: string) => del<void>(`/testcases/${id}`),
 }
 ```
 
-### src/api/plans.ts
+### src/features/plans/services/plans.ts
 
 ```typescript
-import request from '@/lib/request'
+import { get, post, put, patch, del } from '@/lib/request'
 import type {
   TestPlan,
   PlanDetail,
@@ -1373,44 +1458,53 @@ interface PlanListParams {
   limit?: number
 }
 
+interface AddCasesRequest {
+  case_ids: string[]
+}
+
+interface UpdateStatusRequest {
+  status: PlanStatus
+}
+
 export const plansApi = {
   list: (params: PlanListParams) =>
-    request.get<any, TestPlanListResponse>('/plans', { params }),
+    get<TestPlanListResponse>('/plans', { params }),
 
-  get: (id: string) => request.get<any, PlanDetail>(`/plans/${id}`),
+  get: (id: string) => get<PlanDetail>(`/plans/${id}`),
 
   create: (data: CreateTestPlanRequest) =>
-    request.post<any, TestPlan>('/plans', data),
+    post<CreateTestPlanRequest, TestPlan>('/plans', data),
 
   update: (id: string, data: UpdateTestPlanRequest) =>
-    request.put<any, TestPlan>(`/plans/${id}`, data),
+    put<UpdateTestPlanRequest, TestPlan>(`/plans/${id}`, data),
 
-  delete: (id: string) => request.delete(`/plans/${id}`),
+  delete: (id: string) => del<void>(`/plans/${id}`),
 
   addCases: (planId: string, caseIds: string[]) =>
-    request.post(`/plans/${planId}/cases`, { case_ids: caseIds }),
+    post<AddCasesRequest, void>(`/plans/${planId}/cases`, { case_ids: caseIds }),
 
   removeCase: (planId: string, caseId: string) =>
-    request.delete(`/plans/${planId}/cases/${caseId}`),
+    del<void>(`/plans/${planId}/cases/${caseId}`),
 
   getResults: (planId: string) =>
-    request.get<any, TestResult[]>(`/plans/${planId}/results`),
+    get<TestResult[]>(`/plans/${planId}/results`),
 
   recordResult: (planId: string, data: RecordResultRequest) =>
-    request.post<any, TestResult>(`/plans/${planId}/results`, data),
+    post<RecordResultRequest, TestResult>(`/plans/${planId}/results`, data),
 
   updateStatus: (planId: string, status: PlanStatus) =>
-    request.patch(`/plans/${planId}/status`, { status }),
+    patch<UpdateStatusRequest, void>(`/plans/${planId}/status`, { status }),
 }
 ```
 
-### src/api/generation.ts
+### src/features/generation/services/generation.ts
 
 ```typescript
-import request from '@/lib/request'
+import { get, post } from '@/lib/request'
 import type {
   GenerationTask,
   CaseDraft,
+  TestCase,
   CreateGenerationTaskRequest,
   BatchConfirmResult,
   TaskStatus,
@@ -1440,50 +1534,64 @@ interface DraftListResponse {
   limit: number
 }
 
+interface ConfirmDraftRequest {
+  module_id: string
+}
+
+interface RejectDraftRequest {
+  reason?: string
+  feedback?: string
+}
+
+interface BatchConfirmRequest {
+  draft_ids: string[]
+  module_id: string
+}
+
 export const generationApi = {
   // 生成任务
   createTask: (data: CreateGenerationTaskRequest) =>
-    request.post<any, GenerationTask>('/generation/tasks', data),
+    post<CreateGenerationTaskRequest, GenerationTask>('/generation/tasks', data),
 
   getTask: (id: string) =>
-    request.get<any, GenerationTask>(`/generation/tasks/${id}`),
+    get<GenerationTask>(`/generation/tasks/${id}`),
 
   listTasks: (params: GenerationTaskListParams) =>
-    request.get<any, { data: GenerationTask[]; total: number }>(
+    get<{ data: GenerationTask[]; total: number }>(
       '/generation/tasks',
       { params }
     ),
 
   // 草稿
   getTaskDrafts: (taskId: string) =>
-    request.get<any, CaseDraft[]>(`/generation/tasks/${taskId}/drafts`),
+    get<CaseDraft[]>(`/generation/tasks/${taskId}/drafts`),
 
   getDrafts: (params: DraftListParams) =>
-    request.get<any, DraftListResponse>('/drafts', { params }),
+    get<DraftListResponse>('/drafts', { params }),
 
   confirmDraft: (draftId: string, moduleId: string) =>
-    request.post<any, import('@/types/api').TestCase>(
+    post<ConfirmDraftRequest, TestCase>(
       `/generation/drafts/${draftId}/confirm`,
       { module_id: moduleId }
     ),
 
   rejectDraft: (
     draftId: string,
-    data: { reason?: string; feedback?: string }
-  ) => request.post(`/generation/drafts/${draftId}/reject`, data),
+    data: RejectDraftRequest
+  ) => post<RejectDraftRequest, void>(`/generation/drafts/${draftId}/reject`, data),
 
   batchConfirm: (draftIds: string[], moduleId: string) =>
-    request.post<any, BatchConfirmResult>('/generation/drafts/batch-confirm', {
+    post<BatchConfirmRequest, BatchConfirmResult>('/generation/drafts/batch-confirm', {
       draft_ids: draftIds,
       module_id: moduleId,
     }),
 }
 ```
 
-### src/api/documents.ts
+### src/features/documents/services/documents.ts
 
 ```typescript
-import request from '@/lib/request'
+import { get, post, del } from '@/lib/request'
 import type {
   Document,
   DocumentDetail,
@@ -1504,18 +1612,18 @@ interface DocumentListParams {
 
 export const documentsApi = {
   list: (params: DocumentListParams) =>
-    request.get<any, DocumentListResponse>('/knowledge/documents', { params }),
+    get<DocumentListResponse>('/knowledge/documents', { params }),
 
   get: (id: string) =>
-    request.get<any, DocumentDetail>(`/knowledge/documents/${id}`),
+    get<DocumentDetail>(`/knowledge/documents/${id}`),
 
   upload: (data: UploadDocumentRequest) =>
-    request.post<any, Document>('/knowledge/documents', data),
+    post<UploadDocumentRequest, Document>('/knowledge/documents', data),
 
-  delete: (id: string) => request.delete(`/knowledge/documents/${id}`),
+  delete: (id: string) => del<void>(`/knowledge/documents/${id}`),
 
   getChunks: (id: string) =>
-    request.get<any, ChunkInfo[]>(`/knowledge/documents/${id}/chunks`),
+    get<ChunkInfo[]>(`/knowledge/documents/${id}/chunks`),
 }
 ```
 
@@ -1650,7 +1758,6 @@ import {
   Settings,
   FileEdit,
 } from 'lucide-react'
-import { useProjectStore } from '@/store/useProjectStore'
 import { useAppStore } from '@/store/useAppStore'
 import { Badge } from '@arco-design/web-react'
 
@@ -1661,10 +1768,15 @@ export function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
   const params = useParams()
-  const currentProject = useProjectStore((s) => s.currentProject)
-  const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed)
-  const pendingDraftCount = useAppStore((s) => s.pendingDraftCount)
   const projectId = params.id
+  // 项目信息通过 React Query 获取（替代 useProjectStore）
+  const { data: currentProject } = useProjectDetail(projectId ?? '')
+  const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed)
+  // 草稿计数通过 React Query 轮询获取（替代 useAppStore.pendingDraftCount）
+  // useDraftCount 定义于 src/features/drafts/hooks/useDrafts.ts
+  const { data: draftCount } = useDraftCount()
+  const pendingDraftCount = draftCount ?? 0
+  const projId = params.id
 
   // 使用路径前缀匹配，支持子路由高亮
   const selectedKeys = (() => {
@@ -1764,15 +1876,16 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Bell, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
-import { useAuthStore } from '@/store/useAuthStore'
-import { useProjectStore } from '@/store/useProjectStore'
+import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
 
 export function Header() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { sidebarCollapsed, toggleSidebar, notificationCount } = useAppStore()
+  const { sidebarCollapsed, toggleSidebar } = useAppStore()
   const { user, logout } = useAuthStore()
-  const currentProject = useProjectStore((s) => s.currentProject)
+  // 项目信息从 URL params + React Query 获取（替代 useProjectStore）
+  const params = useParams()
+  const { data: currentProject } = useProjectDetail(params.id ?? '')
 
   // 生成面包屑
   const breadcrumbs = generateBreadcrumbs(location.pathname, currentProject)
@@ -1793,8 +1906,8 @@ export function Header() {
           onClick={toggleSidebar}
         />
         <Breadcrumb>
-          {breadcrumbs.map((item, i) => (
-            <Breadcrumb.Item key={i}>
+          {breadcrumbs.map((item) => (
+            <Breadcrumb.Item key={item.path ?? item.label}>
               {item.path ? (
                 <span
                   className="cursor-pointer text-gray-7"
@@ -1811,7 +1924,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
-        <Badge count={notificationCount} dot>
+        <Badge count={0} dot>
           <Bell size={18} className="text-gray-7 cursor-pointer" />
         </Badge>
 
@@ -2125,9 +2238,10 @@ export function ArrayEditor({
 
 > UX 规范：§5.1 表格组件
 
+> **宪法 §4.1 合规**: SearchTable 为纯展示组件，**不持有服务端数据**。所有数据通过 React Query hook 获取后以 props 传入。组件仅负责筛选栏 UI 和表格展示。筛选条件和分页状态通过回调上抛，由父组件透传给 React Query hook 的 queryKey 参数。
+
 ```tsx
 // src/components/business/SearchTable.tsx
-import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Table,
   Input,
@@ -2145,100 +2259,53 @@ interface FilterOption {
   options: Array<{ label: string; value: string }>
 }
 
-interface SearchTableProps {
+interface SearchTableProps<T> {
   columns: TableColumnProps[]
-  /** API 请求函数引用（必须用 useCallback 包裹或使用模块级函数） */
-  fetchData: (
-    params: Record<string, unknown>
-  ) => Promise<{ data: unknown[]; total: number }>
+  /** 服务端数据，由父组件通过 React Query hook 获取 */
+  data: T[]
+  /** 加载状态，来自 React Query 的 isFetching */
+  loading: boolean
+  /** 总记录数，来自 API 响应的 total */
+  total: number
+  /** 当前分页，受控模式 */
+  pagination: { offset: number; limit: number }
+  /** 分页变更回调 */
+  onPaginationChange: (pagination: { offset: number; limit: number }) => void
+  /** 筛选配置 */
   filters?: FilterOption[]
+  /** 当前筛选值，受控模式 */
+  filterValues?: Record<string, string>
+  /** 筛选变更回调 */
+  onFilterChange?: (filters: Record<string, string>) => void
+  /** 搜索关键词，受控模式 */
+  keywords?: string
+  /** 搜索变更回调（父组件配合 useDebounce 防抖后传入 React Query） */
+  onKeywordsChange?: (keywords: string) => void
   searchPlaceholder?: string
-  searchKey?: string
   rowKey?: string
   toolbar?: React.ReactNode
-  onRowClick?: (record: Record<string, unknown>) => void
+  onRowClick?: (record: T) => void
 }
 
-/** 简易防抖 hook */
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(timer)
-  }, [value, delay])
-  return debounced
-}
-
-export function SearchTable({
+export function SearchTable<T extends Record<string, unknown>>({
   columns,
-  fetchData,
+  data,
+  loading,
+  total,
+  pagination,
+  onPaginationChange,
   filters = [],
+  filterValues = {},
+  onFilterChange,
+  keywords = '',
+  onKeywordsChange,
   searchPlaceholder = '搜索关键词',
-  searchKey = 'keywords',
   rowKey = 'id',
   toolbar,
   onRowClick,
-}: SearchTableProps) {
-  const [data, setData] = useState<unknown[]>([])
-  const [loading, setLoading] = useState(false)
-  const [total, setTotal] = useState(0)
-  const [pagination, setPagination] = useState({ offset: 0, limit: 20 })
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({})
-  const [keywords, setKeywords] = useState('')
-  const debouncedKeywords = useDebouncedValue(keywords, 300)
-
-  // 使用 ref 存储 fetchData，避免依赖变化导致无限重渲染
-  const fetchDataRef = useRef(fetchData)
-  fetchDataRef.current = fetchData
-
-  // 保存当前请求的 AbortController，用于取消上一次未完成请求
-  const abortRef = useRef<AbortController | null>(null)
-
-  useEffect(() => {
-    // 取消上一次未完成请求
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-
-    let cancelled = false
-    setLoading(true)
-
-    fetchDataRef
-      .current({
-        ...filterValues,
-        [searchKey]: debouncedKeywords || undefined,
-        offset: pagination.offset,
-        limit: pagination.limit,
-      })
-      .then((res) => {
-        if (!cancelled) {
-          setData(res.data)
-          setTotal(res.total)
-        }
-      })
-      .catch((err) => {
-        // AbortError 是主动取消，不处理
-        if (
-          !cancelled &&
-          err.name !== 'CanceledError' &&
-          err.code !== 'ERR_CANCELED'
-        ) {
-          setData([])
-          setTotal(0)
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-      controller.abort()
-    }
-  }, [filterValues, debouncedKeywords, pagination, searchKey])
-
+}: SearchTableProps<T>) {
   const handlePageChange = (page: number, pageSize: number) => {
-    setPagination({ offset: (page - 1) * pageSize, limit: pageSize })
+    onPaginationChange({ offset: (page - 1) * pageSize, limit: pageSize })
   }
 
   return (
@@ -2252,8 +2319,9 @@ export function SearchTable({
               placeholder={f.placeholder}
               style={{ width: 140 }}
               allowClear
+              value={filterValues[f.key] || undefined}
               onChange={(val) =>
-                setFilterValues((prev) => ({ ...prev, [f.key]: val || '' }))
+                onFilterChange?.({ ...filterValues, [f.key]: val || '' })
               }
             >
               {f.options.map((opt) => (
@@ -2269,7 +2337,7 @@ export function SearchTable({
             style={{ width: 220 }}
             allowClear
             value={keywords}
-            onChange={setKeywords}
+            onChange={onKeywordsChange}
           />
         </Space>
         {toolbar && <Space>{toolbar}</Space>}
@@ -2486,57 +2554,46 @@ export function ReferencePanel({
 
 > UX 规范：§11.2 新建计划页的用例选择面板
 
+> **宪法 §4.1 合规**: CaseSelector 为纯展示组件，可选用例数据由父组件通过 React Query hook 获取后以 props 传入。筛选条件通过回调上抛。
+
 ```tsx
 // src/components/business/CaseSelector.tsx
-import { useState, useEffect } from 'react'
 import {
   Table,
   Tabs,
-  Input,
   Select,
   Checkbox,
   Button,
-  Space,
   Badge,
 } from '@arco-design/web-react'
 import { StatusTag } from './StatusTag'
 import type { TestCase, CaseType, Priority } from '@/types/api'
 
 interface CaseSelectorProps {
-  /** 获取可选用例列表的函数 */
-  fetchCases: (
-    params: Record<string, unknown>
-  ) => Promise<{ data: TestCase[]; total: number }>
+  /** 可选用例列表，由父组件通过 React Query hook 获取 */
+  availableCases: TestCase[]
+  /** 加载状态 */
+  loading: boolean
   /** 已选用例变更回调 */
   onChange: (selected: TestCase[]) => void
   /** 当前已选中的用例列表 */
   value: TestCase[]
+  /** 筛选变更回调，父组件用于更新 React Query 参数 */
+  onFilterChange?: (filters: {
+    module_id?: string
+    case_type?: CaseType
+    priority?: Priority
+  }) => void
 }
 
 export function CaseSelector({
-  fetchCases,
+  availableCases,
+  loading,
   onChange,
   value,
+  onFilterChange,
 }: CaseSelectorProps) {
-  const [availableCases, setAvailableCases] = useState<TestCase[]>([])
-  const [loading, setLoading] = useState(false)
-  const [moduleFilter, setModuleFilter] = useState<string | undefined>()
-  const [typeFilter, setTypeFilter] = useState<CaseType | undefined>()
-  const [priorityFilter, setPriorityFilter] = useState<Priority | undefined>()
-
   const selectedIds = new Set(value.map((c) => c.id))
-
-  useEffect(() => {
-    setLoading(true)
-    fetchCases({
-      module_id: moduleFilter,
-      case_type: typeFilter,
-      priority: priorityFilter,
-      limit: 200,
-    })
-      .then((res) => setAvailableCases(res.data))
-      .finally(() => setLoading(false))
-  }, [moduleFilter, typeFilter, priorityFilter, fetchCases])
 
   const toggleSelect = (testCase: TestCase) => {
     if (selectedIds.has(testCase.id)) {
@@ -2578,19 +2635,19 @@ export function CaseSelector({
             placeholder="模块"
             style={{ width: 120 }}
             allowClear
-            onChange={setModuleFilter}
+            onChange={(val) => onFilterChange?.({ module_id: val })}
           />
           <Select
             placeholder="类型"
             style={{ width: 120 }}
             allowClear
-            onChange={setTypeFilter}
+            onChange={(val) => onFilterChange?.({ case_type: val })}
           />
           <Select
             placeholder="优先级"
             style={{ width: 120 }}
             allowClear
-            onChange={setPriorityFilter}
+            onChange={(val) => onFilterChange?.({ priority: val })}
           />
           <span className="text-sm text-gray-6 self-center ml-2">
             已选择 {value.length} 条
@@ -2737,6 +2794,95 @@ export function JsonEditor({ value, onChange, height = 200 }: JsonEditorProps) {
 ---
 
 # 第六章：页面详细设计
+
+> **数据获取模式**: 所有页面数据通过 React Query hooks 获取（见 §3.4），禁止 `useEffect` + API 调用。表单使用 React Hook Form + Zod schema 校验（见 §3.4 表单模式）。
+
+## 6.0 Zod Schema 定义（表单校验）
+
+> **宪法 §3.3**: 表单输入使用 Zod schema 校验。以下为各页面的 schema 定义。
+
+### src/features/auth/schema/loginSchema.ts
+
+```typescript
+import { z } from 'zod'
+
+export const loginSchema = z.object({
+  email: z.string().min(1, '请输入邮箱').email('请输入有效的邮箱地址'),
+  password: z.string().min(1, '请输入密码'),
+})
+
+export type LoginInput = z.infer<typeof loginSchema>
+```
+
+### src/features/auth/schema/registerSchema.ts
+
+```typescript
+import { z } from 'zod'
+
+export const registerSchema = z.object({
+  username: z.string().min(3, '用户名至少 3 个字符').max(32, '用户名最多 32 个字符'),
+  email: z.string().min(1, '请输入邮箱').email('请输入有效的邮箱地址'),
+  password: z.string().min(8, '密码至少 8 位字符').max(100, '密码最多 100 个字符'),
+  // 注意：super_admin 由系统分配，注册页面不开放此角色
+  role: z.enum(['admin', 'normal'], { errorMap: () => '请选择用户角色' }),
+})
+
+export type RegisterInput = z.infer<typeof registerSchema>
+```
+
+### src/features/projects/schema/projectSchema.ts
+
+```typescript
+import { z } from 'zod'
+
+export const createProjectSchema = z.object({
+  name: z.string().min(2, '项目名称至少 2 个字符').max(255, '项目名称最多 255 个字符'),
+  prefix: z.string()
+    .min(2, '前缀至少 2 个字符').max(4, '前缀最多 4 个字符')
+    .regex(/^[A-Z]+$/, '前缀仅支持大写字母'),
+  description: z.string().optional(),
+})
+
+export type CreateProjectInput = z.infer<typeof createProjectSchema>
+```
+
+### 表单使用模式
+
+```tsx
+// 在组件中使用 React Hook Form + Zod
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { createProjectSchema, type CreateProjectInput } from '../schema/projectSchema'
+
+function CreateProjectModal() {
+  const { register, handleSubmit, formState: { errors } } = useForm<CreateProjectInput>({
+    resolver: zodResolver(createProjectSchema),
+    mode: 'onChange',
+  })
+
+  const createProject = useCreateProject() // React Query mutation hook
+
+  const onSubmit = (data: CreateProjectInput) => {
+    createProject.mutate(data, {
+      onSuccess: () => Message.success('项目创建成功'),
+    })
+  }
+
+  // ... JSX
+}
+```
+
+### Schema 清单
+
+| 页面 | Schema 文件 | 字段 |
+|------|-----------|------|
+| 登录 | `features/auth/schema/loginSchema.ts` | email, password |
+| 注册 | `features/auth/schema/registerSchema.ts` | username, email, password, role |
+| 创建项目 | `features/projects/schema/projectSchema.ts` | name, prefix, description |
+| 新建用例 | 内联或 `features/testcases/schema/caseSchema.ts` | moduleId, title, steps, expected, caseType, priority |
+| 新建计划 | 内联或 `features/plans/schema/planSchema.ts` | name, description |
+| 新建生成任务 | 内联或 `features/generation/schema/taskSchema.ts` | moduleId, prompt, count, caseType, priority |
+| 上传文档 | 内联或 `features/documents/schema/documentSchema.ts` | name, type |
 
 ## 6.1 登录页 (/login)
 
@@ -3642,18 +3788,19 @@ export class ErrorBoundary extends Component<Props, State> {
 
 ```tsx
 // 通用表单提交错误处理
+// 需要导入: import { isAxiosError } from 'axios'
 const handleSubmit = async (values: FormData) => {
   try {
     setLoading(true)
     await someApi.create(values)
     Message.success('创建成功')
     onClose()
-  } catch (err: any) {
-    if (err.response?.status === 400) {
+  } catch (err: unknown) {
+    if (isAxiosError(err) && err.response?.status === 400) {
       // 后端返回字段级错误
-      const msg = err.response.data?.error
-      form.setFields({ name: { value: values.name, errors: [msg] } })
-    } else if (err.response?.status === 409) {
+      const msg = (err.response.data as { error?: string }).error
+      form.setFields({ name: { value: values.name, errors: [msg ?? '请求参数错误'] } })
+    } else if (isAxiosError(err) && err.response?.status === 409) {
       Message.warning('资源已存在')
     }
   } finally {
@@ -3728,10 +3875,16 @@ const handleSubmit = async (values: FormData) => {
 
 ## 9.1 路由懒加载
 
-所有页面组件使用 `React.lazy` + `Suspense` 实现按需加载，已在第二章路由配置中实现。
+所有页面组件使用 React Router `lazy` 路由属性实现按需加载，已在第二章路由配置中实现。
 
 ```tsx
-const CaseListPage = lazy(() => import('@/pages/cases/CaseListPage'))
+// 路由级 lazy loading（无需 React.lazy + Suspense）
+{
+  path: 'projects/:id/cases',
+  lazy: () => import('@/features/testcases/components/CaseListPage').then((m) => ({
+    Component: m.CaseListPage,
+  })),
+}
 ```
 
 ## 9.2 组件按需加载
@@ -3749,81 +3902,78 @@ import { VirtualList } from '@arco-design/web-react'
 
 ## 9.4 API 请求缓存
 
-对于不频繁变化的数据（如模块列表、项目配置），使用 Zustand store 缓存：
+> **宪法 §4.1**: 服务端数据必须通过 React Query 管理，禁止 Zustand 缓存。
+
+对于不频繁变化的数据（如模块列表、项目配置），使用 React Query 的 `staleTime` 控制缓存有效期：
 
 ```tsx
-// 在 store 中添加缓存逻辑
-const useModuleCache = create((set, get) => ({
-  modules: null as Module[] | null,
-  lastFetch: 0,
-  fetchModules: async (projectId: string) => {
-    const { lastFetch, modules } = get()
-    // 5 分钟内不重复请求
-    if (modules && Date.now() - lastFetch < 5 * 60 * 1000) return modules
-    const data = await modulesApi.list(projectId)
-    set({ modules: data, lastFetch: Date.now() })
-    return data
-  },
-}))
+// 在 hooks 中设置 staleTime，5 分钟内不重新请求
+export function useModuleList(projectId: string) {
+  return useQuery({
+    queryKey: moduleKeys.list(projectId),
+    queryFn: () => modulesApi.list(projectId),
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000, // 5 分钟
+  })
+}
 ```
 
 ## 9.5 轮询优化
 
-AI 生成任务详情页使用 5s 轮询，仅在任务未完成时启动：
+> **宪法 §4.1**: 使用 React Query `refetchInterval` 替代自定义轮询 hook（见 §3.4 轮询模式）。**禁止自行实现 `usePolling` hook。**
+
+AI 生成任务、文档解析等长时任务均使用 `refetchInterval` + 条件停止模式：
 
 ```tsx
-// src/hooks/usePolling.ts
-import { useEffect, useRef } from 'react'
-
-export function usePolling(
-  callback: () => Promise<void>,
-  interval: number,
-  enabled: boolean
-) {
-  const savedCallback = useRef(callback)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    savedCallback.current = callback
-  }, [callback])
-
-  useEffect(() => {
-    if (!enabled) return
-
-    let stopped = false
-
-    const tick = async () => {
-      if (stopped) return
-      await savedCallback.current()
-      if (!stopped) {
-        timerRef.current = setTimeout(tick, interval)
-      }
-    }
-
-    tick() // 立即执行一次
-
-    return () => {
-      stopped = true
-      if (timerRef.current) {
-        clearTimeout(timerRef.current)
-      }
-    }
-  }, [interval, enabled])
+// 示例：AI 生成任务轮询
+export function useTaskDetail(id: string) {
+  return useQuery({
+    queryKey: generationKeys.task(id),
+    queryFn: () => generationApi.getTask(id),
+    enabled: !!id,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status
+      return status === 'pending' || status === 'processing' ? 5000 : false
+    },
+  })
 }
 ```
 
 ## 9.6 防抖搜索
 
-列表页搜索输入使用防抖，避免频繁 API 调用：
+列表页搜索输入使用防抖，避免频繁 API 调用。统一使用 `@/hooks/useDebounce.ts`：
 
 ```tsx
-import { useMemo } from 'react'
-import { debounce } from 'lodash-es' // 或自行实现
+// src/hooks/useDebounce.ts
+import { useState, useEffect } from 'react'
 
-const debouncedSearch = useMemo(
-  () => debounce((val: string) => setKeywords(val), 300),
-  []
-)
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+  return debouncedValue
+}
+```
+
+页面使用示例：
+
+```tsx
+// 配合 SearchTable 受控模式 + React Query
+const [keywords, setKeywords] = useState('')
+const debouncedKeywords = useDebounce(keywords, 300)
+
+const { data, isFetching } = useProjectList({ keywords: debouncedKeywords })
+
+<SearchTable
+  data={data?.data ?? []}
+  loading={isFetching}
+  total={data?.total ?? 0}
+  keywords={keywords}
+  onKeywordsChange={setKeywords}
+  // ...
+/>
 ```
 
 ---
@@ -3866,7 +4016,7 @@ import { http, HttpResponse } from 'msw'
 export const handlers = [
   // 登录
   http.post('/api/v1/auth/login', async ({ request }) => {
-    const body = (await request.json()) as any
+    const body = (await request.json()) as { email: string; password: string }
     return HttpResponse.json({
       access_token: 'mock-token-123',
       refresh_token: 'mock-refresh-123',
