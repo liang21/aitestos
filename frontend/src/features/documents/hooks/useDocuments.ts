@@ -71,14 +71,18 @@ export function useUploadDocument() {
   return useMutation({
     mutationFn: (data: UploadDocumentRequest) => documentsApi.create(data),
     onSuccess: () => {
-      message.success('文档上传成功')
+      if (message && typeof message.success === 'function') {
+        message.success('文档上传成功')
+      }
       // Invalidate document lists
       queryClient.invalidateQueries({ queryKey: documentKeys.lists() })
     },
     onError: (error: unknown) => {
       const errorMessage =
         error instanceof Error ? error.message : '文档上传失败'
-      message.error(errorMessage)
+      if (message && typeof message.error === 'function') {
+        message.error(errorMessage)
+      }
     },
   })
 }
@@ -92,14 +96,18 @@ export function useDeleteDocument() {
   return useMutation({
     mutationFn: (id: string) => documentsApi.delete(id),
     onSuccess: () => {
-      message.success('文档删除成功')
+      if (message && typeof message.success === 'function') {
+        message.success('文档删除成功')
+      }
       // Invalidate document lists
       queryClient.invalidateQueries({ queryKey: documentKeys.lists() })
     },
     onError: (error: unknown) => {
       const errorMessage =
         error instanceof Error ? error.message : '文档删除失败'
-      message.error(errorMessage)
+      if (message && typeof message.error === 'function') {
+        message.error(errorMessage)
+      }
     },
   })
 }

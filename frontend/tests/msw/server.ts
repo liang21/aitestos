@@ -1,5 +1,6 @@
 import { setupServer } from 'msw/node'
 import { HttpResponse, http } from 'msw'
+import { documentsHandlers } from './handlers/documents'
 import { draftsHandlers } from './handlers/drafts'
 import { testcasesHandlers } from './handlers/testcases'
 import { plansHandlers } from './handlers/plans'
@@ -50,6 +51,8 @@ export const server = setupServer(
       limit: 10,
     })
   ),
+  // Documents handlers
+  ...documentsHandlers,
   // Draft handlers
   ...draftsHandlers,
   // Testcases handlers

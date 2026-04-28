@@ -33,6 +33,16 @@ describe('UploadDocumentModal', () => {
   beforeEach(() => {
     server.resetHandlers()
     vi.clearAllMocks()
+    // Mock localStorage to provide access_token
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn((key) => {
+        if (key === 'access_token') return 'mock-token'
+        return null
+      }),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    })
   })
 
   describe('form rendering', () => {

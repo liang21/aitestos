@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { server } from '../../../../tests/msw/server'
@@ -30,6 +30,16 @@ function wrapper({ children }: { children: any }) {
 describe('useDocuments hooks', () => {
   beforeEach(() => {
     server.resetHandlers()
+    // Mock localStorage to provide access_token
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn((key) => {
+        if (key === 'access_token') return 'mock-token'
+        return null
+      }),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    })
   })
 
   describe('useDocumentList', () => {
