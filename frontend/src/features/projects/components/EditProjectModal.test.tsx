@@ -26,7 +26,9 @@ vi.mock('react-router-dom', async () => ({
 
 vi.mock('../hooks/useProjects', () => ({
   useUpdateProject: () => ({
-    mutateAsync: vi.fn().mockResolvedValue({ id: 'proj-1', name: 'Updated Project' }),
+    mutateAsync: vi
+      .fn()
+      .mockResolvedValue({ id: 'proj-1', name: 'Updated Project' }),
     isPending: false,
   }),
   useDeleteProject: () => ({
@@ -80,9 +82,15 @@ describe('EditProjectModal', () => {
       )
 
       // 验证表单预填数据（使用 placeholder 获取元素）
-      expect(screen.getByPlaceholderText('请输入项目名称')).toHaveValue('ECommerce')
-      expect(screen.getByPlaceholderText('2-4位大写字母，如：ECO')).toHaveValue('ECO')
-      expect(screen.getByPlaceholderText('请输入项目描述（可选）')).toHaveValue('电商平台测试项目')
+      expect(screen.getByPlaceholderText('请输入项目名称')).toHaveValue(
+        'ECommerce'
+      )
+      expect(screen.getByPlaceholderText('2-4位大写字母，如：ECO')).toHaveValue(
+        'ECO'
+      )
+      expect(screen.getByPlaceholderText('请输入项目描述（可选）')).toHaveValue(
+        '电商平台测试项目'
+      )
     })
 
     it('修改成功后应该关闭 Modal 并刷新列表', async () => {

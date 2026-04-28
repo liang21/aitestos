@@ -182,7 +182,10 @@ export function EditProjectModal({
         </div>
 
         <div className="mb-4">
-          <label htmlFor={`edit-project-prefix-${prefixId}`} className="block mb-2">
+          <label
+            htmlFor={`edit-project-prefix-${prefixId}`}
+            className="block mb-2"
+          >
             <span className="text-red-500 mr-1">*</span>项目前缀
           </label>
           <Input
@@ -201,7 +204,10 @@ export function EditProjectModal({
         </div>
 
         <div className="mb-4">
-          <label htmlFor={`edit-project-description-${descriptionId}`} className="block mb-2">
+          <label
+            htmlFor={`edit-project-description-${descriptionId}`}
+            className="block mb-2"
+          >
             项目描述
           </label>
           <TextArea
