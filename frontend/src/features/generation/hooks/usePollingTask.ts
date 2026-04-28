@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { generationApi } from '@/features/generation/services/generation'
-import type { GenerationTask } from '@/types/api'
 import { generationKeys } from './useGeneration'
+import { GENERATION_CONFIG } from '@/features/generation/constants'
 
 /**
  * Poll a generation task by ID
- * - Polls every 3 seconds when status is pending or processing
+ * - Polls at configured interval when status is pending or processing
  * - Stops polling when status is completed or failed
  */
 export function usePollingTask(taskId: string) {
@@ -17,12 +17,16 @@ export function usePollingTask(taskId: string) {
     },
     enabled: !!taskId && taskId.length > 0,
     refetchInterval: (data) => {
-      // Poll every 3 seconds if task is pending or processing
-      if (data?.status === 'pending' || data?.status === 'processing') {
-        return 3000
+      // Poll when task is in active status
+      if (
+        data?.status === 'pending' ||
+        data?.status === 'processing'
+      ) {
+        return GENERATION_CONFIG.POLLING.INTERVAL_MS
       }
       // Stop polling for completed or failed tasks
       return false
     },
+    refetchIntervalInBackground: false,
   })
 }
