@@ -184,7 +184,9 @@ describe('MSW Server 基础设施', () => {
       // onUnhandledRequest: 'error' 会导致请求失败
       // 这是预期的行为
       await expect(
-        fetch('http://localhost/api/v1/test-temp-reset').catch(() => ({ ok: false }))
+        fetch('http://localhost/api/v1/test-temp-reset').catch(() => ({
+          ok: false,
+        }))
       ).resolves.toHaveProperty('ok', false)
     })
   })
