@@ -11,7 +11,7 @@ import {
   BookOpen,
   ListTodo,
 } from 'lucide-react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useParams } from 'react-router-dom'
 import { useMemo } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { usePendingDraftCount } from '@/features/drafts/hooks/useDrafts'
@@ -27,6 +27,20 @@ export function Sidebar() {
   const { user } = useAuthStore()
   const handleLogout = useLogout()
   const location = useLocation()
+  const { projectId } = useParams<{ projectId?: string }>()
+
+  // Build project-scoped routes when projectId exists
+  const projectRoutes = useMemo(() => {
+    if (!projectId) return null
+    const base = `/projects/${projectId}`
+    return {
+      dashboard: `${base}/dashboard`,
+      knowledge: `${base}/knowledge`,
+      generation: `${base}/generation`,
+      cases: `${base}/cases`,
+      plans: `${base}/plans`,
+    }
+  }, [projectId])
 
   // Memoize menu items to prevent unnecessary re-renders
   const menuItems = useMemo(
@@ -40,7 +54,52 @@ export function Sidebar() {
           </NavLink>
         </MenuItem>
 
-        {/* Drafts with Badge */}
+        {/* Project-scoped menu items - only show when projectId exists */}
+        {projectRoutes && (
+          <>
+            {/* Dashboard */}
+            <MenuItem key={projectRoutes.dashboard}>
+              <NavLink to={projectRoutes.dashboard} aria-label="仪表盘">
+                <BarChart3 size={18} aria-hidden="true" />
+                {!sidebarCollapsed && <span>仪表盘</span>}
+              </NavLink>
+            </MenuItem>
+
+            {/* Knowledge Base */}
+            <MenuItem key={projectRoutes.knowledge}>
+              <NavLink to={projectRoutes.knowledge} aria-label="知识库">
+                <BookOpen size={18} aria-hidden="true" />
+                {!sidebarCollapsed && <span>知识库</span>}
+              </NavLink>
+            </MenuItem>
+
+            {/* Test Cases */}
+            <MenuItem key={projectRoutes.cases}>
+              <NavLink to={projectRoutes.cases} aria-label="测试用例">
+                <FileText size={18} aria-hidden="true" />
+                {!sidebarCollapsed && <span>测试用例</span>}
+              </NavLink>
+            </MenuItem>
+
+            {/* Test Plans */}
+            <MenuItem key={projectRoutes.plans}>
+              <NavLink to={projectRoutes.plans} aria-label="测试计划">
+                <ListTodo size={18} aria-hidden="true" />
+                {!sidebarCollapsed && <span>测试计划</span>}
+              </NavLink>
+            </MenuItem>
+
+            {/* AI Generation */}
+            <MenuItem key={projectRoutes.generation}>
+              <NavLink to={projectRoutes.generation} aria-label="AI 生成">
+                <PlayCircle size={18} aria-hidden="true" />
+                {!sidebarCollapsed && <span>AI 生成</span>}
+              </NavLink>
+            </MenuItem>
+          </>
+        )}
+
+        {/* Drafts with Badge (global route) */}
         <MenuItem key="/drafts">
           <NavLink to="/drafts" aria-label="草稿箱">
             <Badge count={pendingCount ?? 0} offset={[8, 0]}>
@@ -49,49 +108,9 @@ export function Sidebar() {
             {!sidebarCollapsed && <span>草稿箱</span>}
           </NavLink>
         </MenuItem>
-
-        {/* Test Cases */}
-        <MenuItem key="/testcases">
-          <NavLink to="/testcases" aria-label="测试用例">
-            <FileText size={18} aria-hidden="true" />
-            {!sidebarCollapsed && <span>测试用例</span>}
-          </NavLink>
-        </MenuItem>
-
-        {/* Test Plans */}
-        <MenuItem key="/plans">
-          <NavLink to="/plans" aria-label="测试计划">
-            <ListTodo size={18} aria-hidden="true" />
-            {!sidebarCollapsed && <span>测试计划</span>}
-          </NavLink>
-        </MenuItem>
-
-        {/* AI Generation */}
-        <MenuItem key="/generation">
-          <NavLink to="/generation" aria-label="AI 生成">
-            <PlayCircle size={18} aria-hidden="true" />
-            {!sidebarCollapsed && <span>AI 生成</span>}
-          </NavLink>
-        </MenuItem>
-
-        {/* Documents */}
-        <MenuItem key="/documents">
-          <NavLink to="/documents" aria-label="知识库">
-            <BookOpen size={18} aria-hidden="true" />
-            {!sidebarCollapsed && <span>知识库</span>}
-          </NavLink>
-        </MenuItem>
-
-        {/* Dashboard */}
-        <MenuItem key="/dashboard">
-          <NavLink to="/dashboard" aria-label="仪表盘">
-            <BarChart3 size={18} aria-hidden="true" />
-            {!sidebarCollapsed && <span>仪表盘</span>}
-          </NavLink>
-        </MenuItem>
       </>
     ),
-    [sidebarCollapsed, pendingCount] // Only re-render when these change
+    [sidebarCollapsed, pendingCount, projectRoutes]
   )
 
   return (
