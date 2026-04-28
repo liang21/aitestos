@@ -21,7 +21,10 @@ interface CaseDetailPageProps {
 export function CaseDetailPage({
   caseId: propCaseId,
 }: CaseDetailPageProps = {}) {
-  const { caseId: urlCaseId } = useParams<{ caseId: string }>()
+  const { projectId, caseId: urlCaseId } = useParams<{
+    projectId: string
+    caseId: string
+  }>()
   const caseId = propCaseId ?? urlCaseId ?? ''
   const navigate = useNavigate()
   const [editDrawerVisible, setEditDrawerVisible] = useState(false)
@@ -37,7 +40,7 @@ export function CaseDetailPage({
     try {
       await deleteMutation.mutateAsync(testCase.id)
       Message.success('用例已删除')
-      navigate('/testcases')
+      navigate(`/projects/${projectId}/cases`)
     } catch {
       Message.error('删除失败')
     }

@@ -4,17 +4,13 @@
  */
 
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Table, Button, Select, Space, Message } from '@arco-design/web-react'
 import { IconPlus } from '@arco-design/web-react/icon'
 import { useCaseList } from '../hooks/useTestCases'
 import { StatusTag } from '@/components/business/StatusTag'
 import { CreateCaseDrawer } from './CreateCaseDrawer'
 import type { TestCase, CaseStatus, CaseType, Priority } from '@/types/api'
-
-interface CaseListPageProps {
-  projectId?: string
-}
 
 const caseTypeOptions = [
   { label: '全部', value: '' },
@@ -42,26 +38,29 @@ const statusOptions: Array<{ label: string; value: CaseStatus | '' }> = [
   { label: '跳过', value: 'skipped' },
 ]
 
-export function CaseListPage({ projectId }: CaseListPageProps) {
+export function CaseListPage() {
   const navigate = useNavigate()
+  const { projectId } = useParams<{ projectId: string }>()
   const [caseTypeFilter, setCaseTypeFilter] = useState<CaseType | ''>('')
   const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('')
   const [statusFilter, setStatusFilter] = useState<CaseStatus | ''>('')
   const [createDrawerVisible, setCreateDrawerVisible] = useState(false)
 
   // Fetch test cases list
-  const { data, isLoading, refetch } = useCaseList({
-    projectId,
-    caseType: caseTypeFilter || undefined,
-    priority: priorityFilter || undefined,
-    status: statusFilter || undefined,
-    offset: 0,
-    limit: 100,
-  })
+  const { data, isLoading, refetch } = useCaseList(
+    projectId || '',
+    {
+      caseType: caseTypeFilter || undefined,
+      priority: priorityFilter || undefined,
+      status: statusFilter || undefined,
+      offset: 0,
+      limit: 100,
+    }
+  )
 
   // Handle row click - navigate to detail
   const handleRowClick = (record: TestCase) => {
-    navigate(`/testcases/${record.id}`)
+    navigate(`/projects/${projectId}/cases/${record.id}`)
   }
 
   // Table columns
@@ -71,7 +70,10 @@ export function CaseListPage({ projectId }: CaseListPageProps) {
       dataIndex: 'number',
       width: 180,
       render: (number: string, record: TestCase) => (
-        <a href={`/testcases/${record.id}`} onClick={(e) => e.preventDefault()}>
+        <a
+          href={`/projects/${projectId}/cases/${record.id}`}
+          onClick={(e) => e.preventDefault()}
+        >
           {number}
         </a>
       ),

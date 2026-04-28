@@ -23,13 +23,12 @@ import type { PlanCase, PlanStats } from '@/types/api'
 export const planKeys = {
   all: ['plans'] as const,
   lists: () => [...planKeys.all, 'list'] as const,
-  list: (params?: {
-    projectId?: string
+  list: (projectId: string, params?: {
     status?: string
     keywords?: string
     offset?: number
     limit?: number
-  }) => [...planKeys.lists(), params] as const,
+  }) => [...planKeys.lists(), projectId, params] as const,
   details: () => [...planKeys.all, 'detail'] as const,
   detail: (id: string) => [...planKeys.details(), id] as const,
   results: (id: string) => [...planKeys.all, 'results', id] as const,
@@ -37,17 +36,21 @@ export const planKeys = {
 
 /**
  * Get plans list
+ * @param projectId - Project ID from route params
+ * @param params - Query parameters (filters, pagination)
  */
-export function usePlanList(params?: {
-  projectId?: string
-  status?: string
-  keywords?: string
-  offset?: number
-  limit?: number
-}): UseQueryResult<PaginatedResponse<TestPlan>> {
+export function usePlanList(
+  projectId: string,
+  params?: {
+    status?: string
+    keywords?: string
+    offset?: number
+    limit?: number
+  }
+): UseQueryResult<PaginatedResponse<TestPlan>> {
   return useQuery({
-    queryKey: planKeys.list(params),
-    queryFn: () => plansApi.list(params),
+    queryKey: planKeys.list(projectId, params),
+    queryFn: () => plansApi.list({ project_id: projectId, ...params }),
   })
 }
 

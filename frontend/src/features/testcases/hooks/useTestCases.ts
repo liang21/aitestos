@@ -21,21 +21,24 @@ import type {
 export const testcaseKeys = {
   all: ['testcases'] as const,
   lists: () => [...testcaseKeys.all, 'list'] as const,
-  list: (params?: TestCaseListParams) =>
-    [...testcaseKeys.lists(), params] as const,
+  list: (projectId: string, params?: TestCaseListParams) =>
+    [...testcaseKeys.lists(), projectId, params] as const,
   details: () => [...testcaseKeys.all, 'detail'] as const,
   detail: (id: string) => [...testcaseKeys.details(), id] as const,
 }
 
 /**
  * Get test case list
+ * @param projectId - Project ID from route params
+ * @param params - Query parameters (filters, pagination)
  */
 export function useCaseList(
+  projectId: string,
   params?: TestCaseListParams
 ): UseQueryResult<PaginatedResponse<TestCase>> {
   return useQuery({
-    queryKey: testcaseKeys.list(params),
-    queryFn: () => testcasesApi.list(params),
+    queryKey: testcaseKeys.list(projectId, params),
+    queryFn: () => testcasesApi.list({ project_id: projectId, ...params }),
   })
 }
 

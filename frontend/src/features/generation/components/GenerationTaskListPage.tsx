@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Table, Card, Select, Button, Tag } from '@arco-design/web-react'
 import { IconPlus } from '@arco-design/web-react/icon'
 import { useGenerationTasks } from '@/features/generation/hooks/useGeneration'
@@ -8,25 +8,19 @@ import type { TaskStatus } from '@/types/enums'
 
 const { Option: SelectOption } = Select
 
-interface GenerationTaskListPageProps {
-  projectId?: string
-}
-
-export function GenerationTaskListPage({
-  projectId,
-}: GenerationTaskListPageProps) {
+export function GenerationTaskListPage() {
   const navigate = useNavigate()
+  const { projectId } = useParams<{ projectId: string }>()
   const [statusFilter, setStatusFilter] = useState<TaskStatus | ''>('')
 
-  // For E2E testing purposes, use a mock project ID if not provided
-  const activeProjectId = projectId || '550e8400-e29b-41d4-a716-446655440002'
-
-  const { data: tasksData, isLoading } = useGenerationTasks({
-    projectId: activeProjectId,
-    ...(statusFilter ? { status: statusFilter } : {}),
-    offset: 0,
-    limit: 20,
-  })
+  const { data: tasksData, isLoading } = useGenerationTasks(
+    projectId || '',
+    {
+      ...(statusFilter ? { status: statusFilter } : {}),
+      offset: 0,
+      limit: 20,
+    }
+  )
 
   const tasks = tasksData?.data ?? []
 
@@ -40,7 +34,7 @@ export function GenerationTaskListPage({
         ellipsis: true,
         render: (prompt: string, record: { id: string }) => (
           <a
-            onClick={() => navigate(`/generation/tasks/${record.id}`)}
+            onClick={() => navigate(`/projects/${projectId}/generation/${record.id}`)}
             className="text-blue-500 hover:underline cursor-pointer"
           >
             {prompt.length > 50 ? `${prompt.slice(0, 50)}...` : prompt}
@@ -97,9 +91,7 @@ export function GenerationTaskListPage({
             <Button
               type="primary"
               icon={<IconPlus />}
-              onClick={() =>
-                navigate('/generation/tasks/new', { state: { projectId } })
-              }
+              onClick={() => navigate(`/projects/${projectId}/generation/new`)}
             >
               新建任务
             </Button>
@@ -117,7 +109,7 @@ export function GenerationTaskListPage({
             showTotal: (total) => `共 ${total} 条`,
           }}
           onRow={(record) => ({
-            onClick: () => navigate(`/generation/tasks/${record.id}`),
+            onClick: () => navigate(`/projects/${projectId}/generation/${record.id}`),
             style: { cursor: 'pointer' },
           })}
         />
