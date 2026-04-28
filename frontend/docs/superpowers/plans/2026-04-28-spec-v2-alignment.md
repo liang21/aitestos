@@ -26,6 +26,7 @@ This spec covers the full platform. The codebase already has ~80 files with subs
 ## File Structure
 
 ### Files to Create
+
 - `src/features/documents/components/FigmaIntegrationPage.tsx` — Figma import page
 - `src/features/auth/schema/registerSchema.ts` — Zod schema for registration
 - `src/features/testcases/schema/createCaseSchema.ts` — Zod schema for case creation
@@ -34,6 +35,7 @@ This spec covers the full platform. The codebase already has ~80 files with subs
 - `src/styles/animations.css` — AI-specific animations (glow-pulse, ai-reveal, shimmer)
 
 ### Files to Modify (Major)
+
 - `src/router/index.tsx` — Restructure to nested project-scoped routes
 - `src/components/layout/Sidebar.tsx` — Add project submenu, draft badge, AI icon styling
 - `src/components/layout/Header.tsx` — Add breadcrumb with project context
@@ -59,6 +61,7 @@ This spec covers the full platform. The codebase already has ~80 files with subs
 - `src/features/documents/components/UploadDocumentModal.tsx` — File type restrictions
 
 ### Files to Modify (Minor)
+
 - `src/features/auth/components/LoginPage.tsx` — Brand area styling
 - `src/features/auth/components/RegisterPage.tsx` — Role select (no super_admin)
 - `src/store/useAppStore.ts` — Remove currentProject from store (use React Query)
@@ -70,6 +73,7 @@ This spec covers the full platform. The codebase already has ~80 files with subs
 ### Task 1: Restructure Router to Nested Project-Scoped Routes
 
 **Files:**
+
 - Modify: `src/router/index.tsx`
 
 The current router uses flat paths (`/testcases`, `/plans`, `/generation`). Spec requires project-scoped nesting (`/projects/:id/cases`, `/projects/:id/plans`, etc.). This is the single highest-priority change because every page component expects route params.
@@ -205,16 +209,20 @@ export const router = createBrowserRouter([
               {
                 path: 'plans',
                 lazy: () =>
-                  import('../features/plans/components/PlanListPage').then((m) => ({
-                    Component: m.PlanListPage,
-                  })),
+                  import('../features/plans/components/PlanListPage').then(
+                    (m) => ({
+                      Component: m.PlanListPage,
+                    })
+                  ),
               },
               {
                 path: 'plans/new',
                 lazy: () =>
-                  import('../features/plans/components/NewPlanPage').then((m) => ({
-                    Component: m.NewPlanPage,
-                  })),
+                  import('../features/plans/components/NewPlanPage').then(
+                    (m) => ({
+                      Component: m.NewPlanPage,
+                    })
+                  ),
               },
               {
                 path: 'plans/:planId',
@@ -305,6 +313,7 @@ grep -rn "useParams" src/features/ --include="*.tsx"
 ```
 
 Key changes needed in each page component:
+
 - `ProjectDashboard`: `useParams<{ id: string }>()` — param is now `id` not `projectId`
 - `CaseListPage`: `useParams<{ id: string }>()` — use `id` as `projectId`
 - `CaseDetailPage`: `useParams<{ id: string; caseId: string }>()`
@@ -352,12 +361,14 @@ git commit -m "refactor(router): restructure to nested project-scoped routes per
 ### Task 2: Update Sidebar with Project Submenu & Draft Badge
 
 **Files:**
+
 - Modify: `src/components/layout/Sidebar.tsx`
 - Modify: `src/store/useAppStore.ts`
 
 - [ ] **Step 1: Write failing test for Sidebar project submenu**
 
 Add test case in `src/components/layout/Sidebar.test.tsx` verifying:
+
 - When `currentProjectId` is set, project submenu items render
 - Draft Badge shows pending count
 - AI generation menu item has purple icon
@@ -370,6 +381,7 @@ Run: `npx vitest run src/components/layout/Sidebar.test.tsx`
 - [ ] **Step 3: Implement Sidebar project submenu**
 
 Update `Sidebar.tsx`:
+
 - Add project submenu section with items: 仪表盘, 知识库, AI 生成 (purple icon), 测试用例, 测试计划, 项目设置
 - Use `useDraftCount()` hook (from `useDrafts`) for Badge on drafts menu item
 - Selected state uses purple background `rgba(123,97,255,0.10)` + purple text + left 3px border
@@ -391,6 +403,7 @@ git commit -m "feat(sidebar): add project submenu, draft badge, and AI purple st
 ### Task 3: Add Breadcrumb to Header
 
 **Files:**
+
 - Modify: `src/components/layout/Header.tsx`
 
 - [ ] **Step 1: Write failing test for breadcrumb**
@@ -402,6 +415,7 @@ Test that breadcrumb renders: `首页 > 项目列表 > {ProjectName} > {PageName
 - [ ] **Step 3: Implement breadcrumb**
 
 Use `useLocation` + `useParams` to build breadcrumb path. Map route segments to Chinese labels:
+
 - `/projects` → "首页"
 - `/projects/:id` → "项目列表 > {projectName}"
 - `/projects/:id/cases` → "项目列表 > {projectName} > 测试用例"
@@ -423,6 +437,7 @@ git commit -m "feat(header): add breadcrumb navigation with project context"
 ### Task 4: Add AI Animation Styles
 
 **Files:**
+
 - Create: `src/styles/animations.css`
 - Modify: `src/app/providers.tsx` (import animations.css)
 
@@ -439,7 +454,7 @@ git commit -m "feat(header): add breadcrumb navigation with project context"
     filter: blur(2px);
   }
   to {
-    opacity:1;
+    opacity: 1;
     transform: translateY(0) scale(1);
     filter: blur(0);
   }
@@ -447,28 +462,50 @@ git commit -m "feat(header): add breadcrumb navigation with project context"
 
 /* Glow pulse for processing state */
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 15px rgba(123,97,255,0.15); }
-  50% { box-shadow: 0 0 25px rgba(123,97,255,0.30); }
+  0%,
+  100% {
+    box-shadow: 0 0 15px rgba(123, 97, 255, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(123, 97, 255, 0.3);
+  }
 }
 
 /* Progress shimmer */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* Breathing glow for high confidence */
 @keyframes breath-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(0,180,42,0.2); }
-  50% { box-shadow: 0 0 12px rgba(0,180,42,0.4); }
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(0, 180, 42, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(0, 180, 42, 0.4);
+  }
 }
 
 /* Spring celebration */
 @keyframes spring-celebrate {
-  0% { transform: scale(1) rotate(0deg); }
-  30% { transform: scale(1.2) rotate(-5deg); }
-  60% { transform: scale(0.95) rotate(3deg); }
-  100% { transform: scale(1) rotate(0deg); }
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  30% {
+    transform: scale(1.2) rotate(-5deg);
+  }
+  60% {
+    transform: scale(0.95) rotate(3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 .animate-ai-reveal {
@@ -480,7 +517,12 @@ git commit -m "feat(header): add breadcrumb navigation with project context"
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(123,97,255,0.08) 50%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(123, 97, 255, 0.08) 50%,
+    transparent 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s linear infinite;
 }
@@ -523,11 +565,13 @@ git commit -m "feat(styles): add AI-specific animation keyframes"
 ### Task 5: Complete StatusTag Color Maps
 
 **Files:**
+
 - Modify: `src/components/business/StatusTag.tsx`
 
 - [ ] **Step 1: Write failing tests for missing color maps**
 
 In `src/components/business/StatusTag.test.tsx`, add test cases for all `type` values:
+
 - `planStatus`: draft(灰), active(紫+glow), completed(绿), archived(灰淡)
 - `taskStatus`: pending(灰), processing(紫+glow), completed(绿), failed(红)
 - `draftStatus`: pending(橙), confirmed(绿), rejected(红)
@@ -558,11 +602,13 @@ git commit -m "feat(statustag): add all color maps per UX spec §2.1"
 ### Task 6: Enhance SearchTable Component
 
 **Files:**
+
 - Modify: `src/components/business/SearchTable.tsx`
 
 - [ ] **Step 1: Update SearchTable with spec styling defaults**
 
 Set default props matching UX spec §5.1:
+
 - row height 48px (default), 36px (compact via `size="small"`)
 - header background `#F7F8FA`, font 13px Medium
 - zebra stripe on even rows `#FAFBFC`
@@ -591,6 +637,7 @@ git commit -m "feat(searchtable): add spec styling, pagination, batch operation 
 ### Task 7: Enhance ArrayEditor with Validation
 
 **Files:**
+
 - Modify: `src/components/business/ArrayEditor.tsx`
 
 - [ ] **Step 1: Add `minItems` prop support**
@@ -618,6 +665,7 @@ git commit -m "feat(arrayeditor): add minItems validation and reorder buttons"
 ### Task 8: Polish Login Page with Brand Area
 
 **Files:**
+
 - Modify: `src/features/auth/components/LoginPage.tsx`
 - Modify: `src/features/auth/components/LoginBanner.tsx`
 
@@ -646,6 +694,7 @@ git commit -m "feat(login): implement split layout with brand area per UX spec"
 ### Task 9: Polish Register Page
 
 **Files:**
+
 - Modify: `src/features/auth/components/RegisterPage.tsx`
 
 - [ ] **Step 1: Add role select (admin/normal only, no super_admin)**
@@ -655,6 +704,7 @@ Ensure the role Arco Select only shows "管理员 (admin)" and "测试工程师 
 - [ ] **Step 2: Add confirm password field with Zod validation**
 
 Add register Zod schema at `src/features/auth/schema/registerSchema.ts`:
+
 ```typescript
 import { z } from 'zod/v4'
 export const registerSchema = z
@@ -686,11 +736,13 @@ git commit -m "feat(register): add confirm password, role select, field-level 40
 ### Task 10: Convert Project List to Card Grid
 
 **Files:**
+
 - Modify: `src/features/projects/components/ProjectListPage.tsx`
 
 - [ ] **Step 1: Replace table with Card grid (3 columns)**
 
 Use Arco `Grid` with `Col span={8}` for 3-column layout. Each card:
+
 - Top 3px color bar (hash project prefix to pick from palette)
 - Project name as h3
 - Prefix as Tag with monospace font
@@ -716,6 +768,7 @@ git commit -m "feat(projects): convert list to card grid with hover effects per 
 ### Task 11: Enhance Project Dashboard
 
 **Files:**
+
 - Modify: `src/features/projects/components/ProjectDashboard.tsx`
 
 - [ ] **Step 1: Add quick-start guide for empty projects**
@@ -745,6 +798,7 @@ git commit -m "feat(dashboard): add stats cards, trend chart, recent tasks, quic
 ### Task 12: Polish CreateProjectModal
 
 **Files:**
+
 - Modify: `src/features/projects/components/CreateProjectModal.tsx`
 
 - [ ] **Step 1: Add prefix format validation**
@@ -754,11 +808,16 @@ Real-time validation on prefix input: must be 2-4 uppercase letters matching `^[
 - [ ] **Step 2: Add Zod schema**
 
 Create `src/features/projects/schema/projectSchema.ts`:
+
 ```typescript
 import { z } from 'zod/v4'
 export const createProjectSchema = z.object({
   name: z.string().min(2).max(255),
-  prefix: z.string().min(2).max(4).regex(/^[A-Z]+$/, '前缀必须为2-4位大写字母'),
+  prefix: z
+    .string()
+    .min(2)
+    .max(4)
+    .regex(/^[A-Z]+$/, '前缀必须为2-4位大写字母'),
   description: z.string().optional(),
 })
 ```
@@ -780,6 +839,7 @@ git commit -m "feat(create-project): add prefix validation, Zod schema, 409 fiel
 ### Task 13: Polish Knowledge List Page
 
 **Files:**
+
 - Modify: `src/features/documents/components/KnowledgeListPage.tsx`
 
 - [ ] **Step 1: Add filter bar with type, status, search**
@@ -805,6 +865,7 @@ git commit -m "feat(documents): add filters, type icons, empty state to knowledg
 ### Task 14: Polish Document Detail Page
 
 **Files:**
+
 - Modify: `src/features/documents/components/DocumentDetailPage.tsx`
 
 - [ ] **Step 1: Implement split layout**
@@ -826,11 +887,13 @@ git commit -m "feat(document-detail): implement split layout with info panel and
 ### Task 15: Create Figma Integration Page (Stub)
 
 **Files:**
+
 - Create: `src/features/documents/components/FigmaIntegrationPage.tsx`
 
 - [ ] **Step 1: Create FigmaIntegrationPage component**
 
 Page with 3 sections:
+
 1. Connection config: Radio.Group (personal token / OAuth) + Input.Password + "测试连接" button
 2. Import file: URL Input + "解析" button
 3. Node selection: Arco Tree with Checkbox mode, default all selected
@@ -848,6 +911,7 @@ git commit -m "feat(figma): create Figma integration page stub"
 ### Task 16: Enhance Generation Task List Page
 
 **Files:**
+
 - Modify: `src/features/generation/components/GenerationTaskListPage.tsx`
 
 - [ ] **Step 1: Add AI visual styling**
@@ -875,11 +939,13 @@ git commit -m "feat(generation-list): add AI styling, status filter, retry actio
 ### Task 17: Enhance New Generation Task Page
 
 **Files:**
+
 - Modify: `src/features/generation/components/NewGenerationTaskPage.tsx`
 
 - [ ] **Step 1: Add knowledge readiness indicator**
 
 At page top, fetch document count for current project. Show:
+
 - Green "就绪" if documents exist and are completed
 - Yellow "内容有限" if only a few
 - Red "请先上传需求文档" + disable submit button if zero documents
@@ -891,6 +957,7 @@ Arco Collapse wrapping: scene type (Checkbox.Group), priority preference (Select
 - [ ] **Step 3: Add Zod schema and form validation**
 
 Create `src/features/generation/schema/createTaskSchema.ts`:
+
 ```typescript
 import { z } from 'zod/v4'
 export const createTaskSchema = z.object({
@@ -899,7 +966,9 @@ export const createTaskSchema = z.object({
   case_count: z.number().min(1).max(20).optional(),
   scene_types: z.array(z.enum(['positive', 'negative', 'boundary'])).optional(),
   priority: z.enum(['P0', 'P1', 'P2', 'P3']).optional(),
-  case_type: z.enum(['functionality', 'performance', 'api', 'ui', 'security']).optional(),
+  case_type: z
+    .enum(['functionality', 'performance', 'api', 'ui', 'security'])
+    .optional(),
 })
 ```
 
@@ -914,11 +983,13 @@ git commit -m "feat(new-task): add readiness indicator, advanced options, Zod sc
 ### Task 18: Enhance Task Detail Page with AI Status Card
 
 **Files:**
+
 - Modify: `src/features/generation/components/TaskDetailPage.tsx`
 
 - [ ] **Step 1: Add AI status card**
 
 Top card showing task status with AI visual effects:
+
 - pending: Spin + "任务排队中" + faint AI Glow
 - processing: Progress bar + shimmer + estimated time + glow-pulse
 - completed: Success Badge + spring celebration animation on transition
@@ -930,7 +1001,7 @@ When completed, show drafts table with: Checkbox, title, type Tag, priority Tag,
 
 - [ ] **Step 3: Add ai-reveal animation on draft list items**
 
-Apply `animate-ai-reveal` with staggered delay (index * 80ms) to each draft row.
+Apply `animate-ai-reveal` with staggered delay (index \* 80ms) to each draft row.
 
 - [ ] **Step 4: Commit**
 
@@ -943,6 +1014,7 @@ git commit -m "feat(task-detail): add AI status card, draft list with batch oper
 ### Task 19: Enhance Draft Confirm Page
 
 **Files:**
+
 - Modify: `src/features/drafts/components/DraftConfirmPage.tsx`
 
 - [ ] **Step 1: Add draft navigation bar**
@@ -974,6 +1046,7 @@ git commit -m "feat(draft-confirm): add navigation, split layout, reference pane
 ### Task 20: Enhance Case List Page with Split Panel
 
 **Files:**
+
 - Modify: `src/features/testcases/components/CaseListPage.tsx`
 
 - [ ] **Step 1: Add module tree on left panel**
@@ -1003,6 +1076,7 @@ git commit -m "feat(case-list): add module tree, filters, batch ops, empty state
 ### Task 21: Enhance Case Detail Page with AI Metadata
 
 **Files:**
+
 - Modify: `src/features/testcases/components/CaseDetailPage.tsx`
 
 - [ ] **Step 1: Add page header with back link, number, status**
@@ -1028,6 +1102,7 @@ git commit -m "feat(case-detail): add header, info card, AI metadata panel"
 ### Task 22: Enhance Plan Detail Page with Stats & Inline Recording
 
 **Files:**
+
 - Modify: `src/features/plans/components/PlanDetailPage.tsx`
 
 - [ ] **Step 1: Add stats cards (5 columns)**
@@ -1057,6 +1132,7 @@ git commit -m "feat(plan-detail): add stats cards, progress bar, state actions, 
 ### Task 23: Enhance New Plan Page with Case Selector
 
 **Files:**
+
 - Modify: `src/features/plans/components/NewPlanPage.tsx`
 
 - [ ] **Step 1: Implement split layout**
@@ -1080,6 +1156,7 @@ git commit -m "feat(new-plan): add case selector with tabs and filters"
 ### Task 24: Enhance Module Manage Page
 
 **Files:**
+
 - Modify: `src/features/modules/components/ModuleManagePage.tsx`
 
 - [ ] **Step 1: Add split layout with module tree**
@@ -1101,6 +1178,7 @@ git commit -m "feat(modules): add split layout, tree, type-to-confirm delete"
 ### Task 25: Enhance Config Manage Page with Import/Export
 
 **Files:**
+
 - Modify: `src/features/configs/components/ConfigManagePage.tsx`
 
 - [ ] **Step 1: Add import JSON functionality**

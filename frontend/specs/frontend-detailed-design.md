@@ -1,12 +1,12 @@
 # Aitestos 智能测试管理平台 — 前端详细设计文档
 
-| 项目       | 内容                                             |
-| ---------- | ------------------------------------------------ |
-| 产品名称   | Aitestos 智能测试管理平台                        |
-| 文档版本   | v2.0                                             |
-| 文档状态   | 正式发布                                         |
-| 最后更新   | 2026-04-27                                       |
-| 文档所有者 | 前端开发团队                                     |
+| 项目       | 内容                                                                           |
+| ---------- | ------------------------------------------------------------------------------ |
+| 产品名称   | Aitestos 智能测试管理平台                                                      |
+| 文档版本   | v2.0                                                                           |
+| 文档状态   | 正式发布                                                                       |
+| 最后更新   | 2026-04-27                                                                     |
+| 文档所有者 | 前端开发团队                                                                   |
 | 关联规范   | UX 设计规范 v2.0 · 产品 PRD v2.1 · OpenAPI 3.0.3 · CLAUDE.md · constitution.md |
 
 ---
@@ -279,37 +279,47 @@ export const router = createBrowserRouter([
       {
         path: 'projects',
         lazy: () =>
-          import('@/features/projects/components/ProjectListPage').then((m) => ({
-            Component: m.ProjectListPage,
-          })),
+          import('@/features/projects/components/ProjectListPage').then(
+            (m) => ({
+              Component: m.ProjectListPage,
+            })
+          ),
       },
       {
         path: 'projects/:id',
         lazy: () =>
-          import('@/features/projects/components/ProjectDashboard').then((m) => ({
-            Component: m.ProjectDashboard,
-          })),
+          import('@/features/projects/components/ProjectDashboard').then(
+            (m) => ({
+              Component: m.ProjectDashboard,
+            })
+          ),
       },
       {
         path: 'projects/:id/knowledge',
         lazy: () =>
-          import('@/features/documents/components/KnowledgeListPage').then((m) => ({
-            Component: m.KnowledgeListPage,
-          })),
+          import('@/features/documents/components/KnowledgeListPage').then(
+            (m) => ({
+              Component: m.KnowledgeListPage,
+            })
+          ),
       },
       {
         path: 'projects/:id/knowledge/figma',
         lazy: () =>
-          import('@/features/documents/components/FigmaIntegrationPage').then((m) => ({
-            Component: m.FigmaIntegrationPage,
-          })),
+          import('@/features/documents/components/FigmaIntegrationPage').then(
+            (m) => ({
+              Component: m.FigmaIntegrationPage,
+            })
+          ),
       },
       {
         path: 'projects/:id/knowledge/:docId',
         lazy: () =>
-          import('@/features/documents/components/DocumentDetailPage').then((m) => ({
-            Component: m.DocumentDetailPage,
-          })),
+          import('@/features/documents/components/DocumentDetailPage').then(
+            (m) => ({
+              Component: m.DocumentDetailPage,
+            })
+          ),
       },
       {
         path: 'projects/:id/generation',
@@ -328,9 +338,11 @@ export const router = createBrowserRouter([
       {
         path: 'projects/:id/generation/:taskId',
         lazy: () =>
-          import('@/features/generation/components/TaskDetailPage').then((m) => ({
-            Component: m.TaskDetailPage,
-          })),
+          import('@/features/generation/components/TaskDetailPage').then(
+            (m) => ({
+              Component: m.TaskDetailPage,
+            })
+          ),
       },
       {
         path: 'drafts',
@@ -356,9 +368,11 @@ export const router = createBrowserRouter([
       {
         path: 'projects/:id/cases/:caseId',
         lazy: () =>
-          import('@/features/testcases/components/CaseDetailPage').then((m) => ({
-            Component: m.CaseDetailPage,
-          })),
+          import('@/features/testcases/components/CaseDetailPage').then(
+            (m) => ({
+              Component: m.CaseDetailPage,
+            })
+          ),
       },
       {
         path: 'projects/:id/plans',
@@ -395,9 +409,11 @@ export const router = createBrowserRouter([
           {
             index: true,
             lazy: () =>
-              import('@/features/configs/components/ConfigManagePage').then((m) => ({
-                Component: m.ConfigManagePage,
-              })),
+              import('@/features/configs/components/ConfigManagePage').then(
+                (m) => ({
+                  Component: m.ConfigManagePage,
+                })
+              ),
           },
         ],
       },
@@ -408,9 +424,11 @@ export const router = createBrowserRouter([
           {
             index: true,
             lazy: () =>
-              import('@/features/modules/components/ModuleManagePage').then((m) => ({
-                Component: m.ModuleManagePage,
-              })),
+              import('@/features/modules/components/ModuleManagePage').then(
+                (m) => ({
+                  Component: m.ModuleManagePage,
+                })
+              ),
           },
         ],
       },
@@ -468,7 +486,8 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  sidebarCollapsed: typeof window !== 'undefined' ? window.innerWidth < 1280 : false,
+  sidebarCollapsed:
+    typeof window !== 'undefined' ? window.innerWidth < 1280 : false,
 
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
@@ -503,13 +522,25 @@ interface AuthState {
 // Token 持久化接口（便于测试和 SSR 兼容）
 const tokenStorage = {
   getItem: (key: string): string | null => {
-    try { return localStorage.getItem(key) } catch { return null }
+    try {
+      return localStorage.getItem(key)
+    } catch {
+      return null
+    }
   },
   setItem: (key: string, value: string): void => {
-    try { localStorage.setItem(key, value) } catch { /* 静默 */ }
+    try {
+      localStorage.setItem(key, value)
+    } catch {
+      /* 静默 */
+    }
   },
   removeItem: (key: string): void => {
-    try { localStorage.removeItem(key) } catch { /* 静默 */ }
+    try {
+      localStorage.removeItem(key)
+    } catch {
+      /* 静默 */
+    }
   },
 }
 
@@ -518,7 +549,9 @@ function isTokenExpired(token: string): boolean {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]))
     return payload.exp ? Date.now() >= payload.exp * 1000 : true
-  } catch { return true }
+  } catch {
+    return true
+  }
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -595,7 +628,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 export const projectKeys = {
   all: ['projects'] as const,
   lists: () => [...projectKeys.all, 'list'] as const,
-  list: (params: Record<string, unknown>) => [...projectKeys.lists(), params] as const,
+  list: (params: Record<string, unknown>) =>
+    [...projectKeys.lists(), params] as const,
   details: () => [...projectKeys.all, 'detail'] as const,
   detail: (id: string) => [...projectKeys.details(), id] as const,
   stats: (id: string) => [...projectKeys.all, 'stats', id] as const,
@@ -606,7 +640,11 @@ export const projectKeys = {
 
 ```typescript
 // 列表查询
-export function useProjectList(params?: { keywords?: string; offset?: number; limit?: number }) {
+export function useProjectList(params?: {
+  keywords?: string
+  offset?: number
+  limit?: number
+}) {
   return useQuery({
     queryKey: projectKeys.list(params ?? {}),
     queryFn: () => projectsApi.list(params),
@@ -644,7 +682,9 @@ export function useUpdateProject() {
     mutationFn: ({ id, data }: { id: string; data: UpdateProjectRequest }) =>
       projectsApi.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: projectKeys.detail(variables.id) })
+      queryClient.invalidateQueries({
+        queryKey: projectKeys.detail(variables.id),
+      })
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() })
     },
   })
@@ -670,17 +710,18 @@ export function useTaskDetail(id: string) {
 
 ### 各 Feature Query Key 清单
 
-| Feature | Key 工厂 | 包含 |
-|---------|---------|------|
-| projects | `projectKeys` | all, lists, list(params), details, detail(id), stats(id) |
-| modules | `moduleKeys` | all, list(projectId), detail(id) |
-| testcases | `caseKeys` | all, lists, list(params), details, detail(id) |
-| plans | `planKeys` | all, lists, list(params), details, detail(id), results(planId) |
-| generation | `generationKeys` | all, tasks, list(params), task(id), drafts(taskId) |
-| drafts | `draftKeys` | all, lists, list(params), detail(id), pendingCount |
-| documents | `documentKeys` | all, lists, list(params), details, detail(id), chunks(docId) |
-| configs | `configKeys` | all, list(projectId) |
-```
+| Feature    | Key 工厂         | 包含                                                           |
+| ---------- | ---------------- | -------------------------------------------------------------- |
+| projects   | `projectKeys`    | all, lists, list(params), details, detail(id), stats(id)       |
+| modules    | `moduleKeys`     | all, list(projectId), detail(id)                               |
+| testcases  | `caseKeys`       | all, lists, list(params), details, detail(id)                  |
+| plans      | `planKeys`       | all, lists, list(params), details, detail(id), results(planId) |
+| generation | `generationKeys` | all, tasks, list(params), task(id), drafts(taskId)             |
+| drafts     | `draftKeys`      | all, lists, list(params), detail(id), pendingCount             |
+| documents  | `documentKeys`   | all, lists, list(params), details, detail(id), chunks(docId)   |
+| configs    | `configKeys`     | all, list(projectId)                                           |
+
+````
 
 ### useDraftCount — 草稿未处理计数（Sidebar Badge）
 
@@ -711,7 +752,7 @@ export function useDraftCount() {
     staleTime: 15_000,
   })
 }
-```
+````
 
 ---
 
@@ -743,17 +784,37 @@ let isRefreshing = false
 const pendingRequests: QueuedRequest[] = []
 
 let authExpiredHandler: (() => void) | null = null
-let tokenUpdatedHandler: ((accessToken: string, refreshToken: string) => void) | null = null
+let tokenUpdatedHandler:
+  | ((accessToken: string, refreshToken: string) => void)
+  | null = null
 
-export function setAuthExpiredHandler(handler: () => void) { authExpiredHandler = handler }
-export function setTokenUpdatedHandler(handler: (a: string, r: string) => void) {
+export function setAuthExpiredHandler(handler: () => void) {
+  authExpiredHandler = handler
+}
+export function setTokenUpdatedHandler(
+  handler: (a: string, r: string) => void
+) {
   tokenUpdatedHandler = handler
 }
 
 const tokenStorage = {
-  getItem: (key: string): string | null => { try { return localStorage.getItem(key) } catch { return null } },
-  setItem: (key: string, value: string): void => { try { localStorage.setItem(key, value) } catch { } },
-  removeItem: (key: string): void => { try { localStorage.removeItem(key) } catch { } },
+  getItem: (key: string): string | null => {
+    try {
+      return localStorage.getItem(key)
+    } catch {
+      return null
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    try {
+      localStorage.setItem(key, value)
+    } catch {}
+  },
+  removeItem: (key: string): void => {
+    try {
+      localStorage.removeItem(key)
+    } catch {}
+  },
 }
 
 // ==================== 请求拦截器 ====================
@@ -769,33 +830,66 @@ request.interceptors.request.use((config) => {
 request.interceptors.response.use(
   (response) => response.data,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean; _queued?: boolean }
-    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register')
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean
+      _queued?: boolean
+    }
+    const isAuthEndpoint =
+      originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/register')
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !isAuthEndpoint
+    ) {
       if (isRefreshing) {
         if (originalRequest._queued) return Promise.reject(error)
         originalRequest._queued = true
-        return new Promise((resolve, reject) => { pendingRequests.push({ request: originalRequest, resolve, reject }) })
+        return new Promise((resolve, reject) => {
+          pendingRequests.push({ request: originalRequest, resolve, reject })
+        })
       }
       originalRequest._retry = true
       isRefreshing = true
       const refreshToken = tokenStorage.getItem('refresh_token')
-      if (!refreshToken) { authExpiredHandler?.(); pendingRequests.forEach(({ reject }) => reject(error)); pendingRequests.length = 0; return Promise.reject(error) }
-      try {
-        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/auth/refresh`, { refresh_token: refreshToken }, { headers: { 'Content-Type': 'application/json' } })
-        const { access_token, refresh_token: newRefreshToken } = response.data
-        tokenStorage.setItem('access_token', access_token); tokenStorage.setItem('refresh_token', newRefreshToken)
-        tokenUpdatedHandler?.(access_token, newRefreshToken)
-        await Promise.allSettled(pendingRequests.map(async ({ request: q, resolve }) => { if (q.headers) q.headers.Authorization = `Bearer ${access_token}`; resolve(await request(q)) }))
+      if (!refreshToken) {
+        authExpiredHandler?.()
+        pendingRequests.forEach(({ reject }) => reject(error))
         pendingRequests.length = 0
-        if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${access_token}`
+        return Promise.reject(error)
+      }
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/auth/refresh`,
+          { refresh_token: refreshToken },
+          { headers: { 'Content-Type': 'application/json' } }
+        )
+        const { access_token, refresh_token: newRefreshToken } = response.data
+        tokenStorage.setItem('access_token', access_token)
+        tokenStorage.setItem('refresh_token', newRefreshToken)
+        tokenUpdatedHandler?.(access_token, newRefreshToken)
+        await Promise.allSettled(
+          pendingRequests.map(async ({ request: q, resolve }) => {
+            if (q.headers) q.headers.Authorization = `Bearer ${access_token}`
+            resolve(await request(q))
+          })
+        )
+        pendingRequests.length = 0
+        if (originalRequest.headers)
+          originalRequest.headers.Authorization = `Bearer ${access_token}`
         return request(originalRequest)
       } catch (refreshError) {
-        tokenStorage.removeItem('access_token'); tokenStorage.removeItem('refresh_token')
-        authExpiredHandler?.(); pendingRequests.forEach(({ reject }) => reject(refreshError)); pendingRequests.length = 0
+        tokenStorage.removeItem('access_token')
+        tokenStorage.removeItem('refresh_token')
+        authExpiredHandler?.()
+        pendingRequests.forEach(({ reject }) => reject(refreshError))
+        pendingRequests.length = 0
         return Promise.reject(refreshError)
-      } finally { isRefreshing = false }
+      } finally {
+        isRefreshing = false
+      }
     }
     return Promise.reject(error)
   }
@@ -803,19 +897,37 @@ request.interceptors.response.use(
 
 // ==================== 类型安全的 API Wrappers ====================
 
-export function get<TResponse>(url: string, config?: InternalAxiosRequestConfig) {
+export function get<TResponse>(
+  url: string,
+  config?: InternalAxiosRequestConfig
+) {
   return request.get<never, TResponse>(url, config)
 }
-export function post<TRequest, TResponse>(url: string, data?: TRequest, config?: InternalAxiosRequestConfig) {
+export function post<TRequest, TResponse>(
+  url: string,
+  data?: TRequest,
+  config?: InternalAxiosRequestConfig
+) {
   return request.post<never, TResponse>(url, data, config)
 }
-export function put<TRequest, TResponse>(url: string, data?: TRequest, config?: InternalAxiosRequestConfig) {
+export function put<TRequest, TResponse>(
+  url: string,
+  data?: TRequest,
+  config?: InternalAxiosRequestConfig
+) {
   return request.put<never, TResponse>(url, data, config)
 }
-export function patch<TRequest, TResponse>(url: string, data?: TRequest, config?: InternalAxiosRequestConfig) {
+export function patch<TRequest, TResponse>(
+  url: string,
+  data?: TRequest,
+  config?: InternalAxiosRequestConfig
+) {
   return request.patch<never, TResponse>(url, data, config)
 }
-export function del<TResponse>(url: string, config?: InternalAxiosRequestConfig) {
+export function del<TResponse>(
+  url: string,
+  config?: InternalAxiosRequestConfig
+) {
   return request.delete<never, TResponse>(url, config)
 }
 
@@ -837,6 +949,7 @@ setTokenUpdatedHandler((accessToken, refreshToken) => {
   useAuthStore.getState().setTokens(accessToken, refreshToken)
 })
 ```
+
 ## 4.2 TypeScript 类型定义
 
 ### src/types/enums.ts
@@ -1315,8 +1428,7 @@ export const projectsApi = {
 
   delete: (id: string) => del<void>(`/projects/${id}`),
 
-  getStats: (id: string) =>
-    get<ProjectStatistics>(`/projects/${id}/stats`),
+  getStats: (id: string) => get<ProjectStatistics>(`/projects/${id}/stats`),
 }
 ```
 
@@ -1324,11 +1436,14 @@ export const projectsApi = {
 
 ```typescript
 import { get, post, put, del } from '@/lib/request'
-import type { Module, CreateModuleRequest, UpdateModuleRequest } from '@/types/api'
+import type {
+  Module,
+  CreateModuleRequest,
+  UpdateModuleRequest,
+} from '@/types/api'
 
 export const modulesApi = {
-  list: (projectId: string) =>
-    get<Module[]>(`/projects/${projectId}/modules`),
+  list: (projectId: string) => get<Module[]>(`/projects/${projectId}/modules`),
 
   create: (projectId: string, data: CreateModuleRequest) =>
     post<CreateModuleRequest, Module>(`/projects/${projectId}/modules`, data),
@@ -1481,13 +1596,14 @@ export const plansApi = {
   delete: (id: string) => del<void>(`/plans/${id}`),
 
   addCases: (planId: string, caseIds: string[]) =>
-    post<AddCasesRequest, void>(`/plans/${planId}/cases`, { case_ids: caseIds }),
+    post<AddCasesRequest, void>(`/plans/${planId}/cases`, {
+      case_ids: caseIds,
+    }),
 
   removeCase: (planId: string, caseId: string) =>
     del<void>(`/plans/${planId}/cases/${caseId}`),
 
-  getResults: (planId: string) =>
-    get<TestResult[]>(`/plans/${planId}/results`),
+  getResults: (planId: string) => get<TestResult[]>(`/plans/${planId}/results`),
 
   recordResult: (planId: string, data: RecordResultRequest) =>
     post<RecordResultRequest, TestResult>(`/plans/${planId}/results`, data),
@@ -1551,16 +1667,17 @@ interface BatchConfirmRequest {
 export const generationApi = {
   // 生成任务
   createTask: (data: CreateGenerationTaskRequest) =>
-    post<CreateGenerationTaskRequest, GenerationTask>('/generation/tasks', data),
+    post<CreateGenerationTaskRequest, GenerationTask>(
+      '/generation/tasks',
+      data
+    ),
 
-  getTask: (id: string) =>
-    get<GenerationTask>(`/generation/tasks/${id}`),
+  getTask: (id: string) => get<GenerationTask>(`/generation/tasks/${id}`),
 
   listTasks: (params: GenerationTaskListParams) =>
-    get<{ data: GenerationTask[]; total: number }>(
-      '/generation/tasks',
-      { params }
-    ),
+    get<{ data: GenerationTask[]; total: number }>('/generation/tasks', {
+      params,
+    }),
 
   // 草稿
   getTaskDrafts: (taskId: string) =>
@@ -1575,16 +1692,20 @@ export const generationApi = {
       { module_id: moduleId }
     ),
 
-  rejectDraft: (
-    draftId: string,
-    data: RejectDraftRequest
-  ) => post<RejectDraftRequest, void>(`/generation/drafts/${draftId}/reject`, data),
+  rejectDraft: (draftId: string, data: RejectDraftRequest) =>
+    post<RejectDraftRequest, void>(
+      `/generation/drafts/${draftId}/reject`,
+      data
+    ),
 
   batchConfirm: (draftIds: string[], moduleId: string) =>
-    post<BatchConfirmRequest, BatchConfirmResult>('/generation/drafts/batch-confirm', {
-      draft_ids: draftIds,
-      module_id: moduleId,
-    }),
+    post<BatchConfirmRequest, BatchConfirmResult>(
+      '/generation/drafts/batch-confirm',
+      {
+        draft_ids: draftIds,
+        module_id: moduleId,
+      }
+    ),
 }
 ```
 
@@ -1614,8 +1735,7 @@ export const documentsApi = {
   list: (params: DocumentListParams) =>
     get<DocumentListResponse>('/knowledge/documents', { params }),
 
-  get: (id: string) =>
-    get<DocumentDetail>(`/knowledge/documents/${id}`),
+  get: (id: string) => get<DocumentDetail>(`/knowledge/documents/${id}`),
 
   upload: (data: UploadDocumentRequest) =>
     post<UploadDocumentRequest, Document>('/knowledge/documents', data),
@@ -2820,9 +2940,15 @@ export type LoginInput = z.infer<typeof loginSchema>
 import { z } from 'zod'
 
 export const registerSchema = z.object({
-  username: z.string().min(3, '用户名至少 3 个字符').max(32, '用户名最多 32 个字符'),
+  username: z
+    .string()
+    .min(3, '用户名至少 3 个字符')
+    .max(32, '用户名最多 32 个字符'),
   email: z.string().min(1, '请输入邮箱').email('请输入有效的邮箱地址'),
-  password: z.string().min(8, '密码至少 8 位字符').max(100, '密码最多 100 个字符'),
+  password: z
+    .string()
+    .min(8, '密码至少 8 位字符')
+    .max(100, '密码最多 100 个字符'),
   // 注意：super_admin 由系统分配，注册页面不开放此角色
   role: z.enum(['admin', 'normal'], { errorMap: () => '请选择用户角色' }),
 })
@@ -2836,9 +2962,14 @@ export type RegisterInput = z.infer<typeof registerSchema>
 import { z } from 'zod'
 
 export const createProjectSchema = z.object({
-  name: z.string().min(2, '项目名称至少 2 个字符').max(255, '项目名称最多 255 个字符'),
-  prefix: z.string()
-    .min(2, '前缀至少 2 个字符').max(4, '前缀最多 4 个字符')
+  name: z
+    .string()
+    .min(2, '项目名称至少 2 个字符')
+    .max(255, '项目名称最多 255 个字符'),
+  prefix: z
+    .string()
+    .min(2, '前缀至少 2 个字符')
+    .max(4, '前缀最多 4 个字符')
     .regex(/^[A-Z]+$/, '前缀仅支持大写字母'),
   description: z.string().optional(),
 })
@@ -2852,10 +2983,17 @@ export type CreateProjectInput = z.infer<typeof createProjectSchema>
 // 在组件中使用 React Hook Form + Zod
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createProjectSchema, type CreateProjectInput } from '../schema/projectSchema'
+import {
+  createProjectSchema,
+  type CreateProjectInput,
+} from '../schema/projectSchema'
 
 function CreateProjectModal() {
-  const { register, handleSubmit, formState: { errors } } = useForm<CreateProjectInput>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreateProjectInput>({
     resolver: zodResolver(createProjectSchema),
     mode: 'onChange',
   })
@@ -2874,15 +3012,15 @@ function CreateProjectModal() {
 
 ### Schema 清单
 
-| 页面 | Schema 文件 | 字段 |
-|------|-----------|------|
-| 登录 | `features/auth/schema/loginSchema.ts` | email, password |
-| 注册 | `features/auth/schema/registerSchema.ts` | username, email, password, role |
-| 创建项目 | `features/projects/schema/projectSchema.ts` | name, prefix, description |
-| 新建用例 | 内联或 `features/testcases/schema/caseSchema.ts` | moduleId, title, steps, expected, caseType, priority |
-| 新建计划 | 内联或 `features/plans/schema/planSchema.ts` | name, description |
-| 新建生成任务 | 内联或 `features/generation/schema/taskSchema.ts` | moduleId, prompt, count, caseType, priority |
-| 上传文档 | 内联或 `features/documents/schema/documentSchema.ts` | name, type |
+| 页面         | Schema 文件                                          | 字段                                                 |
+| ------------ | ---------------------------------------------------- | ---------------------------------------------------- |
+| 登录         | `features/auth/schema/loginSchema.ts`                | email, password                                      |
+| 注册         | `features/auth/schema/registerSchema.ts`             | username, email, password, role                      |
+| 创建项目     | `features/projects/schema/projectSchema.ts`          | name, prefix, description                            |
+| 新建用例     | 内联或 `features/testcases/schema/caseSchema.ts`     | moduleId, title, steps, expected, caseType, priority |
+| 新建计划     | 内联或 `features/plans/schema/planSchema.ts`         | name, description                                    |
+| 新建生成任务 | 内联或 `features/generation/schema/taskSchema.ts`    | moduleId, prompt, count, caseType, priority          |
+| 上传文档     | 内联或 `features/documents/schema/documentSchema.ts` | name, type                                           |
 
 ## 6.1 登录页 (/login)
 
@@ -3799,7 +3937,9 @@ const handleSubmit = async (values: FormData) => {
     if (isAxiosError(err) && err.response?.status === 400) {
       // 后端返回字段级错误
       const msg = (err.response.data as { error?: string }).error
-      form.setFields({ name: { value: values.name, errors: [msg ?? '请求参数错误'] } })
+      form.setFields({
+        name: { value: values.name, errors: [msg ?? '请求参数错误'] },
+      })
     } else if (isAxiosError(err) && err.response?.status === 409) {
       Message.warning('资源已存在')
     }

@@ -8,15 +8,15 @@
 
 ## 问题全景
 
-| # | 问题类别 | 涉及章节 | 严重度 |
-|---|---------|---------|--------|
-| 1 | 目录结构与 CLAUDE.md feature-based 架构冲突 | §1.1, §4, §5, §6 | 致命 |
-| 2 | 宪法 §3.2 违规：全项目使用 `any` 类型 | §4.2, §4.3, §8 | 致命 |
-| 3 | 宪法 §4.1 违规：SearchTable 手动管理服务端状态 | §5.3 | 致命 |
-| 4 | 宪法 §4.2 违规：Zustand 存储服务端数据 | §3 | 严重 |
-| 5 | 缺失 React Query 模式（query key 工厂、useMutation） | §3, §4, §5, §6 | 严重 |
-| 6 | 缺失 React Hook Form + Zod 表单模式 | §5, §6 | 中等 |
-| 7 | API 端点与 OpenAPI 不一致 | §4.3, §6, §10 | 中等 |
+| #   | 问题类别                                             | 涉及章节         | 严重度 |
+| --- | ---------------------------------------------------- | ---------------- | ------ |
+| 1   | 目录结构与 CLAUDE.md feature-based 架构冲突          | §1.1, §4, §5, §6 | 致命   |
+| 2   | 宪法 §3.2 违规：全项目使用 `any` 类型                | §4.2, §4.3, §8   | 致命   |
+| 3   | 宪法 §4.1 违规：SearchTable 手动管理服务端状态       | §5.3             | 致命   |
+| 4   | 宪法 §4.2 违规：Zustand 存储服务端数据               | §3               | 严重   |
+| 5   | 缺失 React Query 模式（query key 工厂、useMutation） | §3, §4, §5, §6   | 严重   |
+| 6   | 缺失 React Hook Form + Zod 表单模式                  | §5, §6           | 中等   |
+| 7   | API 端点与 OpenAPI 不一致                            | §4.3, §6, §10    | 中等   |
 
 ---
 
@@ -97,6 +97,7 @@ src/
 ```
 
 **依赖规则（与 CLAUDE.md §6 对齐）**:
+
 - Page → Feature hooks → Feature services → `@/lib/request`
 - `components/` 禁止引用 `features/` 的任何内容
 - `services/` 禁止引用 `store/` 或 `hooks/`
@@ -125,6 +126,7 @@ src/
 ### §2.2 路由配置代码 — 替换
 
 **问题**:
+
 1. 使用 `lazy()` + `Suspense` 组件模式，应改为 React Router v7 的 `lazy` 路由属性
 2. 导入路径从 `@/pages/` 改为 `@/features/`
 3. `LazyPage` wrapper 不必要
@@ -176,16 +178,20 @@ export const router = createBrowserRouter([
       {
         path: 'projects',
         lazy: () =>
-          import('@/features/projects/components/ProjectListPage').then((m) => ({
-            Component: m.ProjectListPage,
-          })),
+          import('@/features/projects/components/ProjectListPage').then(
+            (m) => ({
+              Component: m.ProjectListPage,
+            })
+          ),
       },
       {
         path: 'projects/:id',
         lazy: () =>
-          import('@/features/projects/components/ProjectDashboard').then((m) => ({
-            Component: m.ProjectDashboard,
-          })),
+          import('@/features/projects/components/ProjectDashboard').then(
+            (m) => ({
+              Component: m.ProjectDashboard,
+            })
+          ),
       },
       // ... 其余路由路径不变，导入改为 features/ 路径
       {
@@ -222,6 +228,7 @@ export const router = createBrowserRouter([
 ```
 
 **删除**:
+
 - `useProjectStore` — 当前项目信息通过 React Query `useProjectDetail(id)` + URL params 管理
 - `useDraftStore` — 草稿计数通过 React Query `useDraftCount()` + `refetchInterval` 实现
 
@@ -253,13 +260,25 @@ interface AuthState {
 // Token 持久化接口
 const tokenStorage = {
   getItem: (key: string): string | null => {
-    try { return localStorage.getItem(key) } catch { return null }
+    try {
+      return localStorage.getItem(key)
+    } catch {
+      return null
+    }
   },
   setItem: (key: string, value: string): void => {
-    try { localStorage.setItem(key, value) } catch { /* 静默 */ }
+    try {
+      localStorage.setItem(key, value)
+    } catch {
+      /* 静默 */
+    }
   },
   removeItem: (key: string): void => {
-    try { localStorage.removeItem(key) } catch { /* 静默 */ }
+    try {
+      localStorage.removeItem(key)
+    } catch {
+      /* 静默 */
+    }
   },
 }
 
@@ -268,7 +287,9 @@ function isTokenExpired(token: string): boolean {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]))
     return payload.exp ? Date.now() >= payload.exp * 1000 : true
-  } catch { return true }
+  } catch {
+    return true
+  }
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -347,7 +368,8 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  sidebarCollapsed: typeof window !== 'undefined' ? window.innerWidth < 1280 : false,
+  sidebarCollapsed:
+    typeof window !== 'undefined' ? window.innerWidth < 1280 : false,
 
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
@@ -355,6 +377,7 @@ export const useAppStore = create<AppState>((set) => ({
 ```
 
 **迁移说明**:
+
 - `notifications` → 改用 React Query 轮询 + Arco Notification API
 - `pendingDraftCount` → 改用 `useDraftCount()` hook (React Query + refetchInterval)
 - `currentProject` → 已删除，通过 `useProjectDetail(id)` + URL params 管理
@@ -372,7 +395,8 @@ export const useAppStore = create<AppState>((set) => ({
 export const projectKeys = {
   all: ['projects'] as const,
   lists: () => [...projectKeys.all, 'list'] as const,
-  list: (params: Record<string, unknown>) => [...projectKeys.lists(), params] as const,
+  list: (params: Record<string, unknown>) =>
+    [...projectKeys.lists(), params] as const,
   details: () => [...projectKeys.all, 'detail'] as const,
   detail: (id: string) => [...projectKeys.details(), id] as const,
   stats: (id: string) => [...projectKeys.all, 'stats', id] as const,
@@ -382,7 +406,11 @@ export const projectKeys = {
 #### useQuery 查询模式
 
 ```typescript
-export function useProjectList(params?: { keywords?: string; offset?: number; limit?: number }) {
+export function useProjectList(params?: {
+  keywords?: string
+  offset?: number
+  limit?: number
+}) {
   return useQuery({
     queryKey: projectKeys.list(params ?? {}),
     queryFn: () => projectsApi.list(params),
@@ -447,23 +475,41 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 // ... token 刷新逻辑保留不变 ...
 
 // 类型安全的 API wrappers（替代直接使用 request.get/post/put/delete）
-export function get<TResponse>(url: string, config?: InternalAxiosRequestConfig) {
+export function get<TResponse>(
+  url: string,
+  config?: InternalAxiosRequestConfig
+) {
   return request.get<never, TResponse>(url, config)
 }
 
-export function post<TRequest, TResponse>(url: string, data?: TRequest, config?: InternalAxiosRequestConfig) {
+export function post<TRequest, TResponse>(
+  url: string,
+  data?: TRequest,
+  config?: InternalAxiosRequestConfig
+) {
   return request.post<never, TResponse>(url, data, config)
 }
 
-export function put<TRequest, TResponse>(url: string, data?: TRequest, config?: InternalAxiosRequestConfig) {
+export function put<TRequest, TResponse>(
+  url: string,
+  data?: TRequest,
+  config?: InternalAxiosRequestConfig
+) {
   return request.put<never, TResponse>(url, data, config)
 }
 
-export function patch<TRequest, TResponse>(url: string, data?: TRequest, config?: InternalAxiosRequestConfig) {
+export function patch<TRequest, TResponse>(
+  url: string,
+  data?: TRequest,
+  config?: InternalAxiosRequestConfig
+) {
   return request.patch<never, TResponse>(url, data, config)
 }
 
-export function del<TResponse>(url: string, config?: InternalAxiosRequestConfig) {
+export function del<TResponse>(
+  url: string,
+  config?: InternalAxiosRequestConfig
+) {
   return request.delete<never, TResponse>(url, config)
 }
 
@@ -477,6 +523,7 @@ export default request
 ### §4.3 API 模块 — 迁移 + 修 any
 
 **问题**:
+
 1. 文件位置从 `src/api/` 迁移到 `src/features/*/services/`
 2. 所有 `request.post<any, T>` 改为使用 typed wrappers
 3. API 端点与 OpenAPI 不一致
@@ -487,19 +534,20 @@ export default request
 // src/features/projects/services/projects.ts
 import { get, post, put, del } from '@/lib/request'
 import type {
-  Project, ProjectDetail, ProjectStats,
-  CreateProjectRequest, UpdateProjectRequest,
+  Project,
+  ProjectDetail,
+  ProjectStats,
+  CreateProjectRequest,
+  UpdateProjectRequest,
 } from '@/types/api'
 
 export const projectsApi = {
   list: (params?: { keywords?: string; offset?: number; limit?: number }) =>
     get<PaginatedResponse<Project>>('/projects', { params }),
 
-  get: (id: string) =>
-    get<ProjectDetail>(`/projects/${id}`),
+  get: (id: string) => get<ProjectDetail>(`/projects/${id}`),
 
-  getStats: (id: string) =>
-    get<ProjectStats>(`/projects/${id}/stats`),
+  getStats: (id: string) => get<ProjectStats>(`/projects/${id}/stats`),
 
   create: (data: CreateProjectRequest) =>
     post<CreateProjectRequest, Project>('/projects', data),
@@ -507,22 +555,21 @@ export const projectsApi = {
   update: (id: string, data: UpdateProjectRequest) =>
     put<UpdateProjectRequest, Project>(`/projects/${id}`, data),
 
-  delete: (id: string) =>
-    del<void>(`/projects/${id}`),
+  delete: (id: string) => del<void>(`/projects/${id}`),
 }
 ```
 
 **API 端点对齐修复**:
 
-| # | 原设计端点 | OpenAPI 定义 | 修复 |
-|---|-----------|-------------|------|
-| 1 | `GET /generation/tasks` | 不存在 | 需后端补充（已在 §10 标注） |
-| 2 | `GET /drafts` | 不存在 | 需后端补充（已在 §10 标注） |
-| 3 | `PUT /projects/{id}/modules/{moduleId}` | 不存在 | 需后端补充 |
-| 4 | `PATCH /plans/{id}/status` | 不存在 | 用 `PUT /plans/{id}` + `status` 字段替代 |
-| 5 | `POST /plans/{planId}/results` | `POST /plans/{id}/results` | 路径参数名统一 |
-| 6 | `POST /testcases/import` | 不存在 | 需后端补充（P1） |
-| 7 | `GET /testcases/export` | 不存在 | 需后端补充（P1） |
+| #   | 原设计端点                              | OpenAPI 定义               | 修复                                     |
+| --- | --------------------------------------- | -------------------------- | ---------------------------------------- |
+| 1   | `GET /generation/tasks`                 | 不存在                     | 需后端补充（已在 §10 标注）              |
+| 2   | `GET /drafts`                           | 不存在                     | 需后端补充（已在 §10 标注）              |
+| 3   | `PUT /projects/{id}/modules/{moduleId}` | 不存在                     | 需后端补充                               |
+| 4   | `PATCH /plans/{id}/status`              | 不存在                     | 用 `PUT /plans/{id}` + `status` 字段替代 |
+| 5   | `POST /plans/{planId}/results`          | `POST /plans/{id}/results` | 路径参数名统一                           |
+| 6   | `POST /testcases/import`                | 不存在                     | 需后端补充（P1）                         |
+| 7   | `GET /testcases/export`                 | 不存在                     | 需后端补充（P1）                         |
 
 ---
 
@@ -537,6 +584,7 @@ export const projectsApi = {
 所有 `@/store/useProjectStore` 引用删除，改为从 URL params 获取项目 ID 后通过 React Query 获取项目信息。
 
 **Sidebar 修改要点**:
+
 - 删除 `useProjectStore` 引用
 - 项目上下文通过 `useProjectDetail(projectId)` 获取
 - `pendingDraftCount` 改为 React Query hook
@@ -572,11 +620,22 @@ interface SearchTableProps<T> {
 }
 
 export function SearchTable<T extends Record<string, unknown>>({
-  columns, data, total, loading,
-  currentPage, pageSize, onPageChange,
-  filters, filterValues, onFilterChange,
-  searchPlaceholder, keywords, onKeywordsChange,
-  rowKey = 'id', toolbar, onRowClick,
+  columns,
+  data,
+  total,
+  loading,
+  currentPage,
+  pageSize,
+  onPageChange,
+  filters,
+  filterValues,
+  onFilterChange,
+  searchPlaceholder,
+  keywords,
+  onKeywordsChange,
+  rowKey = 'id',
+  toolbar,
+  onRowClick,
 }: SearchTableProps<T>) {
   // 纯展示组件：所有状态由父组件（React Query）传入
   return (
@@ -658,7 +717,11 @@ function ProjectListPage() {
       currentPage={Math.floor(params.offset / params.limit) + 1}
       pageSize={params.limit}
       onPageChange={(page, pageSize) =>
-        setParams((p) => ({ ...p, offset: (page - 1) * pageSize, limit: pageSize }))
+        setParams((p) => ({
+          ...p,
+          offset: (page - 1) * pageSize,
+          limit: pageSize,
+        }))
       }
       keywords={params.keywords}
       onKeywordsChange={(val) => setParams((p) => ({ ...p, keywords: val }))}
@@ -688,8 +751,12 @@ StatusTag、ArrayEditor、SplitPanel、StatsCard、ReferencePanel、CaseSelector
 import { z } from 'zod'
 
 export const createProjectSchema = z.object({
-  name: z.string().min(2, '项目名称至少 2 个字符').max(255, '项目名称最多 255 个字符'),
-  prefix: z.string()
+  name: z
+    .string()
+    .min(2, '项目名称至少 2 个字符')
+    .max(255, '项目名称最多 255 个字符'),
+  prefix: z
+    .string()
     .min(2, '前缀至少 2 个字符')
     .max(4, '前缀最多 4 个字符')
     .regex(/^[A-Z]+$/, '前缀仅支持大写字母'),
@@ -701,15 +768,15 @@ export type CreateProjectInput = z.infer<typeof createProjectSchema>
 
 **所有需补充 schema 的页面**:
 
-| 页面 | Schema 名称 | 字段 |
-|------|------------|------|
-| 登录 | `loginSchema` | username, password |
-| 注册 | `registerSchema` | username, email, password, role |
-| 创建项目 | `createProjectSchema` | name, prefix, description |
-| 新建用例 | `createCaseSchema` | moduleId, title, steps, expected, caseType, priority |
-| 新建计划 | `createPlanSchema` | name, description |
-| 新建生成任务 | `createTaskSchema` | moduleId, prompt, count, caseType, priority |
-| 上传文档 | `uploadDocumentSchema` | name, type |
+| 页面         | Schema 名称            | 字段                                                 |
+| ------------ | ---------------------- | ---------------------------------------------------- |
+| 登录         | `loginSchema`          | username, password                                   |
+| 注册         | `registerSchema`       | username, email, password, role                      |
+| 创建项目     | `createProjectSchema`  | name, prefix, description                            |
+| 新建用例     | `createCaseSchema`     | moduleId, title, steps, expected, caseType, priority |
+| 新建计划     | `createPlanSchema`     | name, description                                    |
+| 新建生成任务 | `createTaskSchema`     | moduleId, prompt, count, caseType, priority          |
+| 上传文档     | `uploadDocumentSchema` | name, type                                           |
 
 ### §6.x 每页修改要点
 
@@ -717,7 +784,8 @@ export type CreateProjectInput = z.infer<typeof createProjectSchema>
 
 **6.4 项目仪表盘**: 新增 `useProjectStats` hook 描述
 
-**6.11 草稿确认页 (核心)**: 
+**6.11 草稿确认页 (核心)**:
+
 - 草稿间导航的自动保存改为 React Query mutation
 - `useDraftUpdate` mutation 描述
 
@@ -804,17 +872,17 @@ export function useModuleList(projectId: string) {
 
 与 OpenAPI 交叉验证后更新：
 
-| # | 端点 | 方法 | 优先级 | 说明 |
-|---|------|------|--------|------|
-| 1 | `/generation/tasks` | GET | P0 | 生成任务列表（分页、按项目+状态筛选） |
-| 2 | `/drafts` | GET | P0 | 全局草稿列表（跨项目，分页+筛选） |
-| 3 | `/projects/{id}/modules/{moduleId}` | PUT | P0 | 模块编辑（名称、缩写、描述） |
-| 4 | `/plans/{id}/status` | PATCH | P1 | 计划状态变更 |
-| 5 | `/testcases/import` | POST | P1 | 用例批量导入 |
-| 6 | `/testcases/export` | GET | P1 | 用例导出 |
-| 7 | `/generation/drafts/{id}` | GET | P0 | 草稿详情 |
-| 8 | `/generation/drafts/{id}` | PUT | P1 | 草稿编辑保存 |
-| 9 | `/auth/me` | GET | P1 | 当前用户信息验证 |
+| #   | 端点                                | 方法  | 优先级 | 说明                                  |
+| --- | ----------------------------------- | ----- | ------ | ------------------------------------- |
+| 1   | `/generation/tasks`                 | GET   | P0     | 生成任务列表（分页、按项目+状态筛选） |
+| 2   | `/drafts`                           | GET   | P0     | 全局草稿列表（跨项目，分页+筛选）     |
+| 3   | `/projects/{id}/modules/{moduleId}` | PUT   | P0     | 模块编辑（名称、缩写、描述）          |
+| 4   | `/plans/{id}/status`                | PATCH | P1     | 计划状态变更                          |
+| 5   | `/testcases/import`                 | POST  | P1     | 用例批量导入                          |
+| 6   | `/testcases/export`                 | GET   | P1     | 用例导出                              |
+| 7   | `/generation/drafts/{id}`           | GET   | P0     | 草稿详情                              |
+| 8   | `/generation/drafts/{id}`           | PUT   | P1     | 草稿编辑保存                          |
+| 9   | `/auth/me`                          | GET   | P1     | 当前用户信息验证                      |
 
 ### §10.2 Mock 策略 — 修复 `any`
 
@@ -848,18 +916,18 @@ const mockHandlers = [
 
 ## 修改影响矩阵
 
-| 章节 | 改动级别 | 主要修改 |
-|------|---------|---------|
-| §1 项目架构 | 🔴 重写 | 目录结构完全替换为 feature-based |
-| §2 路由设计 | 🟡 中度 | 导入路径改为 features/，去掉 LazyPage wrapper |
-| §3 状态管理 | 🔴 重写 | 4 store → 1+1，新增 React Query 模式指南 |
-| §4 API 层 | 🟡 中度 | 迁移路径 + `any` → `never` + API 端点对齐 |
-| §5 组件架构 | 🟡 中度 | SearchTable 核心重写，其他组件路径调整 |
-| §6 页面设计 | 🟡 中度 | 补充 Zod schema、React Query hook 描述 |
-| §7 设计令牌 | 🟢 无改 | — |
-| §8 错误处理 | 🟢 微调 | `any` → `unknown` + `isAxiosError` |
-| §9 性能优化 | 🟡 中度 | Zustand 缓存 → React Query staleTime |
-| §10 开发建议 | 🟢 微调 | 更新 API 清单、修复 mock any |
+| 章节         | 改动级别 | 主要修改                                      |
+| ------------ | -------- | --------------------------------------------- |
+| §1 项目架构  | 🔴 重写  | 目录结构完全替换为 feature-based              |
+| §2 路由设计  | 🟡 中度  | 导入路径改为 features/，去掉 LazyPage wrapper |
+| §3 状态管理  | 🔴 重写  | 4 store → 1+1，新增 React Query 模式指南      |
+| §4 API 层    | 🟡 中度  | 迁移路径 + `any` → `never` + API 端点对齐     |
+| §5 组件架构  | 🟡 中度  | SearchTable 核心重写，其他组件路径调整        |
+| §6 页面设计  | 🟡 中度  | 补充 Zod schema、React Query hook 描述        |
+| §7 设计令牌  | 🟢 无改  | —                                             |
+| §8 错误处理  | 🟢 微调  | `any` → `unknown` + `isAxiosError`            |
+| §9 性能优化  | 🟡 中度  | Zustand 缓存 → React Query staleTime          |
+| §10 开发建议 | 🟢 微调  | 更新 API 清单、修复 mock any                  |
 
 ---
 
