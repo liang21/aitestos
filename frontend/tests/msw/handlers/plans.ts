@@ -147,4 +147,14 @@ export const plansHandlers = [
     }
     return HttpResponse.json(mockResult, { status: 201 })
   }),
+
+  // PATCH /api/v1/plans/:id/status - Update plan status
+  http.patch('/api/v1/plans/:id/status', () => {
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  // DELETE /api/v1/plans/:id/results/:caseId - Delete result (for undo)
+  http.delete('/api/v1/plans/:id/results/:caseId', () => {
+    return new HttpResponse(null, { status: 204 })
+  }),
 ]

@@ -300,3 +300,97 @@ export function useRecordResult() {
     },
   })
 }
+
+/**
+ * Update plan status mutation
+ */
+export function useUpdatePlanStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ planId, status }: { planId: string; status: string }) =>
+      plansApi.updateStatus(planId, status),
+    onSuccess: () => {
+      // Invalidate plan queries
+      queryClient.invalidateQueries({ queryKey: planKeys.all })
+    },
+  })
+}
+
+/**
+ * Delete result mutation (for undo functionality)
+ */
+export function useDeleteResult() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ planId, caseId }: { planId: string; caseId: string }) =>
+      plansApi.deleteResult(planId, caseId),
+    onMutate: async ({ planId, caseId }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: planKeys.detail(planId) })
+
+      // Snapshot previous value
+      const previousPlan = queryClient.getQueryData(planKeys.detail(planId))
+
+      // Optimistically remove the result
+      queryClient.setQueryData(
+        planKeys.detail(planId),
+        (old: PlanDetail | undefined) => {
+          if (!old) return old
+
+          // Find the case and remove its result
+          const updatedCases = old.cases.map((c) =>
+            c.caseId === caseId
+              ? {
+                  ...c,
+                  resultStatus: undefined,
+                  resultNote: undefined,
+                  executedAt: undefined,
+                  executedBy: undefined,
+                }
+              : c
+          )
+
+          // Recalculate stats
+          const targetCase = old.cases.find((c) => c.caseId === caseId)
+          const oldResult = targetCase?.resultStatus
+          const stats = { ...old.stats }
+
+          // Decrement the old status count
+          if (oldResult === 'pass') stats.passed = Math.max(0, stats.passed - 1)
+          if (oldResult === 'fail') stats.failed = Math.max(0, stats.failed - 1)
+          if (oldResult === 'block')
+            stats.blocked = Math.max(0, stats.blocked - 1)
+          if (oldResult === 'skip')
+            stats.skipped = Math.max(0, stats.skipped - 1)
+
+          // Increment unexecuted
+          stats.unexecuted += 1
+
+          return {
+            ...old,
+            cases: updatedCases,
+            stats,
+          }
+        }
+      )
+
+      // Return context with previous value
+      return { previousPlan }
+    },
+    onError: (err, variables, context) => {
+      // Rollback to previous value
+      if (context?.previousPlan) {
+        queryClient.setQueryData(
+          planKeys.detail(context?.variables.planId),
+          context.previousPlan
+        )
+      }
+    },
+    onSuccess: () => {
+      // Invalidate to ensure consistency with server
+      queryClient.invalidateQueries({ queryKey: planKeys.all })
+    },
+  })
+}

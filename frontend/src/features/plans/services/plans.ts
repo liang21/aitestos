@@ -2,7 +2,7 @@
  * Plans API Service
  */
 
-import { get, post, put, del } from '@/lib/request'
+import { get, post, put, patch, del } from '@/lib/request'
 import type {
   PaginatedResponse,
   TestPlan,
@@ -93,5 +93,24 @@ export const plansApi = {
     data: RecordResultRequest
   ): Promise<PlanCase> => {
     return post<RecordResultRequest, PlanCase>(`/plans/${planId}/results`, data)
+  },
+
+  /**
+   * Update plan status (draft → active → completed → archived)
+   */
+  updateStatus: async (
+    planId: string,
+    status: string
+  ): Promise<void> => {
+    return patch<{ status: string }, void>(`/plans/${planId}/status`, {
+      status,
+    })
+  },
+
+  /**
+   * Delete a recorded result (for undo functionality)
+   */
+  deleteResult: async (planId: string, caseId: string): Promise<void> => {
+    return del<void>(`/plans/${planId}/results/${caseId}`)
   },
 }

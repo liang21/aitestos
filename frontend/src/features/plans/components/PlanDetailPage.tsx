@@ -1,12 +1,11 @@
 /**
  * Plan Detail Page
  * Shows plan information, execution stats, and test results
+ * Features: Quick entry (inline select), Batch entry, Undo functionality
  */
 
-import React from 'react'
-import { useState } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { usePlanList } from '@/features/testcases/hooks/useTestCases'
 import {
   Button,
   Card,
@@ -16,6 +15,8 @@ import {
   Modal,
   Message,
   Popconfirm,
+  Select,
+  Checkbox,
 } from '@arco-design/web-react'
 import {
   IconArrowLeft,
@@ -25,11 +26,13 @@ import {
 import {
   usePlanDetail,
   useRecordResult,
+  useDeleteResult,
   useDeletePlan,
 } from '../hooks/usePlans'
 import { StatusTag } from '@/components/business/StatusTag'
 import { ResultRecordModal } from './ResultRecordModal'
 import type { ResultStatus } from '@/types/enums'
+import type { PlanCase } from '@/types/api'
 
 const resultStatusOptions = [
   { label: '通过', value: 'pass' },
@@ -45,6 +48,20 @@ const resultStatusTextMap: Record<ResultStatus, string> = {
   skip: '跳过',
 }
 
+const resultStatusColorMap: Record<ResultStatus, string> = {
+  pass: 'rgb(var(--success-6))',
+  fail: 'rgb(var(--danger-6))',
+  block: 'rgb(var(--warning-6))',
+  skip: 'rgb(var(--text-3))',
+}
+
+interface UndoState {
+  caseId: string
+  previousStatus?: ResultStatus
+  timerId: number
+  messageId: string
+}
+
 export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
   const navigate = useNavigate()
   const { planId: urlPlanId, projectId } = useParams<{
@@ -53,17 +70,36 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
   }>()
   const planId = propPlanId || urlPlanId || ''
 
-  // If we have a projectId param, we might need to fetch the plan differently
-  // For now, use the planId directly
-  const effectiveProjectId = projectId || ''
-
   const { data: planDetail, isLoading, error, refetch } = usePlanDetail(planId)
   const recordResultMutation = useRecordResult()
+  const deleteResultMutation = useDeleteResult()
   const deletePlanMutation = useDeletePlan()
 
+  // Result Modal state
   const [resultModalVisible, setResultModalVisible] = useState(false)
   const [selectedCaseId, setSelectedCaseId] = useState<string>('')
   const [selectedCaseTitle, setSelectedCaseTitle] = useState<string>('')
+
+  // Quick entry state
+  const [editingCaseId, setEditingCaseId] = useState<string | null>(null)
+  const [flashRows, setFlashRows] = useState<Set<string>>(new Set())
+  const [undoStates, setUndoStates] = useState<Map<string, UndoState>>(new Map())
+
+  // Batch entry state
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([])
+  const [batchModalVisible, setBatchModalVisible] = useState(false)
+  const [batchResult, setBatchResult] = useState<ResultStatus | ''>('')
+
+  // Refs for timers
+  const undoTimersRef = useRef<Map<string, number>>(new Map())
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      undoTimersRef.current.forEach((timerId) => clearTimeout(timerId))
+      undoTimersRef.current.clear()
+    }
+  }, [])
 
   // Handle back button
   const handleBack = () => {
@@ -88,7 +124,7 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
     }
   }
 
-  // Handle open result record modal
+  // Handle open result record modal (detailed entry)
   const handleOpenResultModal = (caseId: string, caseTitle: string) => {
     setSelectedCaseId(caseId)
     setSelectedCaseTitle(caseTitle)
@@ -102,7 +138,7 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
     setSelectedCaseTitle('')
   }
 
-  // Handle submit result
+  // Handle submit result from modal
   const handleSubmitResult = async (data: {
     status: ResultStatus
     note?: string
@@ -122,6 +158,149 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
     } catch (err) {
       Message.error(
         `录入失败：${err instanceof Error ? err.message : '未知错误'}`
+      )
+    }
+  }
+
+  // Quick entry: handle inline select change
+  const handleQuickEntryChange = async (
+    caseId: string,
+    status: ResultStatus
+  ) => {
+    const targetCase = planDetail?.cases.find((c) => c.caseId === caseId)
+    const previousStatus = targetCase?.resultStatus
+
+    try {
+      await recordResultMutation.mutateAsync({
+        planId,
+        data: { caseId, status },
+      })
+
+      // Flash the row
+      setFlashRows((prev) => new Set(prev).add(caseId))
+      setTimeout(() => {
+        setFlashRows((prev) => {
+          const next = new Set(prev)
+          next.delete(caseId)
+          return next
+        })
+      }, 500)
+
+      // Show toast with undo link
+      const messageId = `result-${caseId}-${Date.now()}`
+      Message.success({
+        id: messageId,
+        content: (
+          <span className="flex items-center gap-2">
+            已录入：{resultStatusTextMap[status]}
+            <button
+              className="text-white underline hover:no-underline"
+              onClick={() => handleUndo(caseId, previousStatus, messageId)}
+            >
+              撤销
+            </button>
+          </span>
+        ),
+        duration: 3000,
+        closable: true,
+      })
+
+      // Set up undo state with timer
+      const timerId = window.setTimeout(() => {
+        setUndoStates((prev) => {
+          const next = new Map(prev)
+          next.delete(caseId)
+          return next
+        })
+        undoTimersRef.current.delete(caseId)
+      }, 3000)
+
+      undoTimersRef.current.set(caseId, timerId)
+      setUndoStates((prev) =>
+        new Map(prev).set(caseId, { caseId, previousStatus, timerId, messageId })
+      )
+
+      setEditingCaseId(null)
+    } catch (err) {
+      Message.error(
+        `录入失败：${err instanceof Error ? err.message : '未知错误'}`
+      )
+    }
+  }
+
+  // Undo quick entry result
+  const handleUndo = async (
+    caseId: string,
+    previousStatus: ResultStatus | undefined,
+    messageId: string
+  ) => {
+    // Clear existing timer
+    const existingUndo = undoStates.get(caseId)
+    if (existingUndo) {
+      clearTimeout(existingUndo.timerId)
+      undoTimersRef.current.delete(caseId)
+    }
+
+    // Close the toast
+    Message.clear(messageId)
+
+    try {
+      await deleteResultMutation.mutateAsync({ planId, caseId })
+      Message.success('已撤销录入')
+
+      setUndoStates((prev) => {
+        const next = new Map(prev)
+        next.delete(caseId)
+        return next
+      })
+    } catch (err) {
+      Message.error(
+        `撤销失败：${err instanceof Error ? err.message : '未知错误'}`
+      )
+    }
+  }
+
+  // Batch entry: handle checkbox selection
+  const handleRowSelectionChange = (selectedKeys: string[]) => {
+    setSelectedRowKeys(selectedKeys)
+  }
+
+  // Batch entry: open modal
+  const handleOpenBatchModal = () => {
+    setBatchResult('')
+    setBatchModalVisible(true)
+  }
+
+  // Batch entry: close modal
+  const handleCloseBatchModal = () => {
+    setBatchModalVisible(false)
+    setBatchResult('')
+  }
+
+  // Batch entry: submit
+  const handleSubmitBatchEntry = async () => {
+    if (!batchResult) {
+      Message.warning('请选择执行结果')
+      return
+    }
+
+    try {
+      // Record result for each selected case
+      await Promise.all(
+        selectedRowKeys.map((caseId) =>
+          recordResultMutation.mutateAsync({
+            planId,
+            data: { caseId, status: batchResult as ResultStatus },
+          })
+        )
+      )
+
+      Message.success(`已批量录入 ${selectedRowKeys.length} 条结果`)
+      handleCloseBatchModal()
+      setSelectedRowKeys([])
+    } catch (err) {
+      Message.error(
+        `批量录入失败：${err instanceof Error ? err.message : '未知错误'}`
       )
     }
   }
@@ -150,12 +329,12 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
     )
   }
 
-  const { stats, cases } = planDetail
+  const { stats, cases, status } = planDetail
 
   // Calculate pass rate
   const passRate = stats.total > 0 ? (stats.passed / stats.total) * 100 : 0
 
-  // Table columns
+  // Table columns with quick entry
   const columns = [
     {
       title: '用例编号',
@@ -170,19 +349,58 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
     {
       title: '执行状态',
       dataIndex: 'resultStatus',
-      width: 100,
-      render: (status: ResultStatus | undefined) =>
-        status ? (
-          <StatusTag status={status} category="case_status" />
+      width: 120,
+      render: (status: ResultStatus | undefined, record: PlanCase) => {
+        const isEditing = editingCaseId === record.caseId
+
+        if (isEditing) {
+          return (
+            <Select
+              size="small"
+              options={resultStatusOptions}
+              value={status}
+              placeholder="选择结果"
+              onChange={(value: ResultStatus) =>
+                handleQuickEntryChange(record.caseId, value)
+              }
+              onBlur={() => setEditingCaseId(null)}
+              autoFocus
+              style={{ width: '100%' }}
+            />
+          )
+        }
+
+        return status ? (
+          <button
+            className="cursor-pointer hover:opacity-80"
+            onClick={() => setEditingCaseId(record.caseId)}
+          >
+            <StatusTag status={status} category="case_status" />
+          </button>
         ) : (
-          <span className="text-gray-400">未执行</span>
-        ),
+          <button
+            className="text-gray-400 cursor-pointer hover:text-gray-600"
+            onClick={() => setEditingCaseId(record.caseId)}
+          >
+            未执行
+          </button>
+        )
+      },
     },
     {
-      title: '备注',
-      dataIndex: 'resultNote',
-      ellipsis: true,
-      render: (note: string | undefined) => note || '-',
+      title: '执行人',
+      dataIndex: 'executedBy',
+      width: 100,
+      render: (executedBy: string | undefined) => executedBy || '-',
+    },
+    {
+      title: '执行时间',
+      dataIndex: 'executedAt',
+      width: 160,
+      render: (executedAt: string | undefined) =>
+        executedAt
+          ? new Date(executedAt).toLocaleString('zh-CN')
+          : '-',
     },
     {
       title: '操作',
@@ -193,14 +411,32 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
           size="small"
           onClick={() => handleOpenResultModal(record.caseId, record.caseTitle)}
         >
-          录入结果
+          详细录入
         </Button>
       ),
     },
   ]
 
+  // Row class for flash animation
+  const getRowClassName = (record: PlanCase) => {
+    return flashRows.has(record.caseId) ? 'animate-flash' : ''
+  }
+
   return (
     <div className="p-6">
+      <style>{`
+        @keyframes flash {
+          0% { background-color: transparent; }
+          50% { background-color: ${
+            batchResult ? resultStatusColorMap[batchResult as ResultStatus] : 'rgba(var(--primary-6), 0.1)'
+          }; }
+          100% { background-color: transparent; }
+        }
+        .animate-flash {
+          animation: flash 0.5s ease-in-out;
+        }
+      `}</style>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
@@ -231,7 +467,7 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <div className="text-gray-500 text-sm">状态</div>
-            <StatusTag status={planDetail.status} category="plan_status" />
+            <StatusTag status={status} category="plan_status" />
           </div>
           <div>
             <div className="text-gray-500 text-sm">创建时间</div>
@@ -294,18 +530,37 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
         </div>
       </Card>
 
-      {/* Test Cases Table */}
-      <Card title="用例列表">
+      {/* Test Cases Table with Batch Entry */}
+      <Card
+        title="用例列表"
+        extra={
+          selectedRowKeys.length > 0 && (
+            <Button type="primary" onClick={handleOpenBatchModal}>
+              批量录入 ({selectedRowKeys.length})
+            </Button>
+          )
+        }
+      >
         <Table
           columns={columns}
           data={cases}
           rowKey="caseId"
           pagination={false}
           loading={isLoading}
+          rowSelection={
+            status === 'active'
+              ? {
+                  type: 'checkbox',
+                  selectedRowKeys,
+                  onChange: handleRowSelectionChange,
+                }
+              : undefined
+          }
+          rowClassName={getRowClassName}
         />
       </Card>
 
-      {/* Result Record Modal */}
+      {/* Result Record Modal (Detailed Entry) */}
       <ResultRecordModal
         visible={resultModalVisible}
         planId={planId}
@@ -314,6 +569,33 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
         onClose={handleCloseResultModal}
         onSubmit={handleSubmitResult}
       />
+
+      {/* Batch Entry Modal */}
+      <Modal
+        title="批量录入结果"
+        visible={batchModalVisible}
+        onCancel={handleCloseBatchModal}
+        onOk={handleSubmitBatchEntry}
+        okText="确认录入"
+        cancelText="取消"
+      >
+        <div className="py-4">
+          <div className="mb-4">
+            已选择 <span className="font-medium">{selectedRowKeys.length}</span>{' '}
+            条用例
+          </div>
+          <div>
+            <label className="block mb-2">执行结果</label>
+            <Select
+              options={resultStatusOptions}
+              value={batchResult}
+              onChange={setBatchResult}
+              placeholder="请选择执行结果"
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
