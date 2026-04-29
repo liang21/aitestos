@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Table, Card, Select, Button, Tag } from '@arco-design/web-react'
+import { Card, Select, Button } from '@arco-design/web-react'
 import { IconPlus } from '@arco-design/web-react/icon'
 import { useGenerationTasks } from '@/features/generation/hooks/useGeneration'
 import { StatusTag } from '@/components/business/StatusTag'
+import { VirtualTable } from '@/components/business/VirtualTable'
 import type { TaskStatus } from '@/types/enums'
 
 const { Option: SelectOption } = Select
@@ -98,11 +99,12 @@ export function GenerationTaskListPage() {
           </div>
         </div>
 
-        <Table
+        <VirtualTable
           columns={columns}
           data={tasks}
           loading={isLoading}
           rowKey="id"
+          enableVirtual={tasks.length > 500}
           pagination={{
             total: tasksData?.total ?? 0,
             pageSize: 20,

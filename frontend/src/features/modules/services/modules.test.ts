@@ -114,4 +114,61 @@ describe('modulesApi', () => {
       await expect(modulesApi.delete('123')).resolves.toBe('')
     })
   })
+
+  describe('update', () => {
+    it('should call PUT /modules/:id with updated data', async () => {
+      const updateData = {
+        name: 'Updated Module Name',
+        abbreviation: 'UPD',
+      }
+
+      const mockResponse = {
+        id: '123',
+        projectId: 'proj1',
+        ...updateData,
+        createdAt: '2024-01-01',
+        updatedAt: '2024-01-02',
+      }
+
+      server.use(
+        http.put('/api/v1/modules/123', async ({ request }) => {
+          const body = await request.json()
+          expect(body).toEqual(updateData)
+          return HttpResponse.json(mockResponse)
+        })
+      )
+
+      const result = await modulesApi.update('123', updateData)
+      expect(result.id).toBe('123')
+      expect(result.name).toBe('Updated Module Name')
+      expect(result.abbreviation).toBe('UPD')
+    })
+
+    it('should support partial updates', async () => {
+      const partialUpdate = {
+        name: 'New Name Only',
+      }
+
+      const mockResponse = {
+        id: '123',
+        projectId: 'proj1',
+        name: 'New Name Only',
+        abbreviation: 'USR',
+        createdAt: '2024-01-01',
+        updatedAt: '2024-01-02',
+      }
+
+      server.use(
+        http.put('/api/v1/modules/123', async ({ request }) => {
+          const body = await request.json()
+          expect(body).toEqual(partialUpdate)
+          return HttpResponse.json(mockResponse)
+        })
+      )
+
+      const result = await modulesApi.update('123', partialUpdate)
+      expect(result.name).toBe('New Name Only')
+      expect(result.abbreviation).toBe('USR')
+    })
+  })
 })

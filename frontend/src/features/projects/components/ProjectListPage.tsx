@@ -3,14 +3,14 @@ import {
   Button,
   Card,
   Input,
-  Table,
   Typography,
   Modal,
   Space,
 } from '@arco-design/web-react'
-import { IconPlus, IconSearch } from '@arco-design/web-react/icon'
+import { IconPlus } from '@arco-design/web-react/icon'
 import { useProjectList, useDeleteProject } from '../hooks/useProjects'
 import { CreateProjectModal } from './CreateProjectModal'
+import { SearchTable } from '@/components/business/SearchTable'
 import { useDebounce } from '@/hooks/useDebounce'
 
 const { Title } = Typography
@@ -117,17 +117,20 @@ export function ProjectListPage() {
           />
         </div>
 
-        <Table
+        <SearchTable
           columns={columns}
           data={data?.data ?? []}
+          total={data?.total ?? 0}
           loading={isLoading}
-          rowKey="id"
-          pagination={{
-            current: Math.floor(searchParams.offset / searchParams.limit) + 1,
-            pageSize: searchParams.limit,
-            total: data?.total ?? 0,
-            onChange: handlePageChange,
+          current={Math.floor(searchParams.offset / searchParams.limit) + 1}
+          pageSize={searchParams.limit}
+          onPageChange={(page) => {
+            setSearchParams((prev) => ({
+              ...prev,
+              offset: (page - 1) * prev.limit,
+            }))
           }}
+          emptyText="暂无项目"
         />
       </Card>
 

@@ -9,6 +9,7 @@ import { Table, Button, Select, Space, Message } from '@arco-design/web-react'
 import { IconPlus } from '@arco-design/web-react/icon'
 import { useCaseList } from '../hooks/useTestCases'
 import { StatusTag } from '@/components/business/StatusTag'
+import { VirtualTable } from '@/components/business/VirtualTable'
 import { CreateCaseDrawer } from './CreateCaseDrawer'
 import type { TestCase, CaseStatus, CaseType, Priority } from '@/types/api'
 
@@ -148,12 +149,13 @@ export function CaseListPage() {
         />
       </div>
 
-      {/* Table */}
-      <Table
+      {/* Table with virtual scrolling */}
+      <VirtualTable
         loading={isLoading}
         data={data?.data ?? []}
         columns={columns}
         rowKey="id"
+        enableVirtual={(data?.data ?? []).length > 500}
         pagination={{
           total: data?.total ?? 0,
           pageSize: 20,

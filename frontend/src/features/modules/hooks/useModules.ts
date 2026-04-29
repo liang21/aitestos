@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   CreateModuleRequest,
+  UpdateModuleRequest,
   Module,
   PaginatedResponse,
 } from '@/types/api'
@@ -60,6 +61,29 @@ export function useDeleteModule() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: moduleKeys.list(variables.projectId),
+      })
+    },
+  })
+}
+
+/**
+ * Hook: Update module
+ */
+export function useUpdateModule() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string
+      data: UpdateModuleRequest
+    }) => modulesApi.update(id, data),
+    onSuccess: (_, variables) => {
+      // Invalidate module list queries
+      queryClient.invalidateQueries({
+        queryKey: moduleKeys.lists(),
       })
     },
   })

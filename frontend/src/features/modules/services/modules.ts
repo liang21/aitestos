@@ -1,5 +1,6 @@
 import type {
   CreateModuleRequest,
+  UpdateModuleRequest,
   Module,
   PaginatedResponse,
 } from '@/types/api'
@@ -32,5 +33,16 @@ export const modulesApi = {
    */
   delete: async (id: string): Promise<void> => {
     return request.delete(`/modules/${id}`)
+  },
+
+  /**
+   * Update module
+   * PUT /api/v1/modules/:id
+   */
+  update: async (
+    id: string,
+    data: UpdateModuleRequest
+  ): Promise<Module> => {
+    return request.put(`/modules/${id}`, data)
   },
 }

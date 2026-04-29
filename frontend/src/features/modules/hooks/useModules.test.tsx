@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { server } from '../../../../tests/msw/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { useModuleList, useCreateModule, useDeleteModule } from './useModules'
+import { useModuleList, useCreateModule, useDeleteModule, useUpdateModule } from './useModules'
 import React from 'react'
 
 function createTestQueryClient() {
@@ -138,6 +138,85 @@ describe('useModules hooks', () => {
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: ['modules', 'list', 'proj1'],
       })
+    })
+  })
+
+  describe('useUpdateModule', () => {
+    it('should update module and invalidate cache', async () => {
+      const queryClient = createTestQueryClient()
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+      const updateData = {
+        name: 'Updated Module',
+        abbreviation: 'UPD',
+      }
+
+      const mockResponse = {
+        id: '123',
+        projectId: 'proj1',
+        ...updateData,
+        createdAt: '2024-01-01',
+        updatedAt: '2024-01-02',
+      }
+
+      server.use(
+        http.put('/api/v1/modules/123', async () =>
+          HttpResponse.json(mockResponse)
+        )
+      )
+
+      const { result } = renderHook(() => useUpdateModule(), {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
+      })
+
+      await result.current.mutateAsync({ id: '123', data: updateData })
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      expect(result.current.data).toEqual(mockResponse)
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ['modules', 'list'],
+      })
+    })
+
+    it('should support partial updates', async () => {
+      const queryClient = createTestQueryClient()
+
+      const partialData = {
+        name: 'New Name Only',
+      }
+
+      const mockResponse = {
+        id: '123',
+        projectId: 'proj1',
+        name: 'New Name Only',
+        abbreviation: 'USR',
+        createdAt: '2024-01-01',
+        updatedAt: '2024-01-02',
+      }
+
+      server.use(
+        http.put('/api/v1/modules/123', async () =>
+          HttpResponse.json(mockResponse)
+        )
+      )
+
+      const { result } = renderHook(() => useUpdateModule(), {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        ),
+      })
+
+      await result.current.mutateAsync({ id: '123', data: partialData })
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      expect(result.current.data?.name).toBe('New Name Only')
+      expect(result.current.data?.abbreviation).toBe('USR')
     })
   })
 })

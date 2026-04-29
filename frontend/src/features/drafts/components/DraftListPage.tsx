@@ -21,6 +21,7 @@ import {
 } from '../hooks/useDrafts'
 import { useModuleList } from '@/features/modules/hooks/useModules'
 import { StatusTag } from '@/components/business/StatusTag'
+import { VirtualTable } from '@/components/business/VirtualTable'
 import type { CaseDraft, DraftStatus, Module } from '@/types/api'
 
 interface DraftListPageProps {
@@ -244,12 +245,13 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
         </div>
       )}
 
-      {/* Table */}
-      <Table
+      {/* Table with virtual scrolling for large datasets */}
+      <VirtualTable
         loading={isLoading}
         data={data?.data ?? []}
         columns={columns}
         rowKey="id"
+        enableVirtual={(data?.data ?? []).length > 500}
         pagination={{
           total: data?.total ?? 0,
           pageSize: 20,

@@ -163,6 +163,15 @@ export interface CreateModuleRequest {
   abbreviation: string
 }
 
+/**
+ * Update module request (all fields optional)
+ */
+export interface UpdateModuleRequest {
+  name?: string
+  abbreviation?: string
+  description?: string
+}
+
 // ============================================================================
 // Test Case Types
 // ============================================================================
