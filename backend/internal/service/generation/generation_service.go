@@ -29,6 +29,7 @@ type ListTaskOptions struct {
 	Limit    int
 	Status   string
 	Keywords string
+	ModuleID uuid.UUID
 }
 
 // ConfirmDraftRequest contains draft confirmation data
