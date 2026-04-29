@@ -1,6 +1,6 @@
 import { Button, Input, Space } from '@arco-design/web-react'
 import { IconMinus, IconPlus } from '@arco-design/web-react/icon'
-import { useEffect, useRef, useState } from 'react'
+import { useMemo } from 'react'
 
 export interface ArrayEditorProps {
   /** Current array value */
@@ -22,17 +22,6 @@ export interface ArrayEditorProps {
 }
 
 /**
- * Check if two string arrays are deeply equal
- */
-function arraysEqual(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false
-  }
-  return true
-}
-
-/**
  * Dynamic array editor component
  * Used for editing test case steps, preconditions, etc.
  */
@@ -46,38 +35,26 @@ export function ArrayEditor({
   showRemoveButton = true,
   className,
 }: ArrayEditorProps) {
-  // Sync internal state with external value prop
-  const [rows, setRows] = useState<string[]>(value.length > 0 ? value : [''])
-  const prevValueRef = useRef<string[]>()
-
-  useEffect(() => {
-    // Only update if value actually changed (deep comparison)
-    if (!arraysEqual(value, prevValueRef.current ?? [])) {
-      if (value.length > 0) {
-        setRows(value)
-      }
-      prevValueRef.current = value
-    }
+  // Use value directly as source of truth, default to one empty row
+  const displayRows = useMemo(() => {
+    return value.length > 0 ? value : ['']
   }, [value])
 
   const handleInputChange = (index: number, newValue: string) => {
-    const newRows = [...rows]
+    const newRows = [...displayRows]
     newRows[index] = newValue
-    setRows(newRows)
     onChange(newRows)
   }
 
   const handleAddRow = () => {
-    if (maxRows && rows.length >= maxRows) return
-    const newRows = [...rows, '']
-    setRows(newRows)
+    if (maxRows && displayRows.length >= maxRows) return
+    const newRows = [...displayRows, '']
     onChange(newRows)
   }
 
   const handleRemoveRow = (index: number) => {
-    if (rows.length <= minRows) return
-    const newRows = rows.filter((_, i) => i !== index)
-    setRows(newRows)
+    if (displayRows.length <= minRows) return
+    const newRows = displayRows.filter((_, i) => i !== index)
     onChange(newRows)
   }
 
@@ -88,7 +65,7 @@ export function ArrayEditor({
       size="small"
       style={{ width: '100%' }}
     >
-      {rows.map((row, index) => (
+      {displayRows.map((row, index) => (
         <div key={index} className="flex gap-2 items-center">
           <Input
             value={row}
@@ -96,7 +73,7 @@ export function ArrayEditor({
             placeholder={placeholder}
             className="flex-1"
           />
-          {showRemoveButton && rows.length > minRows && (
+          {showRemoveButton && displayRows.length > minRows && (
             <Button
               type="text"
               status="danger"
@@ -107,7 +84,7 @@ export function ArrayEditor({
           )}
         </div>
       ))}
-      {showAddButton && (!maxRows || rows.length < maxRows) && (
+      {showAddButton && (!maxRows || displayRows.length < maxRows) && (
         <Button
           type="outline"
           icon={<IconPlus />}

@@ -4,7 +4,11 @@ import '@testing-library/jest-dom/vitest'
 import { server } from './msw/server'
 
 // Start MSW server before all tests
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+beforeAll(() => {
+  // Set environment variable for API base URL
+  process.env.VITE_API_BASE_URL = '/api/v1'
+  server.listen({ onUnhandledRequest: 'error' })
+})
 
 // Reset handlers after each test
 afterEach(() => {

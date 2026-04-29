@@ -272,6 +272,11 @@ export interface CaseDraft {
   priority: Priority
   status: DraftStatus
   feedback?: string
+  aiMetadata?: {
+    confidence: Confidence
+    referencedChunks: ReferencedChunk[]
+    modelVersion: string
+  }
   createdAt: string
   updatedAt: string
   // Joined fields

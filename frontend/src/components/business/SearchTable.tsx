@@ -76,8 +76,8 @@ export function SearchTable<T extends Record<string, unknown>>({
           pagination={paginationProps}
           rowKey={(record, index) => {
             if (typeof record === 'object' && record !== null) {
-              const id = (record as any).id ?? (record as any).key
-              if (id) return String(id)
+              const id = (record as Record<string, unknown>).id ?? (record as Record<string, unknown>).key
+              if (typeof id === 'string' || typeof id === 'number') return String(id)
             }
             // Use index as fallback - warn in development
             if (process.env.NODE_ENV === 'development') {

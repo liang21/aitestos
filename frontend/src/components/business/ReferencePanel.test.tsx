@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, vi } from 'vitest'
+import { describe, expect } from 'vitest'
 import type { ReferencedChunk } from '@/types/api'
 import { ReferencePanel } from './ReferencePanel'
 
@@ -52,7 +52,7 @@ describe('ReferencePanel', () => {
   })
 
   it('should group chunks by document', () => {
-    const { container } = render(<ReferencePanel chunks={mockChunks} />)
+    render(<ReferencePanel chunks={mockChunks} />)
 
     // Check that chunks from same document are visually grouped
     const docTitles = screen.getAllByText('用户注册模块 PRD v2.0')

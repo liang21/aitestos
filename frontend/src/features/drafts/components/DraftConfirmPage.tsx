@@ -29,7 +29,7 @@ import { ArrayEditor } from '@/components/business/ArrayEditor'
 import { ReferencePanel } from '@/components/business/ReferencePanel'
 import { StatusTag } from '@/components/business/StatusTag'
 import { buildProjectRoutes } from '@/lib/routes'
-import type { ReferencedChunk } from '@/types/api'
+import type { ReferencedChunk, ConfirmDraftRequest } from '@/types/api'
 
 const reasonOptions = [
   { label: '重复', value: 'duplicate' },
@@ -63,7 +63,7 @@ export function DraftConfirmPage() {
   })
 
   // Local edits state (for auto-save between drafts)
-  const [localEdits, setLocalEdits] = useState<Record<string, any>>({})
+  const [localEdits, setLocalEdits] = useState<Record<string, Partial<ConfirmDraftRequest>>>({})
 
   // Fetch draft list for navigation
   const { data: draftList } = useDraftList({ status: 'pending' })
@@ -175,7 +175,7 @@ export function DraftConfirmPage() {
 
   // Get AI metadata for reference panel
   const referencedChunks: ReferencedChunk[] =
-    (draft as any).aiMetadata?.referencedChunks ?? []
+    draft.aiMetadata?.referencedChunks ?? []
 
   // Handle confirm button click - show module selection modal
   const handleConfirmClick = () => {
@@ -242,7 +242,7 @@ export function DraftConfirmPage() {
       await rejectDraft.mutateAsync({
         draftId: draft.id,
         data: {
-          reason: selectedReason as any,
+          reason: selectedReason,
           feedback: feedback || undefined,
         },
       })
@@ -438,16 +438,16 @@ export function DraftConfirmPage() {
                 </Space>
 
                 {/* AI Metadata Display */}
-                {(draft as any).aiMetadata && (
+                {draft.aiMetadata && (
                   <div className="mt-4 pt-4 border-t">
                     <p className="text-sm text-gray-500 mb-2">AI 生成信息</p>
                     <Space>
                       <StatusTag
-                        status={(draft as any).aiMetadata?.confidence}
+                        status={draft.aiMetadata?.confidence}
                         category="confidence"
                       />
                       <span className="text-sm text-gray-400">
-                        模型：{(draft as any).aiMetadata?.modelVersion}
+                        模型：{draft.aiMetadata?.modelVersion}
                       </span>
                     </Space>
                   </div>

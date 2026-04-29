@@ -103,7 +103,7 @@ describe('ErrorBoundary', () => {
       )
     }
 
-    const { rerender } = render(<TestWrapper />)
+    render(<TestWrapper />)
 
     // Initial render with error
     expect(screen.getByText('Error fallback')).toBeInTheDocument()

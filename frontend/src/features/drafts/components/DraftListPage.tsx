@@ -106,7 +106,7 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
       rejectModal.draftIds.map((draftId) =>
         rejectDraft.mutateAsync({
           draftId,
-          data: { reason: reason as any, feedback },
+          data: { reason, feedback },
         })
       )
     )

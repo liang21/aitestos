@@ -22,11 +22,6 @@ interface PanelProps {
   style?: React.CSSProperties
 }
 
-const splitPanelContext = {
-  splitRatio: 0.5,
-  setSplitRatio: (_ratio: number) => {},
-}
-
 /**
  * Left panel component
  */
@@ -124,8 +119,14 @@ export function SplitPanel({
 
   // Find Left and Right panel children
   const childArray = Array.isArray(children) ? children : [children]
-  const leftChild = childArray.find((c) => (c as any)?.type === LeftPanel)
-  const rightChild = childArray.find((c) => (c as any)?.type === RightPanel)
+  const leftChild = childArray.find((c) => {
+    const element = c as { type?: typeof LeftPanel }
+    return element?.type === LeftPanel
+  })
+  const rightChild = childArray.find((c) => {
+    const element = c as { type?: typeof RightPanel }
+    return element?.type === RightPanel
+  })
 
   return (
     <div

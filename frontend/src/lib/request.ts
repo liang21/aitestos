@@ -1,5 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import type { RefreshResponse } from '@/types/api'
+import { logger } from './logger'
 
 // ============================================================================
 // Token Refresh State
@@ -87,9 +88,11 @@ request.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     } else {
-      console.warn('[Request] No access_token found in localStorage')
+      logger.warn('[Request] No access_token found in localStorage')
     }
-    console.log('[Request]', config.method?.toUpperCase(), config.url, {
+    logger.debug('[Request]', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
       hasAuth: !!config.headers.Authorization,
     })
     return config
@@ -204,7 +207,7 @@ request.interceptors.response.use(
         )
 
         if (failedRequests.length > 0) {
-          console.error(
+          logger.error(
             `${failedRequests.length} queued request(s) failed after token refresh`
           )
         }

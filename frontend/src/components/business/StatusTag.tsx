@@ -1,18 +1,4 @@
 import { Tag } from '@arco-design/web-react'
-import type {
-  CaseStatus,
-  CaseType,
-  Confidence,
-  DocumentStatus,
-  DocumentType,
-  DraftStatus,
-  PlanStatus,
-  Priority,
-  ResultStatus,
-  SceneType,
-  TaskStatus,
-  UserRole,
-} from '@/types/enums'
 
 /**
  * Status category determines which color mapping to use
