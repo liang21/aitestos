@@ -1,4 +1,4 @@
-import { Empty, Pagination, Spin, Table } from '@arco-design/web-react'
+import { Empty, Spin, Table } from '@arco-design/web-react'
 import type { PaginationProps, TableProps } from '@arco-design/web-react'
 import { IconLoading } from '@arco-design/web-react/icon'
 import { useMemo } from 'react'
@@ -27,11 +27,15 @@ export interface SearchTableProps<T = unknown> extends Omit<
   className?: string
   /** Custom style */
   style?: React.CSSProperties
+  /** Enable virtual scrolling for large datasets (>500 rows) */
+  enableVirtual?: boolean
+  /** Estimated row height in pixels (for virtual scrolling) */
+  rowHeight?: number
 }
 
 /**
  * Unified search table component with pagination and loading states
- * Wraps Arco Design Table with consistent behavior
+ * Wraps Arco Design Table with consistent behavior and optional virtual scrolling
  */
 export function SearchTable<T extends Record<string, unknown>>({
   columns,
@@ -44,8 +48,13 @@ export function SearchTable<T extends Record<string, unknown>>({
   emptyText = '暂无数据',
   className,
   style,
+  enableVirtual,
+  rowHeight = 60,
   ...restProps
 }: SearchTableProps<T>) {
+  // Determine if virtual scrolling should be enabled
+  const shouldUseVirtual = enableVirtual || data.length > 500
+
   // Calculate pagination props
   const paginationProps = useMemo((): PaginationProps | false => {
     if (!onPageChange && total <= pageSize) {
@@ -63,6 +72,21 @@ export function SearchTable<T extends Record<string, unknown>>({
     }
   }, [current, pageSize, total, onPageChange])
 
+  // Calculate scroll props for virtual scrolling
+  const scrollProps = useMemo(() => {
+    if (!shouldUseVirtual) {
+      return { x: '100%' }
+    }
+
+    // Calculate viewport height based on page size
+    const viewportHeight = pageSize * rowHeight + 150 // Add extra space for header and pagination
+
+    return {
+      x: '100%',
+      y: viewportHeight,
+    }
+  }, [shouldUseVirtual, pageSize, rowHeight])
+
   return (
     <div className={className} style={style}>
       <Spin
@@ -74,18 +98,19 @@ export function SearchTable<T extends Record<string, unknown>>({
           columns={columns}
           data={data}
           pagination={paginationProps}
-          rowKey={(record, index) => {
+          scroll={scrollProps}
+          rowKey={(record: T, index?: number) => {
             if (typeof record === 'object' && record !== null) {
               const id = (record as Record<string, unknown>).id ?? (record as Record<string, unknown>).key
               if (typeof id === 'string' || typeof id === 'number') return String(id)
             }
             // Use index as fallback - warn in development
-            if (process.env.NODE_ENV === 'development') {
+            if (import.meta.env.DEV) {
               console.warn(
                 'SearchTable: record missing unique "id" or "key" property, using index as fallback. This may cause rendering issues.'
               )
             }
-            return `row-${index}`
+            return `row-${index ?? 0}`
           }}
           noDataElement={<Empty description={emptyText} />}
           border
