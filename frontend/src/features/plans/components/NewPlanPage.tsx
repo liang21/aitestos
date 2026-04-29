@@ -26,15 +26,11 @@ export function NewPlanPage() {
   const [form] = Form.useForm()
   const createMutation = useCreatePlan()
 
-  // Use provided projectId from route params
-  const effectiveProjectId = projectId || 'project-001'
-
   // Get available test cases
-  const { data: casesData, isLoading: casesLoading } = useCaseList({
-    projectId: effectiveProjectId,
-    offset: 0,
-    limit: 100,
-  })
+  const { data: casesData, isLoading: casesLoading } = useCaseList(
+    projectId || '',
+    { offset: 0, limit: 100 }
+  )
 
   const [selectedCaseIds, setSelectedCaseIds] = useState<string[]>([])
 

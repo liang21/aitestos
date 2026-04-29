@@ -15,7 +15,10 @@ import { StatusTag } from '@/components/business/StatusTag'
 import { generationKeys } from '@/features/generation/hooks/useGeneration'
 
 export function TaskDetailPage() {
-  const { taskId } = useParams<{ taskId: string }>()
+  const { projectId, taskId } = useParams<{
+    projectId: string
+    taskId: string
+  }>()
   const navigate = useNavigate()
 
   // Fetch task details with polling

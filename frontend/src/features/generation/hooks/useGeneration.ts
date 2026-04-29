@@ -16,17 +16,19 @@ export const generationKeys = {
   all: ['generation'] as const,
   tasks: () => [...generationKeys.all, 'tasks'] as const,
   task: (id: string) => [...generationKeys.tasks(), id] as const,
-  tasksList: (params: TaskListParams) =>
-    [...generationKeys.tasks(), 'list', params] as const,
+  tasksList: (projectId: string, params: TaskListParams) =>
+    [...generationKeys.tasks(), 'list', projectId, params] as const,
 }
 
 /**
  * Fetch generation tasks list
+ * @param projectId - Project ID from route params
+ * @param params - Query parameters (filters, pagination)
  */
-export function useGenerationTasks(params: TaskListParams) {
+export function useGenerationTasks(projectId: string, params: TaskListParams) {
   return useQuery({
-    queryKey: generationKeys.tasksList(params),
-    queryFn: () => generationApi.listTasks(params),
+    queryKey: generationKeys.tasksList(projectId, params),
+    queryFn: () => generationApi.listTasks({ project_id: projectId, ...params }),
   })
 }
 

@@ -43,25 +43,24 @@ export function PlanListPage() {
     keywords?: string
   }>({})
 
-  // Use provided projectId from route params
-  const effectiveProjectId = projectId || 'project-001'
-
-  const { data, isLoading, error } = usePlanList({
-    projectId: effectiveProjectId,
-    status: filters.status,
-    keywords: filters.keywords,
-    offset: 0,
-    limit: 100,
-  })
+  const { data, isLoading, error } = usePlanList(
+    projectId || '',
+    {
+      status: filters.status,
+      keywords: filters.keywords,
+      offset: 0,
+      limit: 100,
+    }
+  )
 
   // Handle row click
   const handleRowClick = (record: { id: string }) => {
-    navigate(`/plans/${record.id}`)
+    navigate(`/projects/${projectId}/plans/${record.id}`)
   }
 
   // Handle create button click
   const handleCreateClick = () => {
-    navigate('/plans/new')
+    navigate(`/projects/${projectId}/plans/new`)
   }
 
   // Handle status filter change

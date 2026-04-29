@@ -6,7 +6,10 @@ import { StatusTag } from '@/components/business/StatusTag'
 import type { DocumentChunk } from '@/types/api'
 
 export function DocumentDetailPage() {
-  const { documentId } = useParams<{ documentId: string }>()
+  const { projectId, documentId } = useParams<{
+    projectId: string
+    documentId: string
+  }>()
   const { data: document, isLoading } = useDocumentDetail(documentId || '')
 
   if (!documentId) {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Button, Card, Input, Select, Space } from '@arco-design/web-react'
 import { IconPlus, IconSearch } from '@arco-design/web-react/icon'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { SearchTable } from '@/components/business/SearchTable'
 import { StatusTag } from '@/components/business/StatusTag'
 import { useDocumentList } from '../hooks/useDocuments'
@@ -29,9 +29,8 @@ const DOCUMENT_STATUS_OPTIONS = [
 ]
 
 export function KnowledgeListPage() {
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const projectId = searchParams.get('projectId') || ''
+  const { projectId } = useParams<{ projectId: string }>()
 
   // Local state for filters
   const [typeFilter, setTypeFilter] = useState<string>('')
@@ -41,7 +40,7 @@ export function KnowledgeListPage() {
 
   // Query document list
   const { data, isLoading } = useDocumentList({
-    projectId,
+    projectId: projectId || '',
     type: typeFilter || undefined,
     status: statusFilter || undefined,
     offset: (page - 1) * 10,

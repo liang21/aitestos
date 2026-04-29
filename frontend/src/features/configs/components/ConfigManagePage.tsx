@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Button,
   Card,
@@ -16,6 +16,8 @@ import {
   IconImport,
   IconEdit,
 } from '@arco-design/web-react/icon'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
   useConfigList,
   useSetConfig,
@@ -24,6 +26,7 @@ import {
   useImportConfigs,
 } from '../hooks/useConfigs'
 import { useParams, Navigate } from 'react-router-dom'
+import { configSchema, type ConfigInput } from '../schema/configSchema'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -69,21 +72,23 @@ interface ModalState {
 export function ConfigManagePage() {
   const { projectId } = useParams<{ projectId: string }>()
 
-  // P2: 修复硬编码项目 ID - 如果没有 projectId 则重定向
-  if (!projectId) {
-    return <Navigate to="/projects" replace />
-  }
-
   const [modalState, setModalState] = useState<ModalState>({
     visible: false,
     editing: null,
   })
 
-  const { data, isLoading, refetch } = useConfigList(projectId)
-  const setConfig = useSetConfig(projectId)
-  const deleteConfig = useDeleteConfig(projectId)
-  const exportConfigs = useExportConfigs(projectId)
-  const importConfigs = useImportConfigs(projectId)
+  // Hooks must be called unconditionally - use empty string fallback for missing projectId
+  // The component content will render null/redirect when projectId is missing
+  const { data, isLoading } = useConfigList(projectId ?? '')
+  const setConfig = useSetConfig(projectId ?? '')
+  const deleteConfig = useDeleteConfig(projectId ?? '')
+  const exportConfigs = useExportConfigs(projectId ?? '')
+  const importConfigs = useImportConfigs(projectId ?? '')
+
+  // Early return for missing projectId (after all hooks are called)
+  if (!projectId) {
+    return <Navigate to="/projects" replace />
+  }
 
   const columns = [
     {
@@ -170,11 +175,7 @@ export function ConfigManagePage() {
   }
 
   // P5: JSON 解析错误提示
-  const handleModalOk = async (data: {
-    key: string
-    value: string
-    description: string
-  }) => {
+  const handleModalOk = async (data: ConfigInput) => {
     const parseResult = parseJsonValue(data.value)
 
     // 如果值看起来应该是 JSON 对象但解析失败
@@ -312,41 +313,49 @@ export function ConfigManagePage() {
 
 /**
  * Config Modal Component
+ * Uses React Hook Form + Zod for form validation
  */
 interface ConfigModalProps {
   visible: boolean
   config: { key: string; value: unknown; description?: string } | null
   onCancel: () => void
-  onOk: (data: { key: string; value: string; description: string }) => void
+  onOk: (data: ConfigInput) => void
 }
 
 function ConfigModal({ visible, config, onCancel, onOk }: ConfigModalProps) {
-  const [key, setKey] = useState(config?.key || '')
-  const [value, setValue] = useState(formatConfigValue(config?.value || ''))
-  const [description, setDescription] = useState(config?.description || '')
-
   const isEdit = !!config
 
-  const handleOk = () => {
-    if (!key.trim()) {
-      Message.error('配置键不能为空')
-      return
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<ConfigInput>({
+    resolver: zodResolver(configSchema),
+    defaultValues: {
+      key: '',
+      value: '',
+      description: '',
+    },
+  })
+
+  // Reset form when config changes or modal opens/closes
+  useEffect(() => {
+    if (visible) {
+      reset({
+        key: config?.key || '',
+        value: formatConfigValue(config?.value || ''),
+        description: config?.description || '',
+      })
     }
-    if (!value.trim()) {
-      Message.error('配置值不能为空')
-      return
-    }
-    onOk({
-      key: key.trim(),
-      value: value.trim(),
-      description: description.trim(),
-    })
+  }, [visible, config, reset])
+
+  const onSubmit = (data: ConfigInput) => {
+    onOk(data)
   }
 
   const handleCancel = () => {
-    setKey('')
-    setValue('')
-    setDescription('')
+    reset()
     onCancel()
   }
 
@@ -354,7 +363,7 @@ function ConfigModal({ visible, config, onCancel, onOk }: ConfigModalProps) {
     <Modal
       title={isEdit ? '编辑配置' : '新增配置'}
       visible={visible}
-      onOk={handleOk}
+      onOk={handleSubmit(onSubmit)}
       onCancel={handleCancel}
       okText="确定"
       cancelText="取消"
@@ -364,13 +373,24 @@ function ConfigModal({ visible, config, onCancel, onOk }: ConfigModalProps) {
           <div className="mb-2">
             <Text bold>配置键</Text>
           </div>
-          <Input
-            placeholder="请输入配置键，如: llm_model"
-            value={key}
-            onChange={setKey}
-            disabled={isEdit}
-            maxLength={100}
+          <Controller
+            name="key"
+            control={control}
+            render={({ field }) => (
+              <Input
+                {...field}
+                placeholder="请输入配置键，如: llm_model"
+                disabled={isEdit}
+                maxLength={100}
+                status={errors.key ? 'error' : undefined}
+              />
+            )}
           />
+          {errors.key && (
+            <Text type="error" className="mt-1">
+              {errors.key.message}
+            </Text>
+          )}
         </div>
 
         <div>
@@ -380,12 +400,23 @@ function ConfigModal({ visible, config, onCancel, onOk }: ConfigModalProps) {
               (支持 JSON 格式)
             </Text>
           </div>
-          <TextArea
-            placeholder='请输入配置值，如: {"model": "gpt-4", "temperature": 0.7}'
-            value={value}
-            onChange={setValue}
-            autoSize={{ minRows: 3, maxRows: 6 }}
+          <Controller
+            name="value"
+            control={control}
+            render={({ field }) => (
+              <TextArea
+                {...field}
+                placeholder='请输入配置值，如: {"model": "gpt-4", "temperature": 0.7}'
+                autoSize={{ minRows: 3, maxRows: 6 }}
+                status={errors.value ? 'error' : undefined}
+              />
+            )}
           />
+          {errors.value && (
+            <Text type="error" className="mt-1">
+              {errors.value.message}
+            </Text>
+          )}
         </div>
 
         <div>
@@ -395,12 +426,23 @@ function ConfigModal({ visible, config, onCancel, onOk }: ConfigModalProps) {
               (可选)
             </Text>
           </div>
-          <Input
-            placeholder="请输入配置描述"
-            value={description}
-            onChange={setDescription}
-            maxLength={200}
+          <Controller
+            name="description"
+            control={control}
+            render={({ field }) => (
+              <Input
+                {...field}
+                placeholder="请输入配置描述"
+                maxLength={200}
+                status={errors.description ? 'error' : undefined}
+              />
+            )}
           />
+          {errors.description && (
+            <Text type="error" className="mt-1">
+              {errors.description.message}
+            </Text>
+          )}
         </div>
       </div>
     </Modal>
