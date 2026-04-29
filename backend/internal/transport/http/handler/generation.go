@@ -64,9 +64,15 @@ func (h *GenerationHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 
 // ListTasks handles listing generation tasks
 func (h *GenerationHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
-	projectID, err := getIDFromURL(r, "projectID")
+	projectIDStr := r.URL.Query().Get("project_id")
+	if projectIDStr == "" {
+		respondWithError(w, http.StatusBadRequest, "project_id is required")
+		return
+	}
+
+	projectID, err := uuid.Parse(projectIDStr)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid project ID")
+		respondWithError(w, http.StatusBadRequest, "invalid project ID format")
 		return
 	}
 
@@ -75,6 +81,16 @@ func (h *GenerationHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
 		Limit:    getIntQueryParam(r, "limit", 10),
 		Status:   r.URL.Query().Get("status"),
 		Keywords: r.URL.Query().Get("keywords"),
+	}
+
+	// Support module_id filter
+	if moduleIDStr := r.URL.Query().Get("module_id"); moduleIDStr != "" {
+		moduleID, err := uuid.Parse(moduleIDStr)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "invalid module ID format")
+			return
+		}
+		opts.ModuleID = moduleID
 	}
 
 	tasks, total, err := h.genService.ListTasks(r.Context(), projectID, opts)

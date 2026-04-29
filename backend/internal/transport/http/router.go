@@ -113,8 +113,10 @@ func NewRouterWithMiddleware(handlers *Handlers, jwtSecret string, logger zerolo
 			// Module routes
 			r.Route("/modules", func(r chi.Router) {
 				if handlers != nil && handlers.Project != nil {
+					r.Put("/{id}", http.HandlerFunc(handlers.Project.UpdateModule))
 					r.Delete("/{id}", http.HandlerFunc(handlers.Project.DeleteModule))
 				} else {
+					r.Put("/{id}", noOpHandler)
 					r.Delete("/{id}", noOpHandler)
 				}
 			})
@@ -148,6 +150,7 @@ func NewRouterWithMiddleware(handlers *Handlers, jwtSecret string, logger zerolo
 					r.Route("/{id}", func(r chi.Router) {
 						r.Get("/", http.HandlerFunc(handlers.TestPlan.GetPlan))
 						r.Put("/", http.HandlerFunc(handlers.TestPlan.UpdatePlan))
+						r.Patch("/status", http.HandlerFunc(handlers.TestPlan.UpdatePlanStatus))
 						r.Delete("/", http.HandlerFunc(handlers.TestPlan.DeletePlan))
 						r.Post("/cases", http.HandlerFunc(handlers.TestPlan.AddCases))
 						r.Delete("/cases/{caseId}", http.HandlerFunc(handlers.TestPlan.RemoveCase))
@@ -160,6 +163,7 @@ func NewRouterWithMiddleware(handlers *Handlers, jwtSecret string, logger zerolo
 					r.Route("/{id}", func(r chi.Router) {
 						r.Get("/", noOpHandler)
 						r.Put("/", noOpHandler)
+						r.Patch("/status", noOpHandler)
 						r.Delete("/", noOpHandler)
 						r.Post("/cases", noOpHandler)
 						r.Delete("/cases/{caseId}", noOpHandler)
@@ -173,22 +177,26 @@ func NewRouterWithMiddleware(handlers *Handlers, jwtSecret string, logger zerolo
 			r.Route("/generation", func(r chi.Router) {
 				if handlers != nil && handlers.Generation != nil {
 					r.Route("/tasks", func(r chi.Router) {
+						r.Get("/", http.HandlerFunc(handlers.Generation.ListTasks))
 						r.Post("/", http.HandlerFunc(handlers.Generation.CreateTask))
 						r.Get("/{id}", http.HandlerFunc(handlers.Generation.GetTask))
 						r.Get("/{id}/drafts", http.HandlerFunc(handlers.Generation.GetDrafts))
 					})
 					r.Route("/drafts", func(r chi.Router) {
+						r.Get("/", http.HandlerFunc(handlers.Generation.ListAllDrafts))
 						r.Post("/{id}/confirm", http.HandlerFunc(handlers.Generation.ConfirmDraft))
 						r.Post("/{id}/reject", http.HandlerFunc(handlers.Generation.RejectDraft))
 						r.Post("/batch-confirm", http.HandlerFunc(handlers.Generation.BatchConfirm))
 					})
 				} else {
 					r.Route("/tasks", func(r chi.Router) {
+						r.Get("/", noOpHandler)
 						r.Post("/", noOpHandler)
 						r.Get("/{id}", noOpHandler)
 						r.Get("/{id}/drafts", noOpHandler)
 					})
 					r.Route("/drafts", func(r chi.Router) {
+						r.Get("/", noOpHandler)
 						r.Post("/{id}/confirm", noOpHandler)
 						r.Post("/{id}/reject", noOpHandler)
 						r.Post("/batch-confirm", noOpHandler)

@@ -33,6 +33,13 @@ type CreateModuleRequest struct {
 	Description  string `json:"description"`
 }
 
+// UpdateModuleRequest contains module update data
+type UpdateModuleRequest struct {
+	Name         *string `json:"name,omitempty" validate:"omitempty,min=2,max=255"`
+	Abbreviation *string `json:"abbreviation,omitempty" validate:"omitempty,min=2,max=4"`
+	Description  *string `json:"description,omitempty"`
+}
+
 // ProjectDetail contains project info with statistics
 type ProjectDetail struct {
 	*project.Project
@@ -64,6 +71,7 @@ type ProjectService interface {
 	CreateModule(ctx context.Context, projectID uuid.UUID, req *CreateModuleRequest, userID uuid.UUID) (*project.Module, error)
 	ListModules(ctx context.Context, projectID uuid.UUID) ([]*project.Module, error)
 	GetModule(ctx context.Context, id uuid.UUID) (*project.Module, error)
+	UpdateModule(ctx context.Context, id uuid.UUID, req *UpdateModuleRequest) (*project.Module, error)
 	DeleteModule(ctx context.Context, id uuid.UUID) error
 
 	// Config management
@@ -268,6 +276,73 @@ func (s *ProjectServiceImpl) GetModule(ctx context.Context, id uuid.UUID) (*proj
 		return nil, fmt.Errorf("find module: %w", err)
 	}
 	return module, nil
+}
+
+// UpdateModule updates a module
+func (s *ProjectServiceImpl) UpdateModule(ctx context.Context, id uuid.UUID, req *UpdateModuleRequest) (*project.Module, error) {
+	module, err := s.moduleRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("find module: %w", err)
+	}
+
+	// Validate and update name
+	if req.Name != nil {
+		if err := s.validateModuleNameUnique(ctx, module.ProjectID(), *req.Name, id); err != nil {
+			return nil, err
+		}
+		module.UpdateName(*req.Name)
+	}
+
+	// Validate and update abbreviation
+	if req.Abbreviation != nil {
+		if err := s.validateModuleAbbrevUnique(ctx, module.ProjectID(), *req.Abbreviation, id); err != nil {
+			return nil, err
+		}
+		if err := module.UpdateAbbreviation(*req.Abbreviation); err != nil {
+			return nil, fmt.Errorf("update abbreviation: %w", err)
+		}
+	}
+
+	// Update description
+	if req.Description != nil {
+		module.UpdateDescription(*req.Description)
+	}
+
+	if err := s.moduleRepo.Update(ctx, module); err != nil {
+		return nil, fmt.Errorf("update module: %w", err)
+	}
+
+	return module, nil
+}
+
+// validateModuleNameUnique checks if module name is unique within the project
+func (s *ProjectServiceImpl) validateModuleNameUnique(ctx context.Context, projectID uuid.UUID, name string, excludeID uuid.UUID) error {
+	modules, err := s.moduleRepo.FindByProjectID(ctx, projectID)
+	if err != nil {
+		return fmt.Errorf("check name uniqueness: %w", err)
+	}
+
+	for _, m := range modules {
+		if m.Name() == name && m.ID() != excludeID {
+			return project.ErrModuleNameDuplicate
+		}
+	}
+	return nil
+}
+
+// validateModuleAbbrevUnique checks if module abbreviation is unique within the project
+func (s *ProjectServiceImpl) validateModuleAbbrevUnique(ctx context.Context, projectID uuid.UUID, abbrev string, excludeID uuid.UUID) error {
+	modules, err := s.moduleRepo.FindByProjectID(ctx, projectID)
+	if err != nil {
+		return fmt.Errorf("check abbreviation uniqueness: %w", err)
+	}
+
+	for _, m := range modules {
+		if m.Abbreviation().String() == abbrev && m.ID() != excludeID {
+			return project.ErrModuleAbbrevDuplicate
+		}
+	}
+	return nil
 }
 
 // DeleteModule deletes a module

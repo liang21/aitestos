@@ -51,6 +51,9 @@ type ModuleRepository interface {
 	// FindByAbbreviation retrieves a module by abbreviation within a project
 	FindByAbbreviation(ctx context.Context, projectID uuid.UUID, abbrev ModuleAbbreviation) (*Module, error)
 
+	// Update updates an existing module
+	Update(ctx context.Context, module *Module) error
+
 	// Delete removes a module
 	Delete(ctx context.Context, id uuid.UUID) error
 }

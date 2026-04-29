@@ -169,6 +169,29 @@ func (h *ProjectHandler) ListModules(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, modules)
 }
 
+// UpdateModule handles module updates
+func (h *ProjectHandler) UpdateModule(w http.ResponseWriter, r *http.Request) {
+	moduleID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid module ID")
+		return
+	}
+
+	var req projectservice.UpdateModuleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	module, err := h.projectService.UpdateModule(r.Context(), moduleID, &req)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, module)
+}
+
 // DeleteModule handles module deletion
 func (h *ProjectHandler) DeleteModule(w http.ResponseWriter, r *http.Request) {
 	moduleID, err := uuid.Parse(chi.URLParam(r, "id"))

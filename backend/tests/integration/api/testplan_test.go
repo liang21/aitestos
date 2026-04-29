@@ -405,3 +405,134 @@ func TestPlanAPI_Statistics(t *testing.T) {
 		t.Skip("statistics endpoint not yet implemented")
 	})
 }
+
+// TestPlanAPI_UpdateStatus tests plan status update endpoint
+func TestPlanAPI_UpdateStatus(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	tc := testsetup.SetupTest(t)
+	defer tc.CleanupTest()
+
+	suite := testutil.NewIntegrationTestSuite(tc.DB)
+
+	user := testutil.CreateTestUser(t, tc.DB)
+	userID := user.ID()
+	project := testutil.CreateTestProject(t, tc.DB)
+
+	var planID uuid.UUID
+
+	// Setup: Create a plan with draft status
+	t.Run("setup plan", func(t *testing.T) {
+		w := suite.MakeRequest(http.MethodPost, "/api/v1/plans", map[string]interface{}{
+			"project_id":  project.ID().String(),
+			"name":        "Status Update Test Plan",
+			"description": "Plan for testing status updates",
+		}, userID)
+
+		if w.Code == http.StatusNotImplemented {
+			t.Skip("handler not implemented yet")
+		}
+
+		if w.Code == http.StatusCreated {
+			var response map[string]interface{}
+			testutil.ParseJSONResponse(t, w, &response)
+			if id, ok := response["id"].(string); ok {
+				planID, _ = uuid.Parse(id)
+			}
+		}
+	})
+
+	if planID == uuid.Nil {
+		t.Skip("plan creation failed, skipping status update tests")
+	}
+
+	tt := []struct {
+		name       string
+		method     string
+		path       string
+		body       interface{}
+		wantStatus int
+		assertFunc func(t *testing.T, w *httptest.ResponseRecorder)
+	}{
+		{
+			name:   "update plan status from draft to active",
+			method: http.MethodPatch,
+			path:   "/api/v1/plans/" + planID.String() + "/status",
+			body: map[string]string{
+				"status": "active",
+			},
+			wantStatus: http.StatusOK,
+			assertFunc: func(t *testing.T, w *httptest.ResponseRecorder) {
+				var response map[string]interface{}
+				testutil.ParseJSONResponse(t, w, &response)
+				assert.Equal(t, "active", response["status"])
+			},
+		},
+		{
+			name:   "update plan status from active to completed",
+			method: http.MethodPatch,
+			path:   "/api/v1/plans/" + planID.String() + "/status",
+			body: map[string]string{
+				"status": "completed",
+			},
+			wantStatus: http.StatusOK,
+			assertFunc: func(t *testing.T, w *httptest.ResponseRecorder) {
+				var response map[string]interface{}
+				testutil.ParseJSONResponse(t, w, &response)
+				assert.Equal(t, "completed", response["status"])
+			},
+		},
+		{
+			name:       "update plan with invalid status value",
+			method:     http.MethodPatch,
+			path:       "/api/v1/plans/" + planID.String() + "/status",
+			body: map[string]string{
+				"status": "invalid_status",
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "update plan with missing status field",
+			method:     http.MethodPatch,
+			path:       "/api/v1/plans/" + planID.String() + "/status",
+			body:       map[string]string{},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "update non-existent plan status",
+			method:     http.MethodPatch,
+			path:       "/api/v1/plans/" + uuid.New().String() + "/status",
+			body: map[string]string{
+				"status": "active",
+			},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "update plan with invalid plan ID format",
+			method:     http.MethodPatch,
+			path:       "/api/v1/plans/invalid-uuid/status",
+			body: map[string]string{
+				"status": "active",
+			},
+			wantStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			w := suite.MakeRequest(tc.method, tc.path, tc.body, userID)
+
+			if w.Code == http.StatusNotImplemented {
+				t.Skipf("handler not implemented yet (expected status %d)", tc.wantStatus)
+			}
+
+			assert.Equal(t, tc.wantStatus, w.Code)
+
+			if tc.assertFunc != nil {
+				tc.assertFunc(t, w)
+			}
+		})
+	}
+}

@@ -224,3 +224,39 @@ func (h *TestPlanHandler) RemoveCase(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// UpdatePlanStatus handles test plan status updates
+func (h *TestPlanHandler) UpdatePlanStatus(w http.ResponseWriter, r *http.Request) {
+	planID, err := getIDFromURL(r, "id")
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid plan ID")
+		return
+	}
+
+	var req struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.Status == "" {
+		respondWithError(w, http.StatusBadRequest, "status is required")
+		return
+	}
+
+	if err := h.planService.UpdatePlanStatus(r.Context(), planID, req.Status); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	// Fetch updated plan and return it
+	detail, err := h.planService.GetPlan(r.Context(), planID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, detail.TestPlan)
+}

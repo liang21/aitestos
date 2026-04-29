@@ -96,6 +96,23 @@ func (m *Module) UpdateDescription(description string) {
 	m.updatedAt = time.Now()
 }
 
+// UpdateName updates the module's name
+func (m *Module) UpdateName(name string) {
+	m.name = name
+	m.updatedAt = time.Now()
+}
+
+// UpdateAbbreviation updates the module's abbreviation
+func (m *Module) UpdateAbbreviation(abbrevStr string) error {
+	abbrev, err := ParseModuleAbbreviation(abbrevStr)
+	if err != nil {
+		return err
+	}
+	m.abbreviation = abbrev
+	m.updatedAt = time.Now()
+	return nil
+}
+
 // ReconstructModule reconstructs a Module from stored data
 func ReconstructModule(
 	id uuid.UUID,
