@@ -16,6 +16,7 @@ import {
 } from '@arco-design/web-react'
 import { useCreatePlan } from '../hooks/usePlans'
 import { useCaseList } from '@/features/testcases/hooks/useTestCases'
+import { buildProjectRoutes } from '@/lib/routes'
 import type { CreatePlanRequest } from '@/types/api'
 
 const { TextArea } = Input
@@ -26,9 +27,12 @@ export function NewPlanPage() {
   const [form] = Form.useForm()
   const createMutation = useCreatePlan()
 
+  // Get project-scoped routes
+  const routes = projectId ? buildProjectRoutes(projectId) : null
+
   // Get available test cases
   const { data: casesData, isLoading: casesLoading } = useCaseList(
-    projectId || '',
+    projectId ?? '',
     { offset: 0, limit: 100 }
   )
 
@@ -54,7 +58,7 @@ export function NewPlanPage() {
 
       // Create plan
       const planData: CreatePlanRequest = {
-        projectId: effectiveProjectId,
+        projectId: projectId ?? '',
         name: values.name,
         description: values.description,
       }
@@ -65,7 +69,7 @@ export function NewPlanPage() {
       // For now, we'll assume the plan is created and navigate to detail page
 
       Message.success('计划创建成功')
-      navigate(`/plans/${plan.id}`)
+      navigate(routes?.plans.detail(plan.id) ?? `/plans/${plan.id}`)
     } catch (error) {
       Message.error(
         `创建失败：${error instanceof Error ? error.message : '未知错误'}`
@@ -94,7 +98,7 @@ export function NewPlanPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-4">
-        <Button onClick={() => navigate('/plans')} type="text">
+        <Button onClick={() => navigate(routes?.plans.list ?? '/plans')} type="text">
           ← 返回
         </Button>
       </div>
@@ -165,7 +169,7 @@ export function NewPlanPage() {
         </Card>
 
         <div className="flex justify-end gap-2">
-          <Button onClick={() => navigate('/plans')}>取消</Button>
+          <Button onClick={() => navigate(routes?.plans.list ?? '/plans')}>取消</Button>
           <Button
             type="primary"
             htmlType="submit"

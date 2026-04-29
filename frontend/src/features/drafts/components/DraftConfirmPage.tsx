@@ -28,6 +28,7 @@ import { SplitPanel } from '@/components/business/SplitPanel'
 import { ArrayEditor } from '@/components/business/ArrayEditor'
 import { ReferencePanel } from '@/components/business/ReferencePanel'
 import { StatusTag } from '@/components/business/StatusTag'
+import { buildProjectRoutes } from '@/lib/routes'
 import type { ReferencedChunk } from '@/types/api'
 
 const reasonOptions = [
@@ -207,8 +208,9 @@ export function DraftConfirmPage() {
       setHasUnsavedChanges(false)
       setConfirmModal(false)
 
-      // Navigate to case detail page
-      navigate(`/testcases/${result.id}`)
+      // Navigate to case detail page - use project-scoped route
+      const routes = draft.projectId ? buildProjectRoutes(draft.projectId) : null
+      navigate(routes?.cases.detail(result.id) ?? `/testcases/${result.id}`)
     } catch (error) {
       if (error instanceof Error) {
         Message.error(`确认失败：${error.message}`)

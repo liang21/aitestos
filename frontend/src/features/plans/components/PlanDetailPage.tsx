@@ -31,6 +31,7 @@ import {
 } from '../hooks/usePlans'
 import { StatusTag } from '@/components/business/StatusTag'
 import { ResultRecordModal } from './ResultRecordModal'
+import { buildProjectRoutes } from '@/lib/routes'
 import type { ResultStatus } from '@/types/enums'
 import type { PlanCase } from '@/types/api'
 
@@ -70,6 +71,9 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
   }>()
   const planId = propPlanId || urlPlanId || ''
 
+  // Get project-scoped routes
+  const routes = projectId ? buildProjectRoutes(projectId) : null
+
   const { data: planDetail, isLoading, error, refetch } = usePlanDetail(planId)
   const recordResultMutation = useRecordResult()
   const deleteResultMutation = useDeleteResult()
@@ -103,12 +107,14 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
 
   // Handle back button
   const handleBack = () => {
-    navigate('/plans')
+    navigate(routes?.plans.list ?? '/plans')
   }
 
   // Handle edit button
   const handleEdit = () => {
-    navigate(`/plans/${planId}/edit`)
+    // TODO: Implement edit route when available
+    Message.info('编辑功能待实现')
+    // navigate(routes?.plans.detail(planId) + '/edit')
   }
 
   // Handle delete button
@@ -116,7 +122,7 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
     try {
       await deletePlanMutation.mutateAsync(planId)
       Message.success('计划已删除')
-      navigate('/plans')
+      navigate(routes?.plans.list ?? '/plans')
     } catch (err) {
       Message.error(
         `删除失败：${err instanceof Error ? err.message : '未知错误'}`
