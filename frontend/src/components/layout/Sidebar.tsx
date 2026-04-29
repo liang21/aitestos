@@ -17,6 +17,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { usePendingDraftCount } from '@/features/drafts/hooks/useDrafts'
 import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
 import { useLogout } from '@/features/auth/hooks/useAuth'
+import { buildProjectRoutes } from '@/lib/routes'
 import './sidebar.css'
 
 const MenuItem = Menu.Item
@@ -29,17 +30,10 @@ export function Sidebar() {
   const location = useLocation()
   const { projectId } = useParams<{ projectId?: string }>()
 
-  // Build project-scoped routes when projectId exists
+  // Build project-scoped routes when projectId exists - uses centralized routes utility
   const projectRoutes = useMemo(() => {
     if (!projectId) return null
-    const base = `/projects/${projectId}`
-    return {
-      dashboard: `${base}/dashboard`,
-      knowledge: `${base}/knowledge`,
-      generation: `${base}/generation`,
-      cases: `${base}/cases`,
-      plans: `${base}/plans`,
-    }
+    return buildProjectRoutes(projectId)
   }, [projectId])
 
   // Memoize menu items to prevent unnecessary re-renders
@@ -66,32 +60,32 @@ export function Sidebar() {
             </MenuItem>
 
             {/* Knowledge Base */}
-            <MenuItem key={projectRoutes.knowledge}>
-              <NavLink to={projectRoutes.knowledge} aria-label="知识库">
+            <MenuItem key={projectRoutes.knowledge.list}>
+              <NavLink to={projectRoutes.knowledge.list} aria-label="知识库">
                 <BookOpen size={18} aria-hidden="true" />
                 {!sidebarCollapsed && <span>知识库</span>}
               </NavLink>
             </MenuItem>
 
             {/* Test Cases */}
-            <MenuItem key={projectRoutes.cases}>
-              <NavLink to={projectRoutes.cases} aria-label="测试用例">
+            <MenuItem key={projectRoutes.cases.list}>
+              <NavLink to={projectRoutes.cases.list} aria-label="测试用例">
                 <FileText size={18} aria-hidden="true" />
                 {!sidebarCollapsed && <span>测试用例</span>}
               </NavLink>
             </MenuItem>
 
             {/* Test Plans */}
-            <MenuItem key={projectRoutes.plans}>
-              <NavLink to={projectRoutes.plans} aria-label="测试计划">
+            <MenuItem key={projectRoutes.plans.list}>
+              <NavLink to={projectRoutes.plans.list} aria-label="测试计划">
                 <ListTodo size={18} aria-hidden="true" />
                 {!sidebarCollapsed && <span>测试计划</span>}
               </NavLink>
             </MenuItem>
 
             {/* AI Generation */}
-            <MenuItem key={projectRoutes.generation}>
-              <NavLink to={projectRoutes.generation} aria-label="AI 生成">
+            <MenuItem key={projectRoutes.generation.list}>
+              <NavLink to={projectRoutes.generation.list} aria-label="AI 生成">
                 <PlayCircle size={18} aria-hidden="true" />
                 {!sidebarCollapsed && <span>AI 生成</span>}
               </NavLink>

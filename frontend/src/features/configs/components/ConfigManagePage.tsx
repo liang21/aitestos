@@ -77,13 +77,15 @@ export function ConfigManagePage() {
     editing: null,
   })
 
-  const { data, isLoading } = useConfigList(projectId || '')
-  const setConfig = useSetConfig(projectId || '')
-  const deleteConfig = useDeleteConfig(projectId || '')
-  const exportConfigs = useExportConfigs(projectId || '')
-  const importConfigs = useImportConfigs(projectId || '')
+  // Hooks must be called unconditionally - use empty string fallback for missing projectId
+  // The component content will render null/redirect when projectId is missing
+  const { data, isLoading } = useConfigList(projectId ?? '')
+  const setConfig = useSetConfig(projectId ?? '')
+  const deleteConfig = useDeleteConfig(projectId ?? '')
+  const exportConfigs = useExportConfigs(projectId ?? '')
+  const importConfigs = useImportConfigs(projectId ?? '')
 
-  // Conditional render instead of early return (React Hooks rules)
+  // Early return for missing projectId (after all hooks are called)
   if (!projectId) {
     return <Navigate to="/projects" replace />
   }

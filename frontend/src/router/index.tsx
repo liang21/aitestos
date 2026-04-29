@@ -5,11 +5,12 @@
  * Supports both new project-scoped routes and legacy routes for backward compatibility.
  */
 
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter, Navigate, useParams } from 'react-router-dom'
 import { RouteGuard } from '@/router/RouteGuard'
 import { AuthErrorBoundary } from '@/components/ErrorBoundary'
 import { App } from '@/app/App'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { LegacyRouteRedirect, LegacyRouteRedirectWithParams } from '@/components/LegacyRouteRedirect'
 
 /**
  * Application Router
@@ -97,47 +98,59 @@ export const router = createBrowserRouter([
         element: (
           <AuthErrorBoundary>
             <RouteGuard>
-              <Navigate to="/projects/:projectId/cases" replace />
+              <LegacyRouteRedirect to={(pid) => `/projects/${pid}/cases`} />
             </RouteGuard>
           </AuthErrorBoundary>
         ),
       },
       {
         path: '/testcases/:caseId',
-        element: (
-          <AuthErrorBoundary>
-            <RouteGuard>
-              <Navigate to="/projects/:projectId/cases/:caseId" replace />
-            </RouteGuard>
-          </AuthErrorBoundary>
-        ),
+        lazy: () =>
+          import('../features/testcases/components/CaseListPage').then(() => ({
+            Component: () => (
+              <AuthErrorBoundary>
+                <RouteGuard>
+                  <LegacyRouteRedirectWithParams
+                    to={(pid, caseId) => `/projects/${pid}/cases/${caseId}`}
+                    paramKey="caseId"
+                  />
+                </RouteGuard>
+              </AuthErrorBoundary>
+            ),
+          })),
       },
       {
         path: '/documents',
         element: (
           <AuthErrorBoundary>
             <RouteGuard>
-              <Navigate to="/projects/:projectId/knowledge" replace />
+              <LegacyRouteRedirect to={(pid) => `/projects/${pid}/knowledge`} />
             </RouteGuard>
           </AuthErrorBoundary>
         ),
       },
       {
         path: '/documents/:documentId',
-        element: (
-          <AuthErrorBoundary>
-            <RouteGuard>
-              <Navigate to="/projects/:projectId/knowledge/:documentId" replace />
-            </RouteGuard>
-          </AuthErrorBoundary>
-        ),
+        lazy: () =>
+          import('../features/documents/components/KnowledgeListPage').then(() => ({
+            Component: () => (
+              <AuthErrorBoundary>
+                <RouteGuard>
+                  <LegacyRouteRedirectWithParams
+                    to={(pid, docId) => `/projects/${pid}/knowledge/${docId}`}
+                    paramKey="documentId"
+                  />
+                </RouteGuard>
+              </AuthErrorBoundary>
+            ),
+          })),
       },
       {
         path: '/generation',
         element: (
           <AuthErrorBoundary>
             <RouteGuard>
-              <Navigate to="/projects/:projectId/generation" replace />
+              <LegacyRouteRedirect to={(pid) => `/projects/${pid}/generation`} />
             </RouteGuard>
           </AuthErrorBoundary>
         ),
@@ -147,27 +160,33 @@ export const router = createBrowserRouter([
         element: (
           <AuthErrorBoundary>
             <RouteGuard>
-              <Navigate to="/projects/:projectId/generation/new" replace />
+              <LegacyRouteRedirect to={(pid) => `/projects/${pid}/generation/new`} />
             </RouteGuard>
           </AuthErrorBoundary>
         ),
       },
       {
         path: '/generation/tasks/:taskId',
-        element: (
-          <AuthErrorBoundary>
-            <RouteGuard>
-              <Navigate to="/projects/:projectId/generation/:taskId" replace />
-            </RouteGuard>
-          </AuthErrorBoundary>
-        ),
+        lazy: () =>
+          import('../features/generation/components/GenerationTaskListPage').then(() => ({
+            Component: () => (
+              <AuthErrorBoundary>
+                <RouteGuard>
+                  <LegacyRouteRedirectWithParams
+                    to={(pid, taskId) => `/projects/${pid}/generation/${taskId}`}
+                    paramKey="taskId"
+                  />
+                </RouteGuard>
+              </AuthErrorBoundary>
+            ),
+          })),
       },
       {
         path: '/plans',
         element: (
           <AuthErrorBoundary>
             <RouteGuard>
-              <Navigate to="/projects/:projectId/plans" replace />
+              <LegacyRouteRedirect to={(pid) => `/projects/${pid}/plans`} />
             </RouteGuard>
           </AuthErrorBoundary>
         ),
@@ -177,27 +196,33 @@ export const router = createBrowserRouter([
         element: (
           <AuthErrorBoundary>
             <RouteGuard>
-              <Navigate to="/projects/:projectId/plans/new" replace />
+              <LegacyRouteRedirect to={(pid) => `/projects/${pid}/plans/new`} />
             </RouteGuard>
           </AuthErrorBoundary>
         ),
       },
       {
         path: '/plans/:planId',
-        element: (
-          <AuthErrorBoundary>
-            <RouteGuard>
-              <Navigate to="/projects/:projectId/plans/:planId" replace />
-            </RouteGuard>
-          </AuthErrorBoundary>
-        ),
+        lazy: () =>
+          import('../features/plans/components/PlanListPage').then(() => ({
+            Component: () => (
+              <AuthErrorBoundary>
+                <RouteGuard>
+                  <LegacyRouteRedirectWithParams
+                    to={(pid, planId) => `/projects/${pid}/plans/${planId}`}
+                    paramKey="planId"
+                  />
+                </RouteGuard>
+              </AuthErrorBoundary>
+            ),
+          })),
       },
       {
         path: '/projects/:projectId/modules',
         element: (
           <AuthErrorBoundary>
             <RouteGuard>
-              <Navigate to="/projects/:projectId/settings/modules" replace />
+              <Navigate to="./settings/modules" replace />
             </RouteGuard>
           </AuthErrorBoundary>
         ),
@@ -240,7 +265,10 @@ export const router = createBrowserRouter([
                 path: 'dashboard',
                 lazy: () =>
                   import('../features/projects/components/ProjectDashboard').then((m) => ({
-                    Component: m.ProjectDashboard,
+                    Component: () => {
+                      const { projectId } = useParams<{ projectId: string }>()
+                      return projectId ? <m.ProjectDashboard projectId={projectId} /> : null
+                    },
                   })),
               },
 
@@ -268,15 +296,14 @@ export const router = createBrowserRouter([
                   },
                   {
                     path: 'figma',
-                    element: (
-                      <RouteGuard requireAdmin>
-                        <lazy(() =>
-                          import('../features/documents/components/FigmaIntegrationPage').then(
-                            (m) => ({ Component: m.default })
-                          )
-                        )
-                      </RouteGuard>
-                    ),
+                    lazy: () =>
+                      import('../features/documents/components/FigmaIntegrationPage').then((m) => ({
+                        Component: () => (
+                          <RouteGuard requireAdmin>
+                            <m.default />
+                          </RouteGuard>
+                        ),
+                      })),
                   },
                 ],
               },
@@ -365,27 +392,25 @@ export const router = createBrowserRouter([
               // Settings (Admin Only)
               {
                 path: 'settings/modules',
-                element: (
-                  <RouteGuard requireAdmin>
-                    <lazy(() =>
-                      import('../features/modules/components/ModuleManagePage').then((m) => ({
-                        Component: m.default || m.ModuleManagePage,
-                      }))
-                    )
-                  </RouteGuard>
-                ),
+                lazy: () =>
+                  import('../features/modules/components/ModuleManagePage').then((m) => ({
+                    Component: () => (
+                      <RouteGuard requireAdmin>
+                        <m.ModuleManagePage />
+                      </RouteGuard>
+                    ),
+                  })),
               },
               {
                 path: 'configs',
-                element: (
-                  <RouteGuard requireAdmin>
-                    <lazy(() =>
-                      import('../features/configs/components/ConfigManagePage').then((m) => ({
-                        Component: m.default || m.ConfigManagePage,
-                      }))
-                    )
-                  </RouteGuard>
-                ),
+                lazy: () =>
+                  import('../features/configs/components/ConfigManagePage').then((m) => ({
+                    Component: () => (
+                      <RouteGuard requireAdmin>
+                        <m.ConfigManagePage />
+                      </RouteGuard>
+                    ),
+                  })),
               },
             ],
           },
