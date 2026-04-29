@@ -8,6 +8,7 @@ import { LoginPage } from '@/features/auth/components/LoginPage'
 import { RegisterPage } from '@/features/auth/components/RegisterPage'
 import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
 import { useLogin, useRegister } from '@/features/auth/hooks/useAuth'
+import type { UserRole } from '@/types/enums'
 
 describe('Authentication Integration Tests', () => {
   let queryClient: QueryClient
@@ -38,7 +39,7 @@ describe('Authentication Integration Tests', () => {
         id: 'user-123',
         username: 'testuser',
         email: 'test@example.com',
-        role: 'normal',
+        role: 'normal' as UserRole,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
       }
@@ -216,7 +217,7 @@ describe('Authentication Integration Tests', () => {
           id: 'user-123',
           username: 'testuser',
           email: 'test@example.com',
-          role: 'normal',
+          role: 'normal' as UserRole,
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z',
         },

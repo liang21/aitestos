@@ -2,9 +2,13 @@ import { afterAll, afterEach, beforeAll, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { server } from './msw/server'
+import { setupTestLocalStorage, clearTestLocalStorage } from './utils/test-localStorage'
 
 // Start MSW server before all tests
 beforeAll(() => {
+  // Setup test localStorage
+  setupTestLocalStorage()
+
   // Set environment variable for API base URL
   process.env.VITE_API_BASE_URL = '/api/v1'
   server.listen({ onUnhandledRequest: 'error' })
@@ -14,6 +18,7 @@ beforeAll(() => {
 afterEach(() => {
   server.resetHandlers()
   cleanup()
+  clearTestLocalStorage()
 })
 
 // Close MSW server after all tests
@@ -36,3 +41,4 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Note: Arco Design components are not mocked here to preserve all functionality
 // Message side effects in tests can be suppressed by using vi.spyOn if needed
+// localStorage is provided by jsdom, no need to mock it
