@@ -60,6 +60,15 @@ type BatchConfirmResult struct {
 	Errors       []string
 }
 
+// ListAllDraftsOptions contains options for listing all drafts
+type ListAllDraftsOptions struct {
+	Offset    int
+	Limit     int
+	Status    string
+	ProjectID uuid.UUID
+	TaskID    uuid.UUID
+}
+
 // GenerationService provides test case generation operations
 type GenerationService interface {
 	// CreateTask creates a new generation task
@@ -73,6 +82,9 @@ type GenerationService interface {
 
 	// GetDrafts retrieves all drafts for a task
 	GetDrafts(ctx context.Context, taskID uuid.UUID) ([]*generation.GeneratedCaseDraft, error)
+
+	// ListAllDrafts lists all drafts with filters
+	ListAllDrafts(ctx context.Context, opts ListAllDraftsOptions) ([]*generation.GeneratedCaseDraft, int64, error)
 
 	// ConfirmDraft confirms a draft and creates a test case
 	ConfirmDraft(ctx context.Context, req *ConfirmDraftRequest, userID uuid.UUID) (*testcase.TestCase, error)
@@ -201,6 +213,31 @@ func (s *GenerationServiceImpl) ListTasks(ctx context.Context, projectID uuid.UU
 		return nil, 0, fmt.Errorf("list generation tasks: %w", err)
 	}
 
+	// Filter by ModuleID if specified
+	if opts.ModuleID != uuid.Nil {
+		filtered := make([]*generation.GenerationTask, 0)
+		for _, task := range tasks {
+			if task.ModuleID() == opts.ModuleID {
+				filtered = append(filtered, task)
+			}
+		}
+		tasks = filtered
+	}
+
+	// Filter by Status if specified
+	if opts.Status != "" {
+		status, statusErr := generation.ParseTaskStatus(opts.Status)
+		if statusErr == nil {
+			filtered := make([]*generation.GenerationTask, 0)
+			for _, task := range tasks {
+				if task.Status() == status {
+					filtered = append(filtered, task)
+				}
+			}
+			tasks = filtered
+		}
+	}
+
 	return tasks, int64(len(tasks)), nil
 }
 
@@ -211,6 +248,73 @@ func (s *GenerationServiceImpl) GetDrafts(ctx context.Context, taskID uuid.UUID)
 		return nil, fmt.Errorf("find drafts: %w", err)
 	}
 	return drafts, nil
+}
+
+// ListAllDrafts lists all drafts with filters
+func (s *GenerationServiceImpl) ListAllDrafts(ctx context.Context, opts ListAllDraftsOptions) ([]*generation.GeneratedCaseDraft, int64, error) {
+	if opts.Limit <= 0 {
+		opts.Limit = 10
+	}
+
+	var drafts []*generation.GeneratedCaseDraft
+	var err error
+
+	// Query based on filters
+	if opts.TaskID != uuid.Nil {
+		// If task_id is specified, get drafts for that task
+		drafts, err = s.draftRepo.FindByTaskID(ctx, opts.TaskID)
+		if err != nil {
+			return nil, 0, fmt.Errorf("find drafts by task: %w", err)
+		}
+	} else if opts.ProjectID != uuid.Nil {
+		// If project_id is specified, get all tasks for project, then their drafts
+		tasks, taskErr := s.taskRepo.FindByProjectID(ctx, opts.ProjectID, generation.QueryOptions{})
+		if taskErr != nil {
+			return nil, 0, fmt.Errorf("find tasks for project: %w", taskErr)
+		}
+
+		// Collect all drafts from all tasks
+		for _, task := range tasks {
+			taskDrafts, draftErr := s.draftRepo.FindByTaskID(ctx, task.ID())
+			if draftErr == nil {
+				drafts = append(drafts, taskDrafts...)
+			}
+		}
+	} else {
+		// No filter specified, return empty or error
+		return []*generation.GeneratedCaseDraft{}, 0, nil
+	}
+
+	// Filter by status if specified
+	if opts.Status != "" {
+		status, statusErr := generation.ParseDraftStatus(opts.Status)
+		if statusErr == nil {
+			filtered := make([]*generation.GeneratedCaseDraft, 0)
+			for _, draft := range drafts {
+				if draft.Status() == status {
+					filtered = append(filtered, draft)
+				}
+			}
+			drafts = filtered
+		}
+	}
+
+	// Apply pagination
+	total := int64(len(drafts))
+	start := opts.Offset
+	if start > len(drafts) {
+		start = len(drafts)
+	}
+	end := start + opts.Limit
+	if end > len(drafts) {
+		end = len(drafts)
+	}
+
+	if start >= end {
+		return []*generation.GeneratedCaseDraft{}, total, nil
+	}
+
+	return drafts[start:end], total, nil
 }
 
 // ConfirmDraft confirms a draft and creates a test case

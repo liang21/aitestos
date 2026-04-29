@@ -221,3 +221,45 @@ func (h *GenerationHandler) BatchConfirm(w http.ResponseWriter, r *http.Request)
 
 	respondWithJSON(w, http.StatusOK, result)
 }
+
+// ListAllDrafts handles listing all drafts with filters
+func (h *GenerationHandler) ListAllDrafts(w http.ResponseWriter, r *http.Request) {
+	opts := genservice.ListAllDraftsOptions{
+		Offset: getIntQueryParam(r, "offset", 0),
+		Limit:  getIntQueryParam(r, "limit", 10),
+		Status: r.URL.Query().Get("status"),
+	}
+
+	// Parse project_id if provided
+	if projectIDStr := r.URL.Query().Get("project_id"); projectIDStr != "" {
+		projectID, err := uuid.Parse(projectIDStr)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "invalid project ID format")
+			return
+		}
+		opts.ProjectID = projectID
+	}
+
+	// Parse task_id if provided
+	if taskIDStr := r.URL.Query().Get("task_id"); taskIDStr != "" {
+		taskID, err := uuid.Parse(taskIDStr)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "invalid task ID format")
+			return
+		}
+		opts.TaskID = taskID
+	}
+
+	drafts, total, err := h.genService.ListAllDrafts(r.Context(), opts)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"data":   drafts,
+		"total":  total,
+		"offset": opts.Offset,
+		"limit":  opts.Limit,
+	})
+}

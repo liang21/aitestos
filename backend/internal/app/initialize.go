@@ -447,6 +447,10 @@ func (s *placeholderGenerationService) GetDrafts(ctx context.Context, taskID uui
 	return nil, fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
 }
 
+func (s *placeholderGenerationService) ListAllDrafts(ctx context.Context, opts generationSvc.ListAllDraftsOptions) ([]*domaingeneration.GeneratedCaseDraft, int64, error) {
+	return nil, 0, fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
+}
+
 func (s *placeholderGenerationService) ConfirmDraft(ctx context.Context, req *generationSvc.ConfirmDraftRequest, userID uuid.UUID) (*domaintestcase.TestCase, error) {
 	return nil, fmt.Errorf("generation service unavailable: LLM and RAG services not configured")
 }
