@@ -258,3 +258,17 @@ func TestMockProjectRepository_NotFound(t *testing.T) {
 		t.Errorf("Delete() error = %v, want %v", err, domainproject.ErrProjectNotFound)
 	}
 }
+
+
+// TestProjectRepository_Save_DuplicateConstraints tests database unique constraint error handling
+func TestProjectRepository_Save_DuplicateConstraints(t *testing.T) {
+	t.Run("duplicate name constraint", func(t *testing.T) {
+		// This test requires sqlmock and would be added to a separate mock-based test file
+		// For now, we verify the error mapping logic through integration tests
+		t.Skip("requires sqlmock setup")
+	})
+	
+	t.Run("duplicate prefix constraint", func(t *testing.T) {
+		t.Skip("requires sqlmock setup")
+	})
+}

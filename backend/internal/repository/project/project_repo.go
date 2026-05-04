@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	domainproject "github.com/liang21/aitestos/internal/domain/project"
 )
 
@@ -37,6 +38,17 @@ func (r *ProjectRepository) Save(ctx context.Context, project *domainproject.Pro
 		project.UpdatedAt(),
 	)
 	if err != nil {
+		// Handle unique constraint violations
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == "23505" { // unique_violation
+				switch pqErr.Constraint {
+				case "project_name_key":
+					return fmt.Errorf("save project: %w", domainproject.ErrProjectNameDuplicate)
+				case "project_prefix_key":
+					return fmt.Errorf("save project: %w", domainproject.ErrProjectPrefixDuplicate)
+				}
+			}
+		}
 		return fmt.Errorf("save project: %w", err)
 	}
 	return nil
@@ -235,6 +247,12 @@ func (r *ProjectRepository) Update(ctx context.Context, project *domainproject.P
 		project.UpdatedAt(),
 	)
 	if err != nil {
+		// Handle unique constraint violations
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == "23505" && pqErr.Constraint == "project_name_key" {
+				return fmt.Errorf("update project: %w", domainproject.ErrProjectNameDuplicate)
+			}
+		}
 		return fmt.Errorf("update project: %w", err)
 	}
 	rows, err := result.RowsAffected()
