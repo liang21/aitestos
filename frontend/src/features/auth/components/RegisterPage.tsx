@@ -5,7 +5,6 @@ import {
   Form,
   Input,
   Button,
-  Message,
   Card,
   Radio,
 } from '@arco-design/web-react'
@@ -13,6 +12,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useRegister } from '@/features/auth/hooks/useAuth'
 import { useRateLimit, RateLimitConfig } from '@/lib/hooks/useRateLimit'
 import { RateLimiter } from '@/components/RateLimiter'
+import { messageSuccess, messageError } from '@/lib/notification'
 
 const { Item: FormItem } = Form
 
@@ -73,13 +73,13 @@ export function RegisterPage() {
       // Reset rate limit on successful registration
       rateLimit.recordAttempt(true)
 
-      Message.success('注册成功，请登录')
+      messageSuccess('注册成功，请登录')
       navigate('/login')
     } catch (error) {
       // Record failed attempt
       rateLimit.recordAttempt(false)
 
-      Message.error(error instanceof Error ? error.message : '注册失败')
+      messageError(error instanceof Error ? error.message : '注册失败')
     }
   }
 

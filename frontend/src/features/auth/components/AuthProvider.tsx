@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
 import { setAuthExpiredHandler, setTokenUpdatedHandler } from '@/lib/request'
 
@@ -18,16 +18,21 @@ interface AuthProviderProps {
  * 3. Register token updated handler to keep store in sync with request.ts
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { logout, setTokens, initialize } = useAuthStore()
+  const initializedRef = useRef(false)
 
   useEffect(() => {
-    // Initialize auth state from localStorage
-    initialize()
+    // Only run once
+    if (initializedRef.current) return
+    initializedRef.current = true
 
-    // Register handlers with request interceptor
-    setAuthExpiredHandler(logout)
-    setTokenUpdatedHandler(setTokens)
-  }, [initialize, logout, setTokens])
+    // Initialize auth state from localStorage
+    useAuthStore.getState().initialize()
+
+    // Register handlers with request interceptor - use store methods directly
+    const store = useAuthStore.getState()
+    setAuthExpiredHandler(store.logout)
+    setTokenUpdatedHandler(store.setTokens)
+  }, [])
 
   return <>{children}</>
 }

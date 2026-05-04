@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useForm, useController } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Modal, Input, Message } from '@arco-design/web-react'
+import { Input, Modal, Form, Button } from '@arco-design/web-react'
 import { useCreateProject } from '../hooks/useProjects'
+import { messageSuccess, messageError } from '@/lib/notification'
 
 const { TextArea } = Input
 
@@ -61,12 +62,12 @@ export function CreateProjectModal({
   const onSubmit = async (data: ProjectFormValues) => {
     try {
       await createProject.mutateAsync(data)
-      Message.success('项目创建成功')
+      messageSuccess('项目创建成功')
       reset()
       setSubmitAttempted(false)
       onOk?.(data)
     } catch {
-      Message.error('项目创建失败')
+      messageError('项目创建失败')
     }
   }
 

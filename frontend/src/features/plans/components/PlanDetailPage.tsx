@@ -13,7 +13,6 @@ import {
   Progress,
   Space,
   Modal,
-  Message,
   Popconfirm,
   Select,
   Checkbox,
@@ -23,6 +22,7 @@ import {
   IconEdit,
   IconDelete,
 } from '@arco-design/web-react/icon'
+import { messageSuccess, messageError, messageWarning, messageInfo } from '@/lib/notification'
 import {
   usePlanDetail,
   useRecordResult,
@@ -113,7 +113,7 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
   // Handle edit button
   const handleEdit = () => {
     // TODO: Implement edit route when available
-    Message.info('编辑功能待实现')
+    messageInfo('编辑功能待实现')
     // navigate(routes?.plans.detail(planId) + '/edit')
   }
 
@@ -121,10 +121,10 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
   const handleDelete = async () => {
     try {
       await deletePlanMutation.mutateAsync(planId)
-      Message.success('计划已删除')
+      messageSuccess('计划已删除')
       navigate(routes?.plans.list ?? '/plans')
     } catch (err) {
-      Message.error(
+      messageError(
         `删除失败：${err instanceof Error ? err.message : '未知错误'}`
       )
     }
@@ -158,11 +158,11 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
           note: data.note,
         },
       })
-      Message.success('结果录入成功')
+      messageSuccess('结果录入成功')
       handleCloseResultModal()
       refetch()
     } catch (err) {
-      Message.error(
+      messageError(
         `录入失败：${err instanceof Error ? err.message : '未知错误'}`
       )
     }
@@ -194,7 +194,7 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
 
       // Show toast with undo link
       const messageId = `result-${caseId}-${Date.now()}`
-      Message.success({
+      messageSuccess({
         id: messageId,
         content: (
           <span className="flex items-center gap-2">
@@ -228,7 +228,7 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
 
       setEditingCaseId(null)
     } catch (err) {
-      Message.error(
+      messageError(
         `录入失败：${err instanceof Error ? err.message : '未知错误'}`
       )
     }
@@ -248,11 +248,11 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
     }
 
     // Close the toast
-    Message.clear(messageId)
+    Modal.message?.clear(messageId)
 
     try {
       await deleteResultMutation.mutateAsync({ planId, caseId })
-      Message.success('已撤销录入')
+      messageSuccess('已撤销录入')
 
       setUndoStates((prev) => {
         const next = new Map(prev)
@@ -260,7 +260,7 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
         return next
       })
     } catch (err) {
-      Message.error(
+      messageError(
         `撤销失败：${err instanceof Error ? err.message : '未知错误'}`
       )
     }
@@ -286,7 +286,7 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
   // Batch entry: submit
   const handleSubmitBatchEntry = async () => {
     if (!batchResult) {
-      Message.warning('请选择执行结果')
+      messageWarning('请选择执行结果')
       return
     }
 
@@ -301,11 +301,11 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
         )
       )
 
-      Message.success(`已批量录入 ${selectedRowKeys.length} 条结果`)
+      messageSuccess(`已批量录入 ${selectedRowKeys.length} 条结果`)
       handleCloseBatchModal()
       setSelectedRowKeys([])
     } catch (err) {
-      Message.error(
+      messageError(
         `批量录入失败：${err instanceof Error ? err.message : '未知错误'}`
       )
     }

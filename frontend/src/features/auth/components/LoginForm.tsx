@@ -1,12 +1,13 @@
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Form, Input, Button, Message } from '@arco-design/web-react'
+import { Form, Input, Button } from '@arco-design/web-react'
 import { IconEmail, IconLock } from '@arco-design/web-react/icon'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { useLogin } from '@/features/auth/hooks/useAuth'
 import { useRateLimit, RateLimitConfig } from '@/lib/hooks/useRateLimit'
 import { RateLimiter } from '@/components/RateLimiter'
+import { messageSuccess, messageError } from '@/lib/notification'
 
 const { Item: FormItem } = Form
 
@@ -54,7 +55,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     try {
       await login.mutateAsync(data)
       rateLimit.recordAttempt(true)
-      Message.success('登录成功')
+      messageSuccess('登录成功')
 
       // Call onSuccess callback or navigate to redirect destination
       if (onSuccess) {
@@ -64,7 +65,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       }
     } catch (error) {
       rateLimit.recordAttempt(false)
-      Message.error(error instanceof Error ? error.message : '登录失败')
+      messageError(error instanceof Error ? error.message : '登录失败')
     }
   }
 

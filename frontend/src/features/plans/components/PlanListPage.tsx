@@ -11,13 +11,13 @@ import {
   Select,
   Table,
   Space,
-  Message,
 } from '@arco-design/web-react'
 import { IconPlus } from '@arco-design/web-react/icon'
 import { usePlanList } from '../hooks/usePlans'
 import { SearchTable } from '@/components/business/SearchTable'
 import { StatusTag } from '@/components/business/StatusTag'
 import type { PlanStatus } from '@/types/enums'
+import { messageError } from '@/lib/notification'
 
 const { Option } = Select
 
@@ -102,7 +102,7 @@ export function PlanListPage() {
   ]
 
   if (error) {
-    Message.error(`加载失败：${error.message}`)
+    messageError(`加载失败：${error.message}`)
     return null
   }
 

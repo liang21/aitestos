@@ -9,7 +9,6 @@ import {
   Space,
   Form,
   Input,
-  Message,
 } from '@arco-design/web-react'
 import { IconPlus } from '@arco-design/web-react/icon'
 import {
@@ -84,11 +83,11 @@ export function ModuleManagePage() {
     try {
       const values = await form.validate()
       await createModule.mutateAsync({ projectId, data: values })
-      Message.success('模块创建成功')
+      messageSuccess('模块创建成功')
       form.reset()
       setCreateModalVisible(false)
     } catch {
-      Message.error('模块创建失败')
+      messageError('模块创建失败')
     }
   }
 

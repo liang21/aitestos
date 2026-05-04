@@ -17,7 +17,6 @@ import {
   Button,
   Tree,
   Space,
-  Message,
   Steps,
 } from '@arco-design/web-react'
 import { Figma, Link as LinkIcon, Loader2 } from 'lucide-react'
@@ -44,10 +43,10 @@ export default function FigmaIntegrationPage() {
     try {
       // TODO: Implement actual Figma API connection test
       await new Promise((resolve) => setTimeout(resolve, 1000))
-      Message.success('连接成功')
+      messageSuccess('连接成功')
       setStep(2)
     } catch {
-      Message.error('连接失败，请检查令牌是否正确')
+      messageError('连接失败，请检查令牌是否正确')
     } finally {
       setLoading(false)
     }
@@ -57,7 +56,7 @@ export default function FigmaIntegrationPage() {
   const handleParseFile = async () => {
     const url = form.getFieldValue('fileUrl')
     if (!url) {
-      Message.error('请输入 Figma 文件 URL')
+      messageError('请输入 Figma 文件 URL')
       return
     }
 
@@ -90,10 +89,10 @@ export default function FigmaIntegrationPage() {
       ]
 
       setFigmaNodes(mockNodes)
-      Message.success('解析成功')
+      messageSuccess('解析成功')
       setStep(3)
     } catch {
-      Message.error('解析失败，请检查 URL 是否正确')
+      messageError('解析失败，请检查 URL 是否正确')
     } finally {
       setLoading(false)
     }
@@ -102,7 +101,7 @@ export default function FigmaIntegrationPage() {
   // Handle import confirmation
   const handleConfirmImport = async () => {
     if (selectedKeys.length === 0) {
-      Message.warning('请至少选择一个节点')
+      messageWarning('请至少选择一个节点')
       return
     }
 
@@ -110,13 +109,13 @@ export default function FigmaIntegrationPage() {
     try {
       // TODO: Implement actual Figma node import
       await new Promise((resolve) => setTimeout(resolve, 1500))
-      Message.success(`成功导入 ${selectedKeys.length} 个节点`)
+      messageSuccess(`成功导入 ${selectedKeys.length} 个节点`)
       setStep(1)
       form.resetFields()
       setFigmaNodes([])
       setSelectedKeys([])
     } catch {
-      Message.error('导入失败')
+      messageError('导入失败')
     } finally {
       setLoading(false)
     }

@@ -26,6 +26,7 @@ export function useLogin() {
       // Use the store's setTokens method to ensure consistency
       useAuthStore.getState().setTokens(access_token, refresh_token)
       useAuthStore.getState().setUser(user)
+      // Update authenticated state
       useAuthStore.setState({ isAuthenticated: true })
     },
     onError: (error: Error) => {

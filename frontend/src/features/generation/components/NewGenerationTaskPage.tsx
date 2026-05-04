@@ -10,7 +10,6 @@ import {
   Input,
   Collapse,
   InputNumber,
-  Message,
   Card,
   Alert,
   Modal,
@@ -128,10 +127,10 @@ export function NewGenerationTaskPage({
         sceneType: data.sceneType,
       })
 
-      Message.success('生成任务创建成功')
+      messageSuccess('生成任务创建成功')
       navigate(`/generation/tasks/${result.id}`)
     } catch (error) {
-      Message.error('创建任务失败，请重试')
+      messageError('创建任务失败，请重试')
     }
   }
 
@@ -151,10 +150,10 @@ export function NewGenerationTaskPage({
         sceneType: formData.sceneType,
       })
 
-      Message.success('生成任务创建成功')
+      messageSuccess('生成任务创建成功')
       navigate(`/generation/tasks/${result.id}`)
     } catch (error) {
-      Message.error('创建任务失败，请重试')
+      messageError('创建任务失败，请重试')
     }
   }
 

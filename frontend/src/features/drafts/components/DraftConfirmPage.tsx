@@ -12,7 +12,6 @@ import {
   Select,
   Button,
   Space,
-  Message,
   Modal,
   Spin,
 } from '@arco-design/web-react'
@@ -189,7 +188,7 @@ export function DraftConfirmPage() {
   // Handle confirm submission
   const handleConfirmSubmit = async () => {
     if (!selectedModuleId) {
-      Message.warning('请选择目标模块')
+      messageWarning('请选择目标模块')
       return
     }
 
@@ -204,7 +203,7 @@ export function DraftConfirmPage() {
         },
       })
 
-      Message.success(`用例 ${result.number} 已创建`)
+      messageSuccess(`用例 ${result.number} 已创建`)
       setHasUnsavedChanges(false)
       setConfirmModal(false)
 
@@ -213,9 +212,9 @@ export function DraftConfirmPage() {
       navigate(routes?.cases.detail(result.id) ?? `/testcases/${result.id}`)
     } catch (error) {
       if (error instanceof Error) {
-        Message.error(`确认失败：${error.message}`)
+        messageError(`确认失败：${error.message}`)
       } else {
-        Message.error('确认草稿失败，请稍后重试')
+        messageError('确认草稿失败，请稍后重试')
       }
       console.error('Confirm failed:', error)
     }
@@ -229,7 +228,7 @@ export function DraftConfirmPage() {
       [draftId]: values,
     }))
     setHasUnsavedChanges(false)
-    Message.info('草稿已保存到本地')
+    messageInfo('草稿已保存到本地')
   }
 
   // Handle reject
@@ -247,12 +246,12 @@ export function DraftConfirmPage() {
         },
       })
 
-      Message.success('草稿已拒绝')
+      messageSuccess('草稿已拒绝')
       setHasUnsavedChanges(false)
       setRejectModal(false)
       navigate(-1)
     } catch (error) {
-      Message.error('拒绝草稿失败，请稍后重试')
+      messageError('拒绝草稿失败，请稍后重试')
       console.error('Reject failed:', error)
     }
   }

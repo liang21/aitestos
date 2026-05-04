@@ -11,13 +11,13 @@ import {
   Form,
   Input,
   Checkbox,
-  Message,
   Space,
 } from '@arco-design/web-react'
 import { useCreatePlan } from '../hooks/usePlans'
 import { useCaseList } from '@/features/testcases/hooks/useTestCases'
 import { buildProjectRoutes } from '@/lib/routes'
 import type { CreatePlanRequest } from '@/types/api'
+import { messageSuccess, messageError } from '@/lib/notification'
 
 const { TextArea } = Input
 
@@ -46,13 +46,13 @@ export function NewPlanPage() {
     try {
       // Validate name
       if (!values.name || values.name.length < 3) {
-        Message.error('请输入计划名称，至少 3 个字符')
+        messageError('请输入计划名称，至少 3 个字符')
         return
       }
 
       // Validate at least one case is selected
       if (selectedCaseIds.length === 0) {
-        Message.error('请至少选择一个用例')
+        messageError('请至少选择一个用例')
         return
       }
 
@@ -68,10 +68,10 @@ export function NewPlanPage() {
       // Add cases to plan (this would be done in the backend or via a separate API call)
       // For now, we'll assume the plan is created and navigate to detail page
 
-      Message.success('计划创建成功')
+      messageSuccess('计划创建成功')
       navigate(routes?.plans.detail(plan.id) ?? `/plans/${plan.id}`)
     } catch (error) {
-      Message.error(
+      messageError(
         `创建失败：${error instanceof Error ? error.message : '未知错误'}`
       )
     }

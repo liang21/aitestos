@@ -10,9 +10,9 @@ import {
   Input,
   Button,
   Space,
-  Message,
 } from '@arco-design/web-react'
 import type { ResultStatus, PlanCase } from '@/types/api'
+import { messageSuccess, messageError } from '@/lib/notification'
 import { plansApi } from '../services/plans'
 
 const resultStatusTextMap: Record<ResultStatus, string> = {
@@ -87,7 +87,7 @@ export function ResultRecordModal({
 
     // Validate note length if provided
     if (note && note.length > 500) {
-      Message.error('备注不能超过 500 字符')
+      messageError('备注不能超过 500 字符')
       return
     }
 

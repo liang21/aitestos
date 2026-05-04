@@ -212,11 +212,14 @@ request.interceptors.response.use(
           )
         }
 
-        // Retry original request
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${access_token}`
-        }
-        return request(originalRequest)
+        // Retry original request with new token
+        return request({
+          ...originalRequest,
+          headers: {
+            ...originalRequest.headers,
+            Authorization: `Bearer ${access_token}`,
+          },
+        })
       } catch (refreshError) {
         // Refresh failed - clear tokens and trigger auth expired
         tokenStorage.removeItem('access_token')

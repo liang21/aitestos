@@ -6,7 +6,7 @@ import type {
   CreateTaskRequest,
   TaskListParams,
 } from '@/types/api'
-import { Message } from '@arco-design/web-react'
+import { messageError } from '@/lib/notification'
 
 /**
  * Query keys for generation tasks
@@ -58,7 +58,7 @@ export function useCreateGenerationTask() {
     onError: (error: unknown) => {
       const errorMessage =
         error instanceof Error ? error.message : '创建任务失败'
-      Message.error(errorMessage)
+      messageError(errorMessage)
       console.error('Generation task creation error:', error)
     },
   })

@@ -6,7 +6,6 @@ import {
   Typography,
   Modal,
   Space,
-  Message,
   Input,
   Popconfirm,
 } from '@arco-design/web-react'
@@ -160,9 +159,9 @@ export function ConfigManagePage() {
   const handleDelete = async (key: string) => {
     try {
       await deleteConfig.mutateAsync(key)
-      Message.success('配置删除成功')
+      messageSuccess('配置删除成功')
     } catch {
-      Message.error('配置删除失败')
+      messageError('配置删除失败')
     }
   }
 
@@ -184,7 +183,7 @@ export function ConfigManagePage() {
       !parseResult.success &&
       parseResult.error
     ) {
-      Message.error(`配置值格式有误：${parseResult.error}`)
+      messageError(`配置值格式有误：${parseResult.error}`)
       return
     }
 
@@ -194,10 +193,10 @@ export function ConfigManagePage() {
         value: parseResult.data,
         description: data.description || undefined,
       })
-      Message.success(modalState.editing ? '配置更新成功' : '配置创建成功')
+      messageSuccess(modalState.editing ? '配置更新成功' : '配置创建成功')
       handleModalClose()
     } catch {
-      Message.error(modalState.editing ? '配置更新失败' : '配置创建失败')
+      messageError(modalState.editing ? '配置更新失败' : '配置创建失败')
     }
   }
 
@@ -212,9 +211,9 @@ export function ConfigManagePage() {
       a.download = `configs-${projectId}-${Date.now()}.json`
       a.click()
       URL.revokeObjectURL(url)
-      Message.success('配置导出成功')
+      messageSuccess('配置导出成功')
     } catch {
-      Message.error('配置导出失败')
+      messageError('配置导出失败')
     }
   }
 
@@ -245,7 +244,7 @@ export function ConfigManagePage() {
         const result = await importConfigs.mutateAsync(configs)
 
         // 显示结果
-        Message.success(
+        messageSuccess(
           `导入成功：${result.successCount} 个配置${
             result.failedCount > 0 ? `，${result.failedCount} 个失败` : ''
           }`
@@ -254,11 +253,11 @@ export function ConfigManagePage() {
         // 如果有失败的，显示详情
         if (result.failedCount > 0 && result.errors) {
           result.errors.forEach((err) => {
-            Message.error(`配置 ${err.key} 导入失败：${err.error}`)
+            messageError(`配置 ${err.key} 导入失败：${err.error}`)
           })
         }
       } catch (error) {
-        Message.error(
+        messageError(
           error instanceof Error ? error.message : '配置文件格式错误'
         )
       }

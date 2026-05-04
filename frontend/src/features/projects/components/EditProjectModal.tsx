@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useForm, useController } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Modal, Input, Message, Popconfirm } from '@arco-design/web-react'
+import { Input, Modal, Form, Button } from '@arco-design/web-react'
 import { useUpdateProject, useDeleteProject } from '../hooks/useProjects'
 import type { Project } from '@/types/api'
+import { messageSuccess, messageError } from '@/lib/notification'
 
 const { TextArea } = Input
 
@@ -85,13 +86,13 @@ export function EditProjectModal({
   const onSubmit = async (data: ProjectFormValues) => {
     try {
       await updateProject.mutateAsync({ id: project.id, data })
-      Message.success('项目更新成功')
+      messageSuccess('项目更新成功')
       reset()
       setSubmitAttempted(false)
       onSuccess()
       onClose()
     } catch {
-      Message.error('项目更新失败')
+      messageError('项目更新失败')
     }
   }
 
@@ -109,12 +110,12 @@ export function EditProjectModal({
   const handleDelete = async () => {
     try {
       await deleteProject.mutateAsync(project.id)
-      Message.success('项目已删除')
+      messageSuccess('项目已删除')
       onSuccess()
       // 使用 React Router 导航到项目列表
       navigate('/projects')
     } catch {
-      Message.error('项目删除失败')
+      messageError('项目删除失败')
     }
   }
 

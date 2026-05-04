@@ -11,7 +11,6 @@ import {
   Select,
   Space,
   Modal,
-  Message,
 } from '@arco-design/web-react'
 import { IconCheck, IconClose, IconSync } from '@arco-design/web-react/icon'
 import {
@@ -80,7 +79,7 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
   // Execute batch confirm with selected module
   const executeBatchConfirm = async () => {
     if (!batchConfirmModal.targetModuleId) {
-      Message.warning('请选择目标模块')
+      messageWarning('请选择目标模块')
       return
     }
 
@@ -90,11 +89,11 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
     })
 
     if (result.failedCount > 0) {
-      Message.warning(
+      messageWarning(
         `成功确认 ${result.successCount} 条，失败 ${result.failedCount} 条`
       )
     } else {
-      Message.success(`成功确认 ${result.successCount} 条草稿`)
+      messageSuccess(`成功确认 ${result.successCount} 条草稿`)
     }
 
     setBatchConfirmModal({ visible: false, targetModuleId: '' })
@@ -113,7 +112,7 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
     )
 
     const successCount = results.filter((r) => r.status === 'fulfilled').length
-    Message.success(`已拒绝 ${successCount} 条草稿`)
+    messageSuccess(`已拒绝 ${successCount} 条草稿`)
 
     setRejectModal({ visible: false, draftIds: [] })
     setSelectedRowKeys([])

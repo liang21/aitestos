@@ -14,7 +14,6 @@ import {
 import { NavLink, useLocation, useParams } from 'react-router-dom'
 import { useMemo } from 'react'
 import { useAppStore } from '@/store/useAppStore'
-import { usePendingDraftCount } from '@/features/drafts/hooks/useDrafts'
 import { useAuthStore } from '@/features/auth/hooks/useAuthStore'
 import { useLogout } from '@/features/auth/hooks/useAuth'
 import { buildProjectRoutes } from '@/lib/routes'
@@ -24,7 +23,9 @@ const MenuItem = Menu.Item
 
 export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useAppStore()
-  const { data: pendingCount } = usePendingDraftCount()
+  // TODO: Re-enable when backend implements /generation/drafts/count endpoint
+  // const { data: pendingCount = 0 } = usePendingDraftCount()
+  const pendingCount = 0
   const { user } = useAuthStore()
   const handleLogout = useLogout()
   const location = useLocation()
@@ -36,8 +37,8 @@ export function Sidebar() {
     return buildProjectRoutes(projectId)
   }, [projectId])
 
-  // Memoize menu items to prevent unnecessary re-renders
-  const menuItems = useMemo(
+  // Memoize static menu items (without Badge) to prevent unnecessary re-renders
+  const staticMenuItems = useMemo(
     () => (
       <>
         {/* Projects */}
@@ -92,19 +93,9 @@ export function Sidebar() {
             </MenuItem>
           </>
         )}
-
-        {/* Drafts with Badge (global route) */}
-        <MenuItem key="/drafts">
-          <NavLink to="/drafts" aria-label="草稿箱">
-            <Badge count={pendingCount ?? 0} offset={[8, 0]}>
-              <Inbox size={18} aria-hidden="true" />
-            </Badge>
-            {!sidebarCollapsed && <span>草稿箱</span>}
-          </NavLink>
-        </MenuItem>
       </>
     ),
-    [sidebarCollapsed, pendingCount, projectRoutes]
+    [sidebarCollapsed, projectRoutes]
   )
 
   return (
@@ -134,7 +125,16 @@ export function Sidebar() {
         style={{ width: '100%' }}
         className="sidebar-menu"
       >
-        {menuItems}
+        {staticMenuItems}
+        {/* Drafts with Badge - rendered inline without memoization to prevent infinite loop */}
+        <MenuItem key="/drafts">
+          <NavLink to="/drafts" aria-label="草稿箱">
+            <Badge count={pendingCount ?? 0} offset={[8, 0]}>
+              <Inbox size={18} aria-hidden="true" />
+            </Badge>
+            {!sidebarCollapsed && <span>草稿箱</span>}
+          </NavLink>
+        </MenuItem>
       </Menu>
 
       {/* User Section */}
