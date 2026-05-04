@@ -2,6 +2,7 @@
 package project
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -68,6 +69,25 @@ func (p *Project) CreatedAt() time.Time {
 // UpdatedAt returns the last update timestamp
 func (p *Project) UpdatedAt() time.Time {
 	return p.updatedAt
+}
+
+// MarshalJSON implements json.Marshaler interface
+func (p *Project) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		ID          uuid.UUID `json:"id"`
+		Name        string    `json:"name"`
+		Prefix      string    `json:"prefix"`
+		Description string    `json:"description"`
+		CreatedAt   time.Time `json:"created_at"`
+		UpdatedAt   time.Time `json:"updated_at"`
+	}{
+		ID:          p.id,
+		Name:        p.name,
+		Prefix:      string(p.prefix),
+		Description: p.description,
+		CreatedAt:   p.createdAt,
+		UpdatedAt:   p.updatedAt,
+	})
 }
 
 // UpdateDescription updates the project's description

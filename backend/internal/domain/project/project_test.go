@@ -2,6 +2,7 @@
 package project_test
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -159,5 +160,39 @@ func TestProject_UpdateName(t *testing.T) {
 	err = p.UpdateName("")
 	if err == nil {
 		t.Error("Project.UpdateName() should return error for empty name")
+	}
+}
+
+
+func TestProject_MarshalJSON(t *testing.T) {
+	p, err := project.NewProject("Test Project", "TST", "A test project")
+	if err != nil {
+		t.Fatalf("failed to create project: %v", err)
+	}
+
+	data, err := json.Marshal(p)
+	if err != nil {
+		t.Fatalf("failed to marshal project: %v", err)
+	}
+
+	t.Logf("JSON output: %s", string(data))
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+
+	// Verify required fields
+	if result["id"] == nil {
+		t.Error("id field is missing")
+	}
+	if result["name"] == nil || result["name"] != "Test Project" {
+		t.Errorf("name field is missing or wrong: got %v", result["name"])
+	}
+	if result["prefix"] == nil || result["prefix"] != "TST" {
+		t.Errorf("prefix field is missing or wrong: got %v", result["prefix"])
+	}
+	if result["description"] == nil || result["description"] != "A test project" {
+		t.Errorf("description field is missing or wrong: got %v", result["description"])
 	}
 }
