@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	ctxkeys "github.com/liang21/aitestos/internal/transport/http/ctxkeys"
 )
 
 // MockGenerationService implements genservice.GenerationService for testing
@@ -48,6 +50,11 @@ func (m *MockGenerationService) ListTasks(ctx context.Context, projectID uuid.UU
 func (m *MockGenerationService) GetDrafts(ctx context.Context, taskID uuid.UUID) ([]*generation.GeneratedCaseDraft, error) {
 	args := m.Called(ctx, taskID)
 	return args.Get(0).([]*generation.GeneratedCaseDraft), args.Error(1)
+}
+
+func (m *MockGenerationService) ListAllDrafts(ctx context.Context, opts genservice.ListAllDraftsOptions) ([]*generation.GeneratedCaseDraft, int64, error) {
+	args := m.Called(ctx, opts)
+	return args.Get(0).([]*generation.GeneratedCaseDraft), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockGenerationService) ConfirmDraft(ctx context.Context, req *genservice.ConfirmDraftRequest, userID uuid.UUID) (*testcase.TestCase, error) {
@@ -120,7 +127,7 @@ func TestCreateTaskHandler(t *testing.T) {
 
 		req := createRequestWithChiParams("POST", "/api/v1/generation/tasks", jsonBody, nil)
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
+		ctx := context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New())
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
@@ -169,7 +176,7 @@ func TestCreateTaskHandler(t *testing.T) {
 
 		req := createRequestWithChiParams("POST", "/api/v1/generation/tasks", jsonBody, nil)
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
+		ctx := context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New())
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
@@ -289,7 +296,7 @@ func TestConfirmDraftHandler(t *testing.T) {
 
 		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/"+draftID.String()+"/confirm", jsonBody, map[string]string{"draftID": draftID.String()})
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
+		ctx := context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New())
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
@@ -392,7 +399,7 @@ func TestBatchConfirmHandler(t *testing.T) {
 
 		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/batch-confirm", jsonBody, nil)
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
+		ctx := context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New())
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 

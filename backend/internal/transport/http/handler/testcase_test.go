@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	ctxkeys "github.com/liang21/aitestos/internal/transport/http/ctxkeys"
 )
 
 // MockCaseService implements caseservice.CaseService for testing
@@ -100,7 +102,7 @@ func TestCreateCaseHandler(t *testing.T) {
 
 		req := httptest.NewRequest("POST", "/api/v1/testcases", bytes.NewReader(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
+		ctx := context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New())
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
@@ -140,7 +142,7 @@ func TestCreateCaseHandler(t *testing.T) {
 
 		req := httptest.NewRequest("POST", "/api/v1/testcases", bytes.NewReader([]byte("invalid")))
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
+		ctx := context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New())
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
@@ -167,7 +169,7 @@ func TestCreateCaseHandler(t *testing.T) {
 
 		req := httptest.NewRequest("POST", "/api/v1/testcases", bytes.NewReader(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
+		ctx := context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New())
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 

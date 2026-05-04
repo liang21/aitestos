@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	ctxkeys "github.com/liang21/aitestos/internal/transport/http/ctxkeys"
 )
 
 // MockProjectService implements projectservice.ProjectService for testing
@@ -83,6 +85,14 @@ func (m *MockProjectService) DeleteModule(ctx context.Context, id uuid.UUID) err
 	return args.Error(0)
 }
 
+func (m *MockProjectService) UpdateModule(ctx context.Context, id uuid.UUID, req *projectservice.UpdateModuleRequest) (*project.Module, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*project.Module), args.Error(1)
+}
+
 func (m *MockProjectService) SetConfig(ctx context.Context, projectID uuid.UUID, key string, value map[string]any) error {
 	args := m.Called(ctx, projectID, key, value)
 	return args.Error(0)
@@ -146,7 +156,7 @@ func TestCreateProjectHandler(t *testing.T) {
 
 		req := httptest.NewRequest("POST", "/api/v1/projects", bytes.NewReader(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
+		ctx := context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New())
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
@@ -184,7 +194,7 @@ func TestCreateProjectHandler(t *testing.T) {
 
 		req := httptest.NewRequest("POST", "/api/v1/projects", bytes.NewReader([]byte("invalid")))
 		req.Header.Set("Content-Type", "application/json")
-		ctx := context.WithValue(req.Context(), userIDContextKey, uuid.New())
+		ctx := context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New())
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
 
@@ -302,7 +312,7 @@ func TestCreateModuleHandler(t *testing.T) {
 		rctx.URLParams.Add("projectID", projectID.String())
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		// Set user context
-		req = req.WithContext(context.WithValue(req.Context(), userIDContextKey, uuid.New()))
+		req = req.WithContext(context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New()))
 		w := httptest.NewRecorder()
 
 		handler.CreateModule(w, req)

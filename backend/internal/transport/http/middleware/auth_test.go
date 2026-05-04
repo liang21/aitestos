@@ -12,6 +12,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	ctxkeys "github.com/liang21/aitestos/internal/transport/http/ctxkeys"
 )
 
 func TestAuthMiddleware(t *testing.T) {
@@ -142,7 +144,7 @@ func TestUserIDFromContext(t *testing.T) {
 	t.Run("user in context", func(t *testing.T) {
 		t.Parallel()
 		expectedID := uuid.New()
-		ctx := context.WithValue(context.Background(), userContextKey, expectedID)
+		ctx := context.WithValue(context.Background(), ctxkeys.UserIDKey, expectedID)
 		userID, ok := UserIDFromContext(ctx)
 		assert.True(t, ok)
 		assert.Equal(t, expectedID, userID)

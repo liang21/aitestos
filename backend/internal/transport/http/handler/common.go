@@ -17,20 +17,8 @@ import (
 	domainProject "github.com/liang21/aitestos/internal/domain/project"
 	domainTestcase "github.com/liang21/aitestos/internal/domain/testcase"
 	domainTestplan "github.com/liang21/aitestos/internal/domain/testplan"
-)
 
-// Context key types for type-safe context values
-type contextKey string
-
-const (
-	userIDContextKey     contextKey = "user_id"
-	projectIDContextKey  contextKey = "project_id"
-	moduleIDContextKey   contextKey = "module_id"
-	caseIDContextKey     contextKey = "case_id"
-	planIDContextKey     contextKey = "plan_id"
-	taskIDContextKey     contextKey = "task_id"
-	draftIDContextKey    contextKey = "draft_id"
-	documentIDContextKey contextKey = "document_id"
+	ctxkeys "github.com/liang21/aitestos/internal/transport/http/ctxkeys"
 )
 
 // respondWithError sends an error response
@@ -133,7 +121,7 @@ func getIDFromURL(r *http.Request, param string) (uuid.UUID, error) {
 
 // getUserIDFromContext extracts user ID from context
 func getUserIDFromContext(ctx context.Context) (uuid.UUID, bool) {
-	userID, ok := ctx.Value(userIDContextKey).(uuid.UUID)
+	userID, ok := ctx.Value(ctxkeys.UserIDKey).(uuid.UUID)
 	return userID, ok
 }
 

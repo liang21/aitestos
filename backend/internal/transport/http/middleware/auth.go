@@ -9,13 +9,9 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+
+	ctxkeys "github.com/liang21/aitestos/internal/transport/http/ctxkeys"
 )
-
-// contextKey is the type for context keys
-type contextKey string
-
-// userContextKey is the context key for user ID
-const userContextKey contextKey = "user_id"
 
 // respondWithError sends an error response
 func respondWithError(w http.ResponseWriter, httpStatus int, message string) {
@@ -94,7 +90,7 @@ func Auth(secret string, allowedRoles ...string) func(http.Handler) http.Handler
 			}
 
 			// Add user ID to context
-			ctx := context.WithValue(r.Context(), userContextKey, userID)
+			ctx := context.WithValue(r.Context(), ctxkeys.UserIDKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -102,6 +98,6 @@ func Auth(secret string, allowedRoles ...string) func(http.Handler) http.Handler
 
 // UserIDFromContext extracts user ID from context
 func UserIDFromContext(ctx context.Context) (uuid.UUID, bool) {
-	userID, ok := ctx.Value(userContextKey).(uuid.UUID)
+	userID, ok := ctx.Value(ctxkeys.UserIDKey).(uuid.UUID)
 	return userID, ok
 }
