@@ -250,7 +250,7 @@ func TestGetDraftsHandler(t *testing.T) {
 
 		handler := NewGenerationHandler(mockSvc)
 
-		req := createRequestWithChiParams("GET", "/api/v1/generation/tasks/"+taskID.String()+"/drafts", nil, map[string]string{"taskID": taskID.String()})
+		req := createRequestWithChiParams("GET", "/api/v1/generation/tasks/"+taskID.String()+"/drafts", nil, map[string]string{"id": taskID.String()})
 		w := httptest.NewRecorder()
 
 		handler.GetDrafts(w, req)
@@ -267,7 +267,7 @@ func TestGetDraftsHandler(t *testing.T) {
 
 		handler := NewGenerationHandler(mockSvc)
 
-		req := createRequestWithChiParams("GET", "/api/v1/generation/tasks/"+taskID.String()+"/drafts", nil, map[string]string{"taskID": taskID.String()})
+		req := createRequestWithChiParams("GET", "/api/v1/generation/tasks/"+taskID.String()+"/drafts", nil, map[string]string{"id": taskID.String()})
 		w := httptest.NewRecorder()
 
 		handler.GetDrafts(w, req)
@@ -294,7 +294,7 @@ func TestConfirmDraftHandler(t *testing.T) {
 		}
 		jsonBody, _ := json.Marshal(body)
 
-		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/"+draftID.String()+"/confirm", jsonBody, map[string]string{"draftID": draftID.String()})
+		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/"+draftID.String()+"/confirm", jsonBody, map[string]string{"id": draftID.String()})
 		req.Header.Set("Content-Type", "application/json")
 		ctx := context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New())
 		req = req.WithContext(ctx)
@@ -344,7 +344,7 @@ func TestRejectDraftHandler(t *testing.T) {
 		}
 		jsonBody, _ := json.Marshal(body)
 
-		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/"+draftID.String()+"/reject", jsonBody, map[string]string{"draftID": draftID.String()})
+		req := createRequestWithChiParams("POST", "/api/v1/generation/drafts/"+draftID.String()+"/reject", jsonBody, map[string]string{"id": draftID.String()})
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 

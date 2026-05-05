@@ -109,7 +109,7 @@ func (h *GenerationHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
 
 // GetDrafts handles getting drafts for a task
 func (h *GenerationHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
-	taskID, err := getIDFromURL(r, "taskID")
+	taskID, err := getIDFromURL(r, "id")
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid task ID")
 		return
@@ -132,7 +132,7 @@ func (h *GenerationHandler) ConfirmDraft(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	draftID, err := getIDFromURL(r, "draftID")
+	draftID, err := getIDFromURL(r, "id")
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid draft ID")
 		return
@@ -162,7 +162,7 @@ func (h *GenerationHandler) ConfirmDraft(w http.ResponseWriter, r *http.Request)
 
 // RejectDraft handles rejecting a single draft
 func (h *GenerationHandler) RejectDraft(w http.ResponseWriter, r *http.Request) {
-	draftID, err := getIDFromURL(r, "draftID")
+	draftID, err := getIDFromURL(r, "id")
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid draft ID")
 		return
