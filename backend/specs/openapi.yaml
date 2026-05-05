@@ -1591,9 +1591,6 @@ components:
           format: uuid
         name:
           type: string
-        prefix:
-          type: string
-          description: 项目前缀，用于用例编号生成
         description:
           type: string
         createdAt:
@@ -1610,8 +1607,6 @@ components:
           type: string
           format: uuid
         name:
-          type: string
-        prefix:
           type: string
         description:
           type: string
@@ -1647,18 +1642,12 @@ components:
 
     CreateProjectRequest:
       type: object
-      required: [name, prefix]
+      required: [name]
       properties:
         name:
           type: string
           minLength: 2
           maxLength: 255
-        prefix:
-          type: string
-          minLength: 2
-          maxLength: 4
-          pattern: '^[A-Z]+$'
-          description: 项目前缀，2-4位大写字母，用于用例编号生成
         description:
           type: string
 
@@ -1684,9 +1673,6 @@ components:
           format: uuid
         name:
           type: string
-        abbreviation:
-          type: string
-          description: 模块缩写，用于用例编号生成
         description:
           type: string
         createdBy:
@@ -1701,18 +1687,12 @@ components:
 
     CreateModuleRequest:
       type: object
-      required: [name, abbreviation]
+      required: [name]
       properties:
         name:
           type: string
           minLength: 2
           maxLength: 255
-        abbreviation:
-          type: string
-          minLength: 2
-          maxLength: 4
-          pattern: '^[A-Z]+$'
-          description: 模块缩写，2-4位大写字母，项目内唯一
         description:
           type: string
 
@@ -1723,11 +1703,6 @@ components:
           type: string
           minLength: 2
           maxLength: 255
-        abbreviation:
-          type: string
-          minLength: 2
-          maxLength: 4
-          pattern: '^[A-Z]+$'
         description:
           type: string
 
@@ -1766,9 +1741,6 @@ components:
         userId:
           type: string
           format: uuid
-        number:
-          type: string
-          description: 业务编号，如 PRJ-MOD-20260401-001
         title:
           type: string
         preconditions:
@@ -1838,8 +1810,6 @@ components:
         userId:
           type: string
           format: uuid
-        number:
-          type: string
         title:
           type: string
         preconditions:
