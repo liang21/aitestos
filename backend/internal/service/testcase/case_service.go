@@ -38,7 +38,6 @@ type CaseDetail struct {
 	*domaintestcase.TestCase
 	ModuleName    string `json:"module_name"`
 	ProjectName   string `json:"project_name"`
-	ProjectPrefix string `json:"project_prefix"`
 	CreatedByName string `json:"created_by_name"`
 }
 
@@ -56,7 +55,7 @@ type CaseListOptions struct {
 
 // CaseService provides test case management operations
 type CaseService interface {
-	// CreateCase creates a new test case with auto-generated number
+	// CreateCase creates a new test case
 	CreateCase(ctx context.Context, req *CreateCaseRequest, userID uuid.UUID) (*domaintestcase.TestCase, error)
 
 	// UpdateCase updates an existing test case
@@ -64,9 +63,6 @@ type CaseService interface {
 
 	// GetCaseDetail retrieves test case with related info
 	GetCaseDetail(ctx context.Context, id uuid.UUID) (*CaseDetail, error)
-
-	// GetCaseByNumber retrieves test case by case number
-	GetCaseByNumber(ctx context.Context, number domaintestcase.CaseNumber) (*CaseDetail, error)
 
 	// ListByModule lists test cases by module with pagination
 	ListByModule(ctx context.Context, moduleID uuid.UUID, opts CaseListOptions) ([]*domaintestcase.TestCase, int64, error)
@@ -76,9 +72,6 @@ type CaseService interface {
 
 	// DeleteCase soft deletes a test case
 	DeleteCase(ctx context.Context, id uuid.UUID) error
-
-	// GenerateCaseNumber generates a new case number for a module
-	GenerateCaseNumber(ctx context.Context, moduleID uuid.UUID) (domaintestcase.CaseNumber, error)
 }
 
 // CaseServiceImpl implements CaseService
@@ -103,14 +96,12 @@ type Module interface {
 	ID() uuid.UUID
 	ProjectID() uuid.UUID
 	Name() string
-	Abbreviation() string
 }
 
 // Project represents a project (minimal interface)
 type Project interface {
 	ID() uuid.UUID
 	Name() string
-	Prefix() string
 }
 
 // NewCaseService creates a new CaseService instance
@@ -126,7 +117,7 @@ func NewCaseService(
 	}
 }
 
-// CreateCase creates a new test case with auto-generated number
+// CreateCase creates a new test case
 func (s *CaseServiceImpl) CreateCase(ctx context.Context, req *CreateCaseRequest, userID uuid.UUID) (*domaintestcase.TestCase, error) {
 	// Validate steps
 	if len(req.Steps) == 0 {
@@ -139,17 +130,10 @@ func (s *CaseServiceImpl) CreateCase(ctx context.Context, req *CreateCaseRequest
 		return nil, errors.New("module not found")
 	}
 
-	// Generate case number (also validates project exists)
-	caseNumber, err := s.GenerateCaseNumber(ctx, req.ModuleID)
-	if err != nil {
-		return nil, fmt.Errorf("generate case number: %w", err)
-	}
-
 	// Create test case
 	tc, err := domaintestcase.NewTestCase(
 		req.ModuleID,
 		userID,
-		caseNumber,
 		req.Title,
 		req.Preconditions,
 		req.Steps,
@@ -226,19 +210,8 @@ func (s *CaseServiceImpl) GetCaseDetail(ctx context.Context, id uuid.UUID) (*Cas
 		return nil, fmt.Errorf("find project for test case: %w", err)
 	}
 	detail.ProjectName = project.Name()
-	detail.ProjectPrefix = project.Prefix()
 
 	return detail, nil
-}
-
-// GetCaseByNumber retrieves test case by case number
-func (s *CaseServiceImpl) GetCaseByNumber(ctx context.Context, number domaintestcase.CaseNumber) (*CaseDetail, error) {
-	tc, err := s.caseRepo.FindByNumber(ctx, number)
-	if err != nil {
-		return nil, fmt.Errorf("find test case by number: %w", err)
-	}
-
-	return s.GetCaseDetail(ctx, tc.ID())
 }
 
 // ListByModule lists test cases by module with pagination
@@ -295,35 +268,4 @@ func (s *CaseServiceImpl) DeleteCase(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete test case: %w", err)
 	}
 	return nil
-}
-
-// GenerateCaseNumber generates a new case number for a module
-func (s *CaseServiceImpl) GenerateCaseNumber(ctx context.Context, moduleID uuid.UUID) (domaintestcase.CaseNumber, error) {
-	// Get module
-	module, err := s.moduleRepo.FindByID(ctx, moduleID)
-	if err != nil {
-		return "", errors.New("module not found")
-	}
-
-	// Get project
-	project, err := s.projectRepo.FindByID(ctx, module.ProjectID())
-	if err != nil {
-		return "", errors.New("project not found")
-	}
-
-	// Get count for today
-	today := time.Now()
-	count, err := s.caseRepo.CountByDate(ctx, moduleID, today)
-	if err != nil {
-		count = 0
-	}
-
-	// Generate case number
-	caseNumber := domaintestcase.GenerateCaseNumber(
-		project.Prefix(),
-		module.Abbreviation(),
-		int(count)+1,
-	)
-
-	return caseNumber, nil
 }
