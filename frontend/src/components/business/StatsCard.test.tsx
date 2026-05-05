@@ -35,7 +35,7 @@ describe('StatsCard', () => {
 
   it('should render custom icon', () => {
     const CustomIcon = () => <span data-testid="custom-icon">★</span>
-    const { container } = render(
+    render(
       <StatsCard title="覆盖率" value={75} icon={<CustomIcon />} />
     )
 

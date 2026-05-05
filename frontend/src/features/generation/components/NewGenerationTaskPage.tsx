@@ -15,6 +15,7 @@ import {
   Modal,
 } from '@arco-design/web-react'
 import { IconPlus, IconCheckCircle, IconExclamationCircle, IconCloseCircle } from '@arco-design/web-react/icon'
+import { messageSuccess, messageError } from '@/lib/notification'
 import { useCreateGenerationTask } from '@/features/generation/hooks/useGeneration'
 import { useModuleList } from '@/features/modules/hooks/useModules'
 import { useDocumentList } from '@/features/documents/hooks/useDocuments'
@@ -119,12 +120,12 @@ export function NewGenerationTaskPage({
         projectId,
         moduleId: data.moduleId,
         prompt: data.prompt,
-        count: data.count,
+        caseCount: data.count,
         caseType: data.caseType,
         priority:
           data.priority ||
           GENERATION_CONFIG.TASK_CREATION.DEFAULT_PRIORITY_INSUFFICIENT, // Force lower priority when knowledge is limited
-        sceneType: data.sceneType,
+        sceneTypes: data.sceneType ? [data.sceneType] : undefined,
       })
 
       messageSuccess('生成任务创建成功')

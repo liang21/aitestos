@@ -82,7 +82,6 @@ describe('ArrayEditor', () => {
 
   it('should always keep at least one row when trying to delete last row', async () => {
     const onChange = vi.fn()
-    const user = userEvent.setup()
     render(
       <ArrayEditor value={['步骤1']} onChange={onChange} placeholder="请输入" />
     )

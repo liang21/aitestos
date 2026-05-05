@@ -30,12 +30,7 @@ describe('AuthProvider', () => {
 
   it('should initialize auth state on mount', () => {
     // Get the mocked localStorage
-    const localStorageMock = global.localStorage as {
-      getItem: ReturnType<typeof vi.fn>
-      setItem: ReturnType<typeof vi.fn>
-      removeItem: ReturnType<typeof vi.fn>
-      clear: ReturnType<typeof vi.fn>
-    }
+    const localStorageMock = vi.mocked(localStorage)
 
     // Set tokens in localStorage
     localStorageMock.getItem.mockImplementation((key) => {
@@ -69,12 +64,7 @@ describe('AuthProvider', () => {
   })
 
   it('should handle empty localStorage gracefully', () => {
-    const localStorageMock = global.localStorage as {
-      getItem: ReturnType<typeof vi.fn>
-      setItem: ReturnType<typeof vi.fn>
-      removeItem: ReturnType<typeof vi.fn>
-      clear: ReturnType<typeof vi.fn>
-    }
+    const localStorageMock = vi.mocked(localStorage)
 
     localStorageMock.getItem.mockReturnValue(null)
 

@@ -6,12 +6,14 @@
  * In production: sends to error tracking service (TODO).
  */
 
-export enum LogLevel {
-  DEBUG = 0,
-  INFO = 1,
-  WARN = 2,
-  ERROR = 3,
-}
+export const LogLevel = {
+  DEBUG: 0,
+  INFO: 1,
+  WARN: 2,
+  ERROR: 3,
+} as const
+
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel]
 
 interface LogEntry {
   level: LogLevel
@@ -85,14 +87,14 @@ class Logger {
     }
   }
 
-  private sendToErrorTracking(entry: LogEntry) {
+  private sendToErrorTracking(_entry: LogEntry) {
     // TODO: Integrate with error tracking service (e.g., Sentry, LogRocket)
     // For now, we'll just keep the console output
     // Example integration:
-    // Sentry.captureException(entry.error, {
+    // Sentry.captureException(_entry.error, {
     //   level: 'error',
-    //   extra: entry.context,
-    //   tags: { component: entry.context?.component },
+    //   extra: _entry.context,
+    //   tags: { component: _entry.context?.component },
     // })
   }
 

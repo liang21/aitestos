@@ -25,8 +25,12 @@ export function RateLimiter({
     return (
       <Alert
         type="error"
-        message="尝试次数过多"
-        description={`请等待 ${remainingTime} 秒后再试`}
+        content={
+          <div>
+            <div className="font-medium">尝试次数过多</div>
+            <div className="text-sm mt-1">{`请等待 ${remainingTime} 秒后再试`}</div>
+          </div>
+        }
         showIcon
       />
     )
@@ -39,8 +43,12 @@ export function RateLimiter({
       <div className="mb-4">
         <Alert
           type="warning"
-          message={`剩余尝试次数: ${remainingAttempts}/${maxAttempts}`}
-          description="请检查您的输入后重试"
+          content={
+            <div>
+              <div className="font-medium">{`剩余尝试次数: ${remainingAttempts}/${maxAttempts}`}</div>
+              <div className="text-sm mt-1">请检查您的输入后重试</div>
+            </div>
+          }
           showIcon
         />
         <Progress

@@ -3,11 +3,9 @@ import { Card, List, Spin, Tag } from '@arco-design/web-react'
 import { IconLoading } from '@arco-design/web-react/icon'
 import { useDocumentDetail } from '../hooks/useDocuments'
 import { StatusTag } from '@/components/business/StatusTag'
-import type { DocumentChunk } from '@/types/api'
 
 export function DocumentDetailPage() {
-  const { projectId, documentId } = useParams<{
-    projectId: string
+  const { documentId } = useParams<{
     documentId: string
   }>()
   const { data: document, isLoading } = useDocumentDetail(documentId || '')

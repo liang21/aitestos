@@ -119,73 +119,75 @@ export function ResultRecordModal({
   const hasExistingResult = existingCase && existingCase.resultStatus
 
   return (
-    <Modal
-      title="录入执行结果"
-      visible={visible}
-      onCancel={handleClose}
-      footer={
-        <Space>
-          <Button onClick={handleClose}>取消</Button>
-          <Button type="primary" onClick={handleSubmit}>
-            提交
-          </Button>
-        </Space>
-      }
-      width={600}
-    >
-      <div className="mb-4">
-        <div className="text-gray-500 text-sm mb-1">用例</div>
-        <div>{caseTitle}</div>
-        {hasExistingResult && (
-          <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-orange-700 text-sm">
-            ⚠️ 该用例已有执行结果：
-            {resultStatusTextMap[existingCase.resultStatus]}
-          </div>
-        )}
-      </div>
-
-      <div className="mb-4">
-        <div className="mb-2 font-medium">执行状态</div>
-        <Radio.Group
-          value={status}
-          onChange={(value) => setStatus(value as ResultStatus)}
-          options={[
-            { label: '通过', value: 'pass' },
-            { label: '失败', value: 'fail' },
-            { label: '阻塞', value: 'block' },
-            { label: '跳过', value: 'skip' },
-          ]}
-        />
-      </div>
-
-      <div>
-        <div className="mb-2 font-medium">
-          备注{' '}
-          <span className="text-gray-400 font-normal">{note.length}/500</span>
+    <>
+      <Modal
+        title="录入执行结果"
+        visible={visible}
+        onCancel={handleClose}
+        footer={
+          <Space>
+            <Button onClick={handleClose}>取消</Button>
+            <Button type="primary" onClick={handleSubmit}>
+              提交
+            </Button>
+          </Space>
+        }
+        width={600}
+      >
+        <div className="mb-4">
+          <div className="text-gray-500 text-sm mb-1">用例</div>
+          <div>{caseTitle}</div>
+          {hasExistingResult && (
+            <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-orange-700 text-sm">
+              ⚠️ 该用例已有执行结果：
+              {resultStatusTextMap[existingCase.resultStatus]}
+            </div>
+          )}
         </div>
-        <TextArea
-          placeholder="请输入备注（可选）"
-          rows={4}
-          value={note}
-          onChange={setNote}
-          maxLength={500}
-          showWordLimit
-        />
-      </div>
-    </Modal>
 
-    {/* Overwrite Confirmation Modal */}
-    <Modal
-      title="确认覆盖"
-      visible={overwriteConfirmVisible}
-      onCancel={handleOverwriteCancel}
-      onOk={handleOverwriteConfirm}
-      okText="确认覆盖"
-      cancelText="取消"
-      focus={false}
-    >
-      <p>该用例已有执行结果：<strong>{resultStatusTextMap[existingCase?.resultStatus || '']}</strong></p>
-      <p className="mt-2 text-gray-500">确定要覆盖吗？</p>
-    </Modal>
+        <div className="mb-4">
+          <div className="mb-2 font-medium">执行状态</div>
+          <Radio.Group
+            value={status}
+            onChange={(value) => setStatus(value as ResultStatus)}
+            options={[
+              { label: '通过', value: 'pass' },
+              { label: '失败', value: 'fail' },
+              { label: '阻塞', value: 'block' },
+              { label: '跳过', value: 'skip' },
+            ]}
+          />
+        </div>
+
+        <div>
+          <div className="mb-2 font-medium">
+            备注{' '}
+            <span className="text-gray-400 font-normal">{note.length}/500</span>
+          </div>
+          <TextArea
+            placeholder="请输入备注（可选）"
+            rows={4}
+            value={note}
+            onChange={setNote}
+            maxLength={500}
+            showWordLimit
+          />
+        </div>
+      </Modal>
+
+      {/* Overwrite Confirmation Modal */}
+      <Modal
+        title="确认覆盖"
+        visible={overwriteConfirmVisible}
+        onCancel={handleOverwriteCancel}
+        onOk={handleOverwriteConfirm}
+        okText="确认覆盖"
+        cancelText="取消"
+        focus={false}
+      >
+        <p>该用例已有执行结果：<strong>{resultStatusTextMap[existingCase?.resultStatus || '']}</strong></p>
+        <p className="mt-2 text-gray-500">确定要覆盖吗？</p>
+      </Modal>
+    </>
   )
 }

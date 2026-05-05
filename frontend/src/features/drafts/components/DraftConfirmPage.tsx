@@ -519,7 +519,7 @@ export function DraftConfirmPage() {
               placeholder="请选择目标模块"
               className="w-full"
               options={modules.map(m => ({
-                label: `${m.name} (${m.abbreviation})`,
+                label: m.name,
                 value: m.id,
               }))}
             />

@@ -194,7 +194,7 @@ export function CreateCaseDrawer({
           <Select placeholder="请选择所属模块">
             {modules?.data?.map((module) => (
               <Option key={module.id} value={module.id}>
-                {module.name} ({module.abbreviation})
+                {module.name}
               </Option>
             ))}
           </Select>

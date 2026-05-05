@@ -13,11 +13,6 @@ const projectSchema = z.object({
   name: z
     .string({ required_error: '项目名称不能为空' })
     .min(1, '项目名称不能为空'),
-  prefix: z
-    .string({ required_error: '前缀不能为空' })
-    .min(2, '前缀至少2位')
-    .max(4, '前缀最多4位')
-    .regex(/^[A-Z]+$/, '前缀必须是2-4位大写字母'),
   description: z.string().optional(),
 })
 
@@ -50,13 +45,11 @@ export function CreateProjectModal({
     mode: 'onBlur',
     defaultValues: {
       name: '',
-      prefix: '',
       description: '',
     },
   })
 
   const nameField = useController({ name: 'name', control })
-  const prefixField = useController({ name: 'prefix', control })
   const descriptionField = useController({ name: 'description', control })
 
   const onSubmit = async (data: ProjectFormValues) => {
@@ -104,25 +97,6 @@ export function CreateProjectModal({
           {submitAttempted && errors.name && (
             <div className="text-red-500 text-sm mt-1">
               {errors.name.message}
-            </div>
-          )}
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="project-prefix" className="block mb-2">
-            <span className="text-red-500 mr-1">*</span>项目前缀
-          </label>
-          <Input
-            id="project-prefix"
-            {...prefixField.field}
-            placeholder="2-4位大写字母，如：ECO"
-            maxLength={4}
-            style={{ textTransform: 'uppercase' }}
-            aria-label="项目前缀"
-          />
-          {submitAttempted && errors.prefix && (
-            <div className="text-red-500 text-sm mt-1">
-              {errors.prefix.message}
             </div>
           )}
         </div>

@@ -31,6 +31,32 @@ export interface SearchTableProps<T = unknown> extends Omit<
   enableVirtual?: boolean
   /** Estimated row height in pixels (for virtual scrolling) */
   rowHeight?: number
+  /** Keywords to highlight in text cells */
+  highlightKeywords?: string
+}
+
+/**
+ * Highlight keywords in text
+ */
+function highlightText(text: string, keywords: string): React.ReactNode {
+  if (!keywords) return text
+
+  const regex = new RegExp(`(${keywords.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+  const parts = text.split(regex)
+
+  return (
+    <>
+      {parts.map((part, index) =>
+        regex.test(part) ? (
+          <mark key={index} style={{ backgroundColor: '#ffec3d', padding: '0 2px', borderRadius: '2px' }}>
+            {part}
+          </mark>
+        ) : (
+          <span key={index}>{part}</span>
+        )
+      )}
+    </>
+  )
 }
 
 /**
@@ -50,6 +76,7 @@ export function SearchTable<T extends Record<string, unknown>>({
   style,
   enableVirtual,
   rowHeight = 60,
+  highlightKeywords,
   ...restProps
 }: SearchTableProps<T>) {
   // Determine if virtual scrolling should be enabled
@@ -87,6 +114,31 @@ export function SearchTable<T extends Record<string, unknown>>({
     }
   }, [shouldUseVirtual, pageSize, rowHeight])
 
+  // Process columns to add highlighting
+  const processedColumns = useMemo(() => {
+    if (!highlightKeywords) return columns
+
+    return columns.map((col) => {
+      // Only add highlighting to text/string columns
+      if (col.dataIndex && typeof col.dataIndex === 'string') {
+        const originalRender = col.render
+        return {
+          ...col,
+          render: (_: unknown, record: T) => {
+            const value = record[col.dataIndex] as string
+            if (typeof value === 'string' && originalRender) {
+              // If there's a custom render, use it
+              return originalRender(_, record)
+            }
+            // Otherwise apply highlighting
+            return highlightText(value, highlightKeywords)
+          },
+        }
+      }
+      return col
+    })
+  }, [columns, highlightKeywords])
+
   return (
     <div className={className} style={style}>
       <Spin
@@ -95,7 +147,7 @@ export function SearchTable<T extends Record<string, unknown>>({
         style={{ width: '100%', display: 'block' }}
       >
         <Table<T>
-          columns={columns}
+          columns={processedColumns}
           data={data}
           pagination={paginationProps}
           scroll={scrollProps}

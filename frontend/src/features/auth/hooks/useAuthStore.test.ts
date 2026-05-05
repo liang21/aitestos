@@ -253,7 +253,7 @@ describe('useAuthStore', () => {
         id: 'user-456',
         username: 'newuser',
         email: 'new@example.com',
-        role: 'admin',
+        role: 'admin' as const,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
       }

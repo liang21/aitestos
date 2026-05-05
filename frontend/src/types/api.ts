@@ -13,6 +13,22 @@ import type {
   DraftStatus,
 } from './enums'
 
+// Re-export enum types for convenience
+export type {
+  CaseStatus,
+  CaseType,
+  Confidence,
+  DocumentStatus,
+  DocumentType,
+  PlanStatus,
+  Priority,
+  ResultStatus,
+  SceneType,
+  TaskStatus,
+  UserRole,
+  DraftStatus,
+}
+
 // ============================================================================
 // Common Types
 // ============================================================================
@@ -92,7 +108,6 @@ export interface UserJSON {
 export interface Project {
   id: string
   name: string
-  prefix: string
   description: string
   createdAt: string
   updatedAt: string
@@ -103,7 +118,6 @@ export interface Project {
  */
 export interface CreateProjectRequest {
   name: string
-  prefix: string
   description?: string
 }
 
@@ -128,14 +142,42 @@ export interface ProjectDetail extends Project {
  * Project statistics
  */
 export interface ProjectStats {
-  totalCases: number
+  moduleCount: number
+  caseCount: number
+  documentCount: number
   passRate: number
-  coverage: number
+  coverageRate: number
   aiGeneratedCount: number
-  trend: Array<{
-    date: string
-    passRate: number
-  }>
+  recentTasks: TaskSummary[]
+  passRateTrend: TrendData[]
+  updatedAt: string
+}
+
+/**
+ * Generation task summary for project stats
+ */
+export interface TaskSummary {
+  id: string
+  status: TaskStatus
+  resultSummary?: TaskResultSummary
+  createdAt: string
+}
+
+/**
+ * Task result summary
+ */
+export interface TaskResultSummary {
+  totalDrafts: number
+  confirmedCount: number
+  rejectedCount: number
+}
+
+/**
+ * Trend data point
+ */
+export interface TrendData {
+  date: string // YYYY-MM-DD format
+  rate: number // Pass rate percentage
 }
 
 // ============================================================================
@@ -149,7 +191,8 @@ export interface Module {
   id: string
   projectId: string
   name: string
-  abbreviation: string
+  description?: string
+  createdBy?: string
   createdAt: string
   updatedAt: string
   caseCount?: number
@@ -160,7 +203,7 @@ export interface Module {
  */
 export interface CreateModuleRequest {
   name: string
-  abbreviation: string
+  description?: string
 }
 
 /**
@@ -168,7 +211,6 @@ export interface CreateModuleRequest {
  */
 export interface UpdateModuleRequest {
   name?: string
-  abbreviation?: string
   description?: string
 }
 
@@ -204,7 +246,6 @@ export interface TestCase {
   id: string
   moduleId: string
   userId: string
-  number: string // Format: {prefix}-{abbreviation}-{YYYYMMDD}-{001}
   title: string
   preconditions: string[]
   steps: string[]
@@ -218,7 +259,6 @@ export interface TestCase {
   // Joined fields
   moduleName?: string
   projectName?: string
-  projectPrefix?: string
   createdByName?: string
 }
 
@@ -462,10 +502,10 @@ export interface CreateTaskRequest {
   projectId: string
   moduleId: string
   prompt: string
-  count?: number
+  caseCount?: number
   caseType?: CaseType
   priority?: Priority
-  sceneType?: SceneType
+  sceneTypes?: SceneType[]
 }
 
 /**

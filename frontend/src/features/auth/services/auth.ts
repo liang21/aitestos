@@ -1,4 +1,4 @@
-import { get, post } from '@/lib/request'
+import { post } from '@/lib/request'
 import type { UserJSON, UserRole } from '@/types/api'
 
 /**

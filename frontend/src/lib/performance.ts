@@ -2,6 +2,8 @@
  * Performance optimization utilities
  */
 
+import React, { useRef, useEffect } from 'react'
+
 /**
  * Debounce function execution
  * Useful for search inputs, resize handlers, etc.
@@ -10,7 +12,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
-  let timeoutId: NodeJS.Timeout
+  let timeoutId: ReturnType<typeof setTimeout>
 
   return (...args: Parameters<T>) => {
     clearTimeout(timeoutId)
@@ -148,7 +150,7 @@ export const perfMonitor = new PerformanceMonitor()
  * Hook for measuring component render time
  */
 export function useRenderPerf(componentName: string) {
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     useEffect(() => {
       perfMonitor.mark(`${componentName}-render-start`)
       return () => {
@@ -166,7 +168,7 @@ export function useStableKeys<T>(
   items: T[],
   keyExtractor: (item: T) => string | number
 ): void {
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     const prevKeysRef = useRef<Set<string | number>>(new Set())
 
     useEffect(() => {
@@ -190,6 +192,3 @@ export function useStableKeys<T>(
     })
   }
 }
-
-// Add missing imports
-import React, { useRef, useEffect, useMemo, useState } from 'react'

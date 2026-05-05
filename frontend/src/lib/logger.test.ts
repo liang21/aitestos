@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { logger, logAuthError, logApiError } from './logger'
 
 describe('logger', () => {
   let consoleDebugSpy: ReturnType<typeof vi.spyOn>
-  let consoleInfoSpy: ReturnType<typeof vi.spyOf>
+  let consoleInfoSpy: ReturnType<typeof vi.spyOn>
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>
 
@@ -12,9 +13,6 @@ describe('logger', () => {
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
   })
-
-  // Import logger after setting up mocks
-  const { logger, logAuthError, logApiError } = require('./logger')
 
   it('should log debug messages in development', () => {
     logger.debug('Test debug message', { key: 'value' })
@@ -89,7 +87,6 @@ describe('logAuthError', () => {
       .spyOn(console, 'error')
       .mockImplementation(() => {})
 
-    const { logAuthError } = require('./logger')
     const error = new Error('Auth failed')
     logAuthError('Login failed', error)
 
@@ -107,7 +104,6 @@ describe('logApiError', () => {
       .spyOn(console, 'error')
       .mockImplementation(() => {})
 
-    const { logApiError } = require('./logger')
     const error = new Error('Network error')
     logApiError('/api/v1/auth/login', error)
 

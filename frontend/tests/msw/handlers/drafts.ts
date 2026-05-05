@@ -115,6 +115,7 @@ export const draftsHandlers = [
       {
         id: 'draft-001',
         taskId: 'task-001',
+        projectId: 'proj-001',
         title: '验证有效邮箱注册',
         preconditions: ['用户未注册过该邮箱'],
         steps: ['打开注册页面', '输入有效邮箱', '输入密码', '点击注册'],
@@ -135,6 +136,7 @@ export const draftsHandlers = [
       {
         id: 'draft-002',
         taskId: 'task-001',
+        projectId: 'proj-001',
         title: '验证邮箱格式校验',
         preconditions: ['用户在注册页面'],
         steps: ['打开注册页面', '输入无效邮箱格式', '点击注册'],
@@ -154,6 +156,7 @@ export const draftsHandlers = [
       {
         id: 'draft-003',
         taskId: 'task-002',
+        projectId: 'proj-001',
         title: '验证密码强度校验',
         preconditions: ['用户在注册页面'],
         steps: ['打开注册页面', '输入弱密码', '点击注册'],
@@ -195,7 +198,6 @@ export const draftsHandlers = [
       id: 'tc-001',
       moduleId: 'mod-001',
       userId: 'user-001',
-      number: 'ECO-USR-20260421-001',
       title: '验证有效邮箱注册',
       preconditions: ['用户未注册过该邮箱'],
       steps: ['打开注册页面', '输入有效邮箱', '输入密码', '点击注册'],

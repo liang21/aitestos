@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { authApi } from './auth'
 import { server } from '../../../../tests/msw/server'
 import { http, HttpResponse } from 'msw'

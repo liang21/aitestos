@@ -23,8 +23,8 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
-        configure: (proxy, options) => {
-          proxy.on('proxyReq', (proxyReq, req, res) => {
+        configure: (proxy) => {
+          proxy.on('proxyReq', (_proxyReq, req) => {
             // Debug logging
             console.log('[Proxy] Forwarding request:', {
               method: req.method,

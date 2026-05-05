@@ -106,7 +106,6 @@ export function ModuleManagePage() {
     setEditingModule(module)
     editForm.setFieldsValue({
       name: module.name,
-      abbreviation: module.abbreviation,
     })
     setEditModalVisible(true)
   }

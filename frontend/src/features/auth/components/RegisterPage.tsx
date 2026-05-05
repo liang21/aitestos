@@ -29,9 +29,7 @@ const registerSchema = z.object({
     .string()
     .min(8, '密码至少为 8 位字符')
     .max(100, '密码最多为 100 个字符'),
-  role: z.enum(['super_admin', 'admin', 'normal'], {
-    errorMap: () => '请选择用户角色',
-  }),
+  role: z.enum(['super_admin', 'admin', 'normal']),
 })
 
 type RegisterFormData = z.infer<typeof registerSchema>

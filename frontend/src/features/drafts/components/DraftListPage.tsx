@@ -292,7 +292,7 @@ export function DraftListPage({ projectId }: DraftListPageProps) {
           placeholder="请选择目标模块"
           className="w-full"
           options={modules?.data?.map((m: Module) => ({
-            label: `${m.name} (${m.abbreviation})`,
+            label: m.name,
             value: m.id,
           }))}
           notFoundContent="暂无可用模块"

@@ -78,10 +78,10 @@ export function SplitPanel({
     setIsDragging(true)
   }
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging) return
 
-    const container = e.currentTarget as HTMLElement
+    const container = e.currentTarget
     if (!container) return
 
     const containerRect = container.getBoundingClientRect()

@@ -53,11 +53,28 @@ export function ProjectListPage() {
       title: '项目名称',
       dataIndex: 'name',
       key: 'name',
-    },
-    {
-      title: '前缀',
-      dataIndex: 'prefix',
-      key: 'prefix',
+      render: ( text: string, record: { id: string }) => (
+        <a
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            navigate(`/projects/${record.id}/dashboard`)
+          }}
+          style={{
+            color: 'rgb(var(--link-6))',
+            textDecoration: 'none',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = 'rgb(var(--link-8))'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'rgb(var(--link-6))'
+          }}
+        >
+          {text}
+        </a>
+      ),
     },
     {
       title: '描述',
@@ -72,7 +89,10 @@ export function ProjectListPage() {
           <Button
             type="text"
             size="small"
-            onClick={() => handleEdit(record)}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleEdit(record)
+            }}
           >
             编辑
           </Button>
@@ -80,7 +100,10 @@ export function ProjectListPage() {
             type="text"
             status="danger"
             size="small"
-            onClick={() => handleDelete(record.id)}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleDelete(record.id)
+            }}
           >
             删除
           </Button>
@@ -154,16 +177,13 @@ export function ProjectListPage() {
           current={Math.floor(searchParams.offset / searchParams.limit) + 1}
           pageSize={searchParams.limit}
           onPageChange={(page) => {
-            setSearchParams((prev) => ({
+            setSearchParams((prev) ({
               ...prev,
               offset: (page - 1) * prev.limit,
             }))
           }}
-          onRow={(record: { id: string }) => ({
-            onClick: () => navigate(`/projects/${record.id}/dashboard`),
-            style: { cursor: 'pointer' },
-          })}
           emptyText="暂无项目"
+          highlightKeywords={searchParams.keywords}
         />
       </Card>
 

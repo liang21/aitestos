@@ -70,16 +70,19 @@ export function StatsCard({
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="text-gray-500 text-sm mb-2">{title}</div>
-          <Statistic
-            value={value}
-            precision={precision}
-            suffix={suffix}
-            valueStyle={{
+          <div
+            style={{
               fontSize: '28px',
               fontWeight: 600,
               color: '#1D2129',
             }}
-          />
+          >
+            <Statistic
+              value={value}
+              precision={precision}
+              suffix={suffix}
+            />
+          </div>
           {renderTrend()}
         </div>
         {icon && (

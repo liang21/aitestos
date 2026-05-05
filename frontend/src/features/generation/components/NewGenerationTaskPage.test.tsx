@@ -24,8 +24,8 @@ describe('NewGenerationTaskPage', () => {
       http.get('/api/v1/projects/:projectId/modules', () =>
         HttpResponse.json<PaginatedResponse<Module>>({
           data: [
-            { id: 'mod-1', name: '用户中心', abbreviation: 'USR' },
-            { id: 'mod-2', name: '订单管理', abbreviation: 'ORD' },
+            { id: 'mod-1', projectId: 'proj-1', name: '用户中心', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' },
+            { id: 'mod-2', projectId: 'proj-1', name: '订单管理', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' },
           ],
           total: 2,
           offset: 0,
@@ -38,8 +38,8 @@ describe('NewGenerationTaskPage', () => {
       http.get('/api/v1/knowledge/documents', () =>
         HttpResponse.json<PaginatedResponse<Document>>({
           data: [
-            { id: 'doc-1', name: 'PRD', type: 'prd', status: 'completed' },
-            { id: 'doc-2', name: 'API Spec', type: 'api_spec', status: 'completed' },
+            { id: 'doc-1', projectId: 'proj-1', name: 'PRD', type: 'prd', status: 'completed', chunkCount: 10, uploadedBy: 'user-1', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' },
+            { id: 'doc-2', projectId: 'proj-1', name: 'API Spec', type: 'api_spec', status: 'completed', chunkCount: 15, uploadedBy: 'user-1', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' },
           ],
           total: 2,
           offset: 0,

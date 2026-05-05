@@ -110,6 +110,7 @@ export const generationHandlers = [
       {
         id: '550e8400-e29b-41d4-a716-446655440010',
         taskId: '550e8400-e29b-41d4-a716-446655440004',
+        projectId: 'proj-001',
         title: '验证有效邮箱注册',
         preconditions: ['用户未注册过该邮箱'],
         steps: ['打开注册页面', '输入有效邮箱', '输入密码', '点击注册'],
@@ -128,6 +129,7 @@ export const generationHandlers = [
       {
         id: '550e8400-e29b-41d4-a716-446655440011',
         taskId: '550e8400-e29b-41d4-a716-446655440004',
+        projectId: 'proj-001',
         title: '验证邮箱格式校验',
         preconditions: ['用户在注册页面'],
         steps: ['打开注册页面', '输入无效邮箱格式', '点击注册'],

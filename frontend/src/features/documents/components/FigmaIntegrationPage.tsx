@@ -19,9 +19,8 @@ import {
   Space,
   Steps,
 } from '@arco-design/web-react'
-import { Figma, Link as LinkIcon, Loader2 } from 'lucide-react'
-
-const { TextArea } = Input
+import { Sigma, Link as LinkIcon } from 'lucide-react'
+import { messageSuccess, messageError, messageWarning } from '@/lib/notification'
 
 interface FigmaNode {
   id: string
@@ -201,7 +200,7 @@ export default function FigmaIntegrationPage() {
             >
               <Input
                 placeholder="https://www.figma.com/file/..."
-                prefix={<Figma size={16} />}
+                prefix={<Sigma size={16} />}
               />
             </Form.Item>
 
