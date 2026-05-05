@@ -28,7 +28,6 @@ type caseRow struct {
 	ID            uuid.UUID `db:"id"`
 	ModuleID      uuid.UUID `db:"module_id"`
 	UserID        uuid.UUID `db:"user_id"`
-	Number        string    `db:"number"`
 	Title         string    `db:"title"`
 	Preconditions []byte    `db:"preconditions"`
 	Steps         []byte    `db:"steps"`
@@ -43,11 +42,6 @@ type caseRow struct {
 
 // toTestCase converts a database row to domain TestCase
 func (r *TestCaseRepository) toTestCase(row *caseRow) (*domaintestcase.TestCase, error) {
-	number, err := domaintestcase.ParseCaseNumber(row.Number)
-	if err != nil {
-		return nil, fmt.Errorf("parse case number: %w", err)
-	}
-
 	var preconditions domaintestcase.Preconditions
 	if err := json.Unmarshal(row.Preconditions, &preconditions); err != nil {
 		return nil, fmt.Errorf("unmarshal preconditions: %w", err)
@@ -75,7 +69,6 @@ func (r *TestCaseRepository) toTestCase(row *caseRow) (*domaintestcase.TestCase,
 		row.ID,
 		row.ModuleID,
 		row.UserID,
-		number,
 		row.Title,
 		preconditions,
 		steps,
@@ -89,7 +82,7 @@ func (r *TestCaseRepository) toTestCase(row *caseRow) (*domaintestcase.TestCase,
 	), nil
 }
 
-const caseColumns = `id, module_id, user_id, number, title, preconditions, steps, expected, ai_metadata, case_type, priority, status, created_at, updated_at`
+const caseColumns = `id, module_id, user_id, title, preconditions, steps, expected, ai_metadata, case_type, priority, status, created_at, updated_at`
 
 // Save persists a new test case
 func (r *TestCaseRepository) Save(ctx context.Context, tc *domaintestcase.TestCase) error {
@@ -117,14 +110,23 @@ func (r *TestCaseRepository) Save(ctx context.Context, tc *domaintestcase.TestCa
 	}
 
 	query := `
-		INSERT INTO test_case (id, module_id, user_id, number, title, preconditions, steps, expected, ai_metadata, case_type, priority, status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		INSERT INTO test_case (id, module_id, user_id, title, preconditions, steps, expected, ai_metadata, case_type, priority, status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		ON CONFLICT (id) DO UPDATE SET
+			title = EXCLUDED.title,
+			preconditions = EXCLUDED.preconditions,
+			steps = EXCLUDED.steps,
+			expected = EXCLUDED.expected,
+			case_type = EXCLUDED.case_type,
+			priority = EXCLUDED.priority,
+			status = EXCLUDED.status,
+			ai_metadata = EXCLUDED.ai_metadata,
+			updated_at = EXCLUDED.updated_at
 	`
 	_, err = r.db.ExecContext(ctx, query,
 		tc.ID(),
 		tc.ModuleID(),
 		tc.UserID(),
-		tc.Number().String(),
 		tc.Title(),
 		preconditionsJSON,
 		stepsJSON,
@@ -145,27 +147,13 @@ func (r *TestCaseRepository) Save(ctx context.Context, tc *domaintestcase.TestCa
 // FindByID retrieves a test case by ID
 func (r *TestCaseRepository) FindByID(ctx context.Context, id uuid.UUID) (*domaintestcase.TestCase, error) {
 	var row caseRow
-	query := fmt.Sprintf(`SELECT %s FROM test_case WHERE id = $1 AND deleted_at IS NULL`, caseColumns)
+	query := fmt.Sprintf(`SELECT %s FROM test_case WHERE id = $1`, caseColumns)
 	err := r.db.GetContext(ctx, &row, query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, domaintestcase.ErrCaseNotFound
 		}
 		return nil, fmt.Errorf("find test case by id: %w", err)
-	}
-	return r.toTestCase(&row)
-}
-
-// FindByNumber retrieves a test case by case number
-func (r *TestCaseRepository) FindByNumber(ctx context.Context, number domaintestcase.CaseNumber) (*domaintestcase.TestCase, error) {
-	var row caseRow
-	query := fmt.Sprintf(`SELECT %s FROM test_case WHERE number = $1 AND deleted_at IS NULL`, caseColumns)
-	err := r.db.GetContext(ctx, &row, query, number.String())
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, domaintestcase.ErrCaseNotFound
-		}
-		return nil, fmt.Errorf("find test case by number: %w", err)
 	}
 	return r.toTestCase(&row)
 }
@@ -178,7 +166,7 @@ func (r *TestCaseRepository) FindByModuleID(ctx context.Context, moduleID uuid.U
 	}
 
 	var rows []caseRow
-	query := fmt.Sprintf(`SELECT %s FROM test_case WHERE module_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3`, caseColumns)
+	query := fmt.Sprintf(`SELECT %s FROM test_case WHERE module_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`, caseColumns)
 	if err := r.db.SelectContext(ctx, &rows, query, moduleID, limit, opts.Offset); err != nil {
 		return nil, fmt.Errorf("find test cases by module id: %w", err)
 	}
@@ -189,7 +177,7 @@ func (r *TestCaseRepository) FindByModuleID(ctx context.Context, moduleID uuid.U
 // CountByModuleID counts total test cases for a module
 func (r *TestCaseRepository) CountByModuleID(ctx context.Context, moduleID uuid.UUID) (int64, error) {
 	var count int64
-	query := `SELECT COUNT(*) FROM test_case WHERE module_id = $1 AND deleted_at IS NULL`
+	query := `SELECT COUNT(*) FROM test_case WHERE module_id = $1`
 	err := r.db.GetContext(ctx, &count, query, moduleID)
 	if err != nil {
 		return 0, fmt.Errorf("count test cases by module id: %w", err)
@@ -198,7 +186,7 @@ func (r *TestCaseRepository) CountByModuleID(ctx context.Context, moduleID uuid.
 }
 
 // FindByProjectID retrieves all test cases for a project with pagination
-// Joins module table to filter by project_id
+// Joins modules table to filter by project_id
 func (r *TestCaseRepository) FindByProjectID(ctx context.Context, projectID uuid.UUID, opts domaintestcase.QueryOptions) ([]*domaintestcase.TestCase, error) {
 	limit := opts.Limit
 	if limit <= 0 {
@@ -207,12 +195,12 @@ func (r *TestCaseRepository) FindByProjectID(ctx context.Context, projectID uuid
 
 	var rows []caseRow
 	query := `
-		SELECT tc.id, tc.module_id, tc.user_id, tc.number, tc.title,
+		SELECT tc.id, tc.module_id, tc.user_id, tc.title,
 		       tc.preconditions, tc.steps, tc.expected, tc.ai_metadata,
 		       tc.case_type, tc.priority, tc.status, tc.created_at, tc.updated_at
 		FROM test_case tc
-		INNER JOIN module m ON tc.module_id = m.id
-		WHERE m.project_id = $1 AND tc.deleted_at IS NULL
+		INNER JOIN modules m ON tc.module_id = m.id
+		WHERE m.project_id = $1
 		ORDER BY tc.created_at DESC
 		LIMIT $2 OFFSET $3
 	`
@@ -229,8 +217,8 @@ func (r *TestCaseRepository) CountByProjectID(ctx context.Context, projectID uui
 	query := `
 		SELECT COUNT(*)
 		FROM test_case tc
-		INNER JOIN module m ON tc.module_id = m.id
-		WHERE m.project_id = $1 AND tc.deleted_at IS NULL
+		INNER JOIN modules m ON tc.module_id = m.id
+		WHERE m.project_id = $1
 	`
 	err := r.db.GetContext(ctx, &count, query, projectID)
 	if err != nil {
@@ -260,7 +248,7 @@ func (r *TestCaseRepository) Update(ctx context.Context, tc *domaintestcase.Test
 		UPDATE test_case
 		SET title = $2, preconditions = $3, steps = $4, expected = $5,
 			status = $6, updated_at = $7
-		WHERE id = $1 AND deleted_at IS NULL
+		WHERE id = $1
 	`
 	result, err := r.db.ExecContext(ctx, query,
 		tc.ID(),
@@ -284,9 +272,9 @@ func (r *TestCaseRepository) Update(ctx context.Context, tc *domaintestcase.Test
 	return nil
 }
 
-// Delete removes a test case (soft delete)
+// Delete removes a test case (hard delete)
 func (r *TestCaseRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	query := `UPDATE test_case SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	query := `DELETE FROM test_case WHERE id = $1`
 	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("delete test case: %w", err)
@@ -299,23 +287,6 @@ func (r *TestCaseRepository) Delete(ctx context.Context, id uuid.UUID) error {
 		return domaintestcase.ErrCaseNotFound
 	}
 	return nil
-}
-
-// CountByDate counts test cases created on a specific date for a module
-func (r *TestCaseRepository) CountByDate(ctx context.Context, moduleID uuid.UUID, date time.Time) (int64, error) {
-	var count int64
-	query := `
-		SELECT COUNT(*)
-		FROM test_case
-		WHERE module_id = $1
-		  AND DATE(created_at) = DATE($2)
-		  AND deleted_at IS NULL
-	`
-	err := r.db.GetContext(ctx, &count, query, moduleID, date)
-	if err != nil {
-		return 0, fmt.Errorf("count test cases by date: %w", err)
-	}
-	return count, nil
 }
 
 // toTestCases converts multiple rows to domain TestCases
