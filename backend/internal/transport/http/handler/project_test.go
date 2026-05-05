@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -248,7 +249,13 @@ func TestGetProjectHandler(t *testing.T) {
 
 		mockSvc := new(MockProjectService)
 		projectID := uuid.New()
-		mockSvc.On("GetProject", mock.Anything, projectID).Return(&projectservice.ProjectDetail{}, nil)
+		testProject := project.Reconstruct(projectID, "Test Project", "Description", time.Now(), time.Now())
+		mockSvc.On("GetProject", mock.Anything, projectID).Return(&projectservice.ProjectDetail{
+			Project:      testProject,
+			ModuleCount:   0,
+			CaseCount:     0,
+			DocumentCount: 0,
+		}, nil)
 
 		handler := NewProjectHandler(mockSvc)
 
