@@ -303,7 +303,7 @@ func TestGenerationService_CreateTask(t *testing.T) {
 	userID := uuid.New()
 
 	// Create test module
-	testModule, _ := project.NewModule(projectID, "User Module", "Description", userID)
+	testModule, _ := project.NewModule(projectID, "User Module", "Description")
 	moduleRepo.modules[moduleID] = testModule
 
 	tests := []struct {
@@ -430,7 +430,7 @@ func TestGenerationService_ConfirmDraft(t *testing.T) {
 
 				// Create test module and project with matching IDs
 				testProject, _ := project.NewProject("Test Project", "Description")
-				testModule, _ := project.NewModule(testProject.ID(), "Test Module", "Description", userID)
+				testModule, _ := project.NewModule(testProject.ID(), "Test Module", "Description")
 				moduleRepo.modules[moduleID] = testModule
 				projectRepo.projects[testProject.ID()] = testProject
 
@@ -497,7 +497,7 @@ func TestGenerationService_ConfirmDraft(t *testing.T) {
 				caseRepo := NewMockCaseRepo()
 
 				testProject, _ := project.NewProject("Test Project", "Description")
-				testModule, _ := project.NewModule(testProject.ID(), "Test Module", "Description", userID)
+				testModule, _ := project.NewModule(testProject.ID(), "Test Module", "Description")
 				moduleRepo.modules[moduleID] = testModule
 				projectRepo.projects[testProject.ID()] = testProject
 
@@ -809,7 +809,7 @@ func TestGenerationService_BatchConfirm(t *testing.T) {
 
 				testProject, _ := project.NewProject("Test Project", "Description")
 				moduleID := uuid.New()
-				testModule, _ := project.NewModule(testProject.ID(), "Test Module", "Description", userID)
+				testModule, _ := project.NewModule(testProject.ID(), "Test Module", "Description")
 				moduleRepo.modules[moduleID] = testModule
 				projectRepo.projects[testProject.ID()] = testProject
 
@@ -854,7 +854,7 @@ func TestGenerationService_BatchConfirm(t *testing.T) {
 
 				testProject, _ := project.NewProject("Test Project", "Description")
 				moduleID := uuid.New()
-				testModule, _ := project.NewModule(testProject.ID(), "Test Module", "Description", userID)
+				testModule, _ := project.NewModule(testProject.ID(), "Test Module", "Description")
 				moduleRepo.modules[moduleID] = testModule
 				projectRepo.projects[testProject.ID()] = testProject
 

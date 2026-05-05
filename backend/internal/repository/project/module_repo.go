@@ -52,13 +52,12 @@ func (r *ModuleRepository) FindByID(ctx context.Context, id uuid.UUID) (*domainp
 		ProjectID   uuid.UUID `db:"project_id"`
 		Name        string    `db:"name"`
 		Description string    `db:"description"`
-		CreatedBy   string    `db:"created_by"`
 		CreatedAt   string    `db:"created_at"`
 		UpdatedAt   string    `db:"updated_at"`
 	}
 
 	query := `
-		SELECT id, project_id, name, description, created_by, created_at, updated_at
+		SELECT id, project_id, name, description, created_at, updated_at
 		FROM modules
 		WHERE id = $1
 	`
@@ -75,7 +74,6 @@ func (r *ModuleRepository) FindByID(ctx context.Context, id uuid.UUID) (*domainp
 		row.ProjectID,
 		row.Name,
 		row.Description,
-		parseUUID(row.CreatedBy),
 		parseTime(row.CreatedAt),
 		parseTime(row.UpdatedAt),
 	), nil
@@ -84,7 +82,7 @@ func (r *ModuleRepository) FindByID(ctx context.Context, id uuid.UUID) (*domainp
 // FindByProjectID retrieves all modules for a project
 func (r *ModuleRepository) FindByProjectID(ctx context.Context, projectID uuid.UUID) ([]*domainproject.Module, error) {
 	query := `
-		SELECT id, project_id, name, description, created_by, created_at, updated_at
+		SELECT id, project_id, name, description, created_at, updated_at
 		FROM modules
 		WHERE project_id = $1
 		ORDER BY created_at ASC
@@ -95,7 +93,6 @@ func (r *ModuleRepository) FindByProjectID(ctx context.Context, projectID uuid.U
 		ProjectID   uuid.UUID `db:"project_id"`
 		Name        string    `db:"name"`
 		Description string    `db:"description"`
-		CreatedBy   string    `db:"created_by"`
 		CreatedAt   string    `db:"created_at"`
 		UpdatedAt   string    `db:"updated_at"`
 	}
@@ -111,7 +108,6 @@ func (r *ModuleRepository) FindByProjectID(ctx context.Context, projectID uuid.U
 			row.ProjectID,
 			row.Name,
 			row.Description,
-			parseUUID(row.CreatedBy),
 			parseTime(row.CreatedAt),
 			parseTime(row.UpdatedAt),
 		)
@@ -128,13 +124,12 @@ func (r *ModuleRepository) FindByName(ctx context.Context, projectID uuid.UUID, 
 		ProjectID   uuid.UUID `db:"project_id"`
 		Name        string    `db:"name"`
 		Description string    `db:"description"`
-		CreatedBy   string    `db:"created_by"`
 		CreatedAt   string    `db:"created_at"`
 		UpdatedAt   string    `db:"updated_at"`
 	}
 
 	query := `
-		SELECT id, project_id, name, description, created_by, created_at, updated_at
+		SELECT id, project_id, name, description, created_at, updated_at
 		FROM modules
 		WHERE project_id = $1 AND name = $2
 	`
@@ -151,7 +146,6 @@ func (r *ModuleRepository) FindByName(ctx context.Context, projectID uuid.UUID, 
 		row.ProjectID,
 		row.Name,
 		row.Description,
-		parseUUID(row.CreatedBy),
 		parseTime(row.CreatedAt),
 		parseTime(row.UpdatedAt),
 	), nil
@@ -198,12 +192,4 @@ func (r *ModuleRepository) Update(ctx context.Context, module *domainproject.Mod
 		return domainproject.ErrModuleNotFound
 	}
 	return nil
-}
-
-// parseTime parses a time string from the database
-
-// parseUUID parses a UUID string from the database
-func parseUUID(s string) uuid.UUID {
-	id, _ := uuid.Parse(s)
-	return id
 }

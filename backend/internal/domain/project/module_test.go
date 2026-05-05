@@ -12,14 +12,12 @@ import (
 
 func TestNewModule(t *testing.T) {
 	projectID := uuid.New()
-	userID := uuid.New()
 
 	tests := []struct {
 		name        string
 		projectID   uuid.UUID
 		moduleName  string
 		description string
-		userID      uuid.UUID
 		wantErr     bool
 	}{
 		{
@@ -27,7 +25,6 @@ func TestNewModule(t *testing.T) {
 			projectID:   projectID,
 			moduleName:  "User Management",
 			description: "User management module",
-			userID:      userID,
 			wantErr:     false,
 		},
 		{
@@ -35,7 +32,6 @@ func TestNewModule(t *testing.T) {
 			projectID:   projectID,
 			moduleName:  "",
 			description: "Description",
-			userID:      userID,
 			wantErr:     true,
 		},
 		{
@@ -43,15 +39,6 @@ func TestNewModule(t *testing.T) {
 			projectID:   uuid.Nil,
 			moduleName:  "Test Module",
 			description: "Description",
-			userID:      userID,
-			wantErr:     true,
-		},
-		{
-			name:        "nil user ID",
-			projectID:   projectID,
-			moduleName:  "Test Module",
-			description: "Description",
-			userID:      uuid.Nil,
 			wantErr:     true,
 		},
 		{
@@ -59,14 +46,13 @@ func TestNewModule(t *testing.T) {
 			projectID:   projectID,
 			moduleName:  "Test Module",
 			description: "",
-			userID:      userID,
 			wantErr:     false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := project.NewModule(tt.projectID, tt.moduleName, tt.description, tt.userID)
+			got, err := project.NewModule(tt.projectID, tt.moduleName, tt.description)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewModule() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -89,9 +75,8 @@ func TestNewModule(t *testing.T) {
 
 func TestModule_Accessors(t *testing.T) {
 	projectID := uuid.New()
-	userID := uuid.New()
 
-	m, err := project.NewModule(projectID, "User Module", "User management", userID)
+	m, err := project.NewModule(projectID, "User Module", "User management")
 	if err != nil {
 		t.Fatalf("Failed to create module: %v", err)
 	}
@@ -125,18 +110,12 @@ func TestModule_Accessors(t *testing.T) {
 	if m.UpdatedAt().IsZero() {
 		t.Error("Module.UpdatedAt() should not be zero")
 	}
-
-	// Test CreatedBy accessor
-	if m.CreatedBy() != userID {
-		t.Errorf("Module.CreatedBy() = %v, want %v", m.CreatedBy(), userID)
-	}
 }
 
 func TestModule_UpdateDescription(t *testing.T) {
 	projectID := uuid.New()
-	userID := uuid.New()
 
-	m, err := project.NewModule(projectID, "Test Module", "Original", userID)
+	m, err := project.NewModule(projectID, "Test Module", "Original")
 	if err != nil {
 		t.Fatalf("Failed to create module: %v", err)
 	}

@@ -31,7 +31,7 @@ func TestGenerationAPI_Integration(t *testing.T) {
 		user := testutil.CreateTestUser(t, tc.DB)
 		userID := user.ID()
 		project := testutil.CreateTestProject(t, tc.DB)
-		module := testutil.CreateTestModule(t, tc.DB, project.ID(), userID)
+		module := testutil.CreateTestModule(t, tc.DB, project.ID())
 
 		tt := []struct {
 			name       string
@@ -123,7 +123,7 @@ func TestGenerationAPI_Integration(t *testing.T) {
 		user := testutil.CreateTestUser(t, tc.DB)
 		userID := user.ID()
 		project := testutil.CreateTestProject(t, tc.DB)
-		module := testutil.CreateTestModule(t, tc.DB, project.ID(), userID)
+		module := testutil.CreateTestModule(t, tc.DB, project.ID())
 
 		var draftID uuid.UUID
 
@@ -215,7 +215,7 @@ func TestGenerationAPI_Integration(t *testing.T) {
 		user := testutil.CreateTestUser(t, tc.DB)
 		userID := user.ID()
 		project := testutil.CreateTestProject(t, tc.DB)
-		module := testutil.CreateTestModule(t, tc.DB, project.ID(), userID)
+		module := testutil.CreateTestModule(t, tc.DB, project.ID())
 
 		// Step 1: Create generation task
 		t.Run("Step 1: Create Task", func(t *testing.T) {

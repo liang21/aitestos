@@ -10,9 +10,9 @@ import (
 )
 
 // Test fixtures
-func createTestModule(t *testing.T, projectID uuid.UUID, name string) *domainproject.Module {
+func createTestModule(t *testing.T, projectID uuid.UUID, name, abbrev string) *domainproject.Module {
 	t.Helper()
-	module, err := domainproject.NewModule(projectID, name, "test description")
+	module, err := domainproject.NewModule(projectID, name, abbrev, "test description", uuid.New())
 	if err != nil {
 		t.Fatalf("Failed to create test module: %v", err)
 	}
@@ -49,6 +49,16 @@ func TestModuleRepository_FindByProjectID(t *testing.T) {
 	}
 
 	t.Run("find modules by project id", func(t *testing.T) {
+		// Placeholder for integration test
+	})
+}
+
+func TestModuleRepository_FindByAbbreviation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	t.Run("find by abbreviation within project", func(t *testing.T) {
 		// Placeholder for integration test
 	})
 }
@@ -98,6 +108,19 @@ func (m *MockModuleRepository) FindByProjectID(ctx context.Context, projectID uu
 	return modules, nil
 }
 
+func (m *MockModuleRepository) FindByAbbreviation(ctx context.Context, projectID uuid.UUID, abbrev domainproject.ModuleAbbreviation) (*domainproject.Module, error) {
+	modules, ok := m.modulesByProject[projectID]
+	if !ok {
+		return nil, domainproject.ErrModuleNotFound
+	}
+	for _, module := range modules {
+		if module.Abbreviation() == abbrev {
+			return module, nil
+		}
+	}
+	return nil, domainproject.ErrModuleNotFound
+}
+
 func (m *MockModuleRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	module, ok := m.modules[id]
 	if !ok {
@@ -122,7 +145,7 @@ func TestMockModuleRepository_CRUD(t *testing.T) {
 	projectID := uuid.New()
 
 	// Create
-	module := createTestModule(t, projectID, "User Module")
+	module := createTestModule(t, projectID, "User Module", "USR")
 	err := repo.Save(ctx, module)
 	if err != nil {
 		t.Fatalf("Save() error = %v", err)
@@ -146,4 +169,44 @@ func TestMockModuleRepository_CRUD(t *testing.T) {
 		t.Errorf("FindByProjectID() returned %d modules, want 1", len(modules))
 	}
 
+	// Read by Abbreviation
+	abbrev, _ := domainproject.ParseModuleAbbreviation("USR")
+	found, err = repo.FindByAbbreviation(ctx, projectID, abbrev)
+	if err != nil {
+		t.Fatalf("FindByAbbreviation() error = %v", err)
+	}
+	if found.Abbreviation() != abbrev {
+		t.Errorf("FindByAbbreviation().Abbreviation() = %v, want %v", found.Abbreviation(), abbrev)
+	}
+
+	// Delete
+	err = repo.Delete(ctx, module.ID())
+	if err != nil {
+		t.Fatalf("Delete() error = %v", err)
+	}
+	_, err = repo.FindByID(ctx, module.ID())
+	if err != domainproject.ErrModuleNotFound {
+		t.Errorf("FindByID() after Delete() error = %v, want %v", err, domainproject.ErrModuleNotFound)
+	}
+}
+
+func TestMockModuleRepository_NotFound(t *testing.T) {
+	ctx := context.Background()
+	repo := NewMockModuleRepository()
+
+	_, err := repo.FindByID(ctx, uuid.New())
+	if err != domainproject.ErrModuleNotFound {
+		t.Errorf("FindByID() error = %v, want %v", err, domainproject.ErrModuleNotFound)
+	}
+
+	abbrev, _ := domainproject.ParseModuleAbbreviation("NF")
+	_, err = repo.FindByAbbreviation(ctx, uuid.New(), abbrev)
+	if err != domainproject.ErrModuleNotFound {
+		t.Errorf("FindByAbbreviation() error = %v, want %v", err, domainproject.ErrModuleNotFound)
+	}
+
+	err = repo.Delete(ctx, uuid.New())
+	if err != domainproject.ErrModuleNotFound {
+		t.Errorf("Delete() error = %v, want %v", err, domainproject.ErrModuleNotFound)
+	}
 }

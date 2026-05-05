@@ -65,7 +65,7 @@ type ProjectService interface {
 	GetProjectStatistics(ctx context.Context, id uuid.UUID) (*project.ProjectStatistics, error)
 
 	// Module management
-	CreateModule(ctx context.Context, projectID uuid.UUID, req *CreateModuleRequest, userID uuid.UUID) (*project.Module, error)
+	CreateModule(ctx context.Context, projectID uuid.UUID, req *CreateModuleRequest) (*project.Module, error)
 	ListModules(ctx context.Context, projectID uuid.UUID) ([]*project.Module, error)
 	GetModule(ctx context.Context, id uuid.UUID) (*project.Module, error)
 	UpdateModule(ctx context.Context, id uuid.UUID, req *UpdateModuleRequest) (*project.Module, error)
@@ -218,7 +218,7 @@ func (s *ProjectServiceImpl) DeleteProject(ctx context.Context, id uuid.UUID) er
 }
 
 // CreateModule creates a new module within a project
-func (s *ProjectServiceImpl) CreateModule(ctx context.Context, projectID uuid.UUID, req *CreateModuleRequest, userID uuid.UUID) (*project.Module, error) {
+func (s *ProjectServiceImpl) CreateModule(ctx context.Context, projectID uuid.UUID, req *CreateModuleRequest) (*project.Module, error) {
 	// Verify project exists
 	_, err := s.projectRepo.FindByID(ctx, projectID)
 	if err != nil {
@@ -237,7 +237,7 @@ func (s *ProjectServiceImpl) CreateModule(ctx context.Context, projectID uuid.UU
 	}
 
 	// Create new module
-	module, err := project.NewModule(projectID, req.Name, req.Description, userID)
+	module, err := project.NewModule(projectID, req.Name, req.Description)
 	if err != nil {
 		return nil, fmt.Errorf("create module: %w", err)
 	}

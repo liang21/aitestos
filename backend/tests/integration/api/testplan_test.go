@@ -135,7 +135,7 @@ func TestPlanAPI_Integration(t *testing.T) {
 		user := testutil.CreateTestUser(t, tc.DB)
 		userID := user.ID()
 		project := testutil.CreateTestProject(t, tc.DB)
-		module := testutil.CreateTestModule(t, tc.DB, project.ID(), userID)
+		module := testutil.CreateTestModule(t, tc.DB, project.ID())
 		testCase := testutil.CreateTestCase(t, tc.DB, module.ID(), userID)
 
 		var planID uuid.UUID
@@ -224,7 +224,7 @@ func TestPlanAPI_Integration(t *testing.T) {
 		user := testutil.CreateTestUser(t, tc.DB)
 		userID := user.ID()
 		project := testutil.CreateTestProject(t, tc.DB)
-		module := testutil.CreateTestModule(t, tc.DB, project.ID(), userID)
+		module := testutil.CreateTestModule(t, tc.DB, project.ID())
 		testCase := testutil.CreateTestCase(t, tc.DB, module.ID(), userID)
 
 		var planID uuid.UUID
@@ -346,7 +346,7 @@ func TestPlanAPI_FullExecutionFlow(t *testing.T) {
 	user := testutil.CreateTestUser(t, tc.DB)
 	userID := user.ID()
 	project := testutil.CreateTestProject(t, tc.DB)
-	module := testutil.CreateTestModule(t, tc.DB, project.ID(), userID)
+	module := testutil.CreateTestModule(t, tc.DB, project.ID())
 
 	// Create multiple test cases
 	_ = testutil.CreateTestCase(t, tc.DB, module.ID(), userID)

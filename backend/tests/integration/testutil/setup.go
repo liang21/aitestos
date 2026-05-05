@@ -317,13 +317,13 @@ func CreateTestProject(t *testing.T, db *sqlx.DB) *domainProject.Project {
 }
 
 // CreateTestModule creates a test module in the database
-func CreateTestModule(t *testing.T, db *sqlx.DB, projectID uuid.UUID, userID uuid.UUID) *domainProject.Module {
+func CreateTestModule(t *testing.T, db *sqlx.DB, projectID uuid.UUID) *domainProject.Module {
 	t.Helper()
 
 	ctx := context.Background()
 	name := "Test Module " + uuid.New().String()[:8]
 
-	module, err := domainProject.NewModule(projectID, name, "Test module description", userID)
+	module, err := domainProject.NewModule(projectID, name, "Test module description")
 	if err != nil {
 		t.Fatalf("create test module: %v", err)
 	}

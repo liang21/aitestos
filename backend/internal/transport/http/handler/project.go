@@ -125,12 +125,6 @@ func (h *ProjectHandler) DeleteProject(w http.ResponseWriter, r *http.Request) {
 
 // CreateModule handles module creation
 func (h *ProjectHandler) CreateModule(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserIDFromContext(r.Context())
-	if !ok {
-		respondWithError(w, http.StatusUnauthorized, "missing user context")
-		return
-	}
-
 	projectID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid project ID")
@@ -143,7 +137,7 @@ func (h *ProjectHandler) CreateModule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	module, err := h.projectService.CreateModule(r.Context(), projectID, &req, userID)
+	module, err := h.projectService.CreateModule(r.Context(), projectID, &req)
 	if err != nil {
 		handleServiceError(w, err)
 		return

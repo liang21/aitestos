@@ -14,21 +14,17 @@ type Module struct {
 	projectID   uuid.UUID
 	name        string
 	description string
-	createdBy   uuid.UUID
 	createdAt   time.Time
 	updatedAt   time.Time
 }
 
 // NewModule creates a new module
-func NewModule(projectID uuid.UUID, name, description string, userID uuid.UUID) (*Module, error) {
+func NewModule(projectID uuid.UUID, name, description string) (*Module, error) {
 	if projectID == uuid.Nil {
 		return nil, errors.New("project ID cannot be nil")
 	}
 	if name == "" {
 		return nil, errors.New("module name cannot be empty")
-	}
-	if userID == uuid.Nil {
-		return nil, errors.New("user ID cannot be nil")
 	}
 
 	now := time.Now()
@@ -37,7 +33,6 @@ func NewModule(projectID uuid.UUID, name, description string, userID uuid.UUID) 
 		projectID:   projectID,
 		name:        name,
 		description: description,
-		createdBy:   userID,
 		createdAt:   now,
 		updatedAt:   now,
 	}, nil
@@ -61,11 +56,6 @@ func (m *Module) Name() string {
 // Description returns the module's description
 func (m *Module) Description() string {
 	return m.description
-}
-
-// CreatedBy returns the user who created this module
-func (m *Module) CreatedBy() uuid.UUID {
-	return m.createdBy
 }
 
 // CreatedAt returns the creation timestamp
@@ -96,7 +86,6 @@ func ReconstructModule(
 	projectID uuid.UUID,
 	name string,
 	description string,
-	createdBy uuid.UUID,
 	createdAt time.Time,
 	updatedAt time.Time,
 ) *Module {
@@ -105,7 +94,6 @@ func ReconstructModule(
 		projectID:   projectID,
 		name:        name,
 		description: description,
-		createdBy:   createdBy,
 		createdAt:   createdAt,
 		updatedAt:   updatedAt,
 	}

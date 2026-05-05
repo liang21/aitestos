@@ -123,8 +123,7 @@ func (b *ModuleBuilder) WithDescription(desc string) *ModuleBuilder {
 
 // Build 构建模块
 func (b *ModuleBuilder) Build() (*domainproject.Module, error) {
-	userID := uuid.New() // 测试时使用随机用户ID
-	return domainproject.NewModule(b.projectID, b.name, b.description, userID)
+	return domainproject.NewModule(b.projectID, b.name, b.description)
 }
 
 // ProjectConfigBuilder 项目配置构建器

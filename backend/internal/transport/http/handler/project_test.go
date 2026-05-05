@@ -60,8 +60,8 @@ func (m *MockProjectService) DeleteProject(ctx context.Context, id uuid.UUID) er
 	return args.Error(0)
 }
 
-func (m *MockProjectService) CreateModule(ctx context.Context, projectID uuid.UUID, req *projectservice.CreateModuleRequest, userID uuid.UUID) (*project.Module, error) {
-	args := m.Called(ctx, projectID, req, userID)
+func (m *MockProjectService) CreateModule(ctx context.Context, projectID uuid.UUID, req *projectservice.CreateModuleRequest) (*project.Module, error) {
+	args := m.Called(ctx, projectID, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -301,13 +301,13 @@ func TestCreateModuleHandler(t *testing.T) {
 
 		mockSvc := new(MockProjectService)
 		projectID := uuid.New()
-		mockSvc.On("CreateModule", mock.Anything, projectID, mock.Anything, mock.Anything).Return(&project.Module{}, nil)
+		mockSvc.On("CreateModule", mock.Anything, projectID, mock.Anything).Return(&project.Module{}, nil)
 
 		handler := NewProjectHandler(mockSvc)
 
 		body := map[string]string{
 			"name":         "Test Module",
-			"abbreviation": "TMOD",
+			
 			"description":  "A test module",
 		}
 		jsonBody, _ := json.Marshal(body)
@@ -316,7 +316,7 @@ func TestCreateModuleHandler(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		// Set chi URL parameters
 		rctx := chi.NewRouteContext()
-		rctx.URLParams.Add("projectID", projectID.String())
+		rctx.URLParams.Add("id", projectID.String())
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		// Set user context
 		req = req.WithContext(context.WithValue(req.Context(), ctxkeys.UserIDKey, uuid.New()))
@@ -349,7 +349,7 @@ func TestSetConfigHandler(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		// Set chi URL parameters
 		rctx := chi.NewRouteContext()
-		rctx.URLParams.Add("projectID", projectID.String())
+		rctx.URLParams.Add("id", projectID.String())
 		rctx.URLParams.Add("key", "test-key")
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()

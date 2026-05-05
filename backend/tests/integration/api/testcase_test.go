@@ -31,7 +31,7 @@ func TestTestCaseAPI_Integration(t *testing.T) {
 		user := testutil.CreateTestUser(t, tc.DB)
 		userID := user.ID()
 		project := testutil.CreateTestProject(t, tc.DB)
-		module := testutil.CreateTestModule(t, tc.DB, project.ID(), userID)
+		module := testutil.CreateTestModule(t, tc.DB, project.ID())
 
 		tt := []struct {
 			name       string
@@ -178,7 +178,7 @@ func TestTestCaseAPI_Integration(t *testing.T) {
 		user := testutil.CreateTestUser(t, tc.DB)
 		userID := user.ID()
 		project := testutil.CreateTestProject(t, tc.DB)
-		module := testutil.CreateTestModule(t, tc.DB, project.ID(), userID)
+		module := testutil.CreateTestModule(t, tc.DB, project.ID())
 
 		// Test that case numbers are auto-generated correctly
 		t.Run("auto-generate case number", func(t *testing.T) {
@@ -210,7 +210,7 @@ func TestTestCaseAPI_Integration(t *testing.T) {
 		user := testutil.CreateTestUser(t, tc.DB)
 		_ = user.ID() // userID used implicitly through suite.MakeRequest
 		project := testutil.CreateTestProject(t, tc.DB)
-		_ = testutil.CreateTestModule(t, tc.DB, project.ID(), user.ID())
+		_ = testutil.CreateTestModule(t, tc.DB, project.ID())
 
 		// Test linking test cases to requirements
 		t.Run("link to requirement", func(t *testing.T) {
