@@ -20,16 +20,12 @@ const (
 	CodePermissionDenied  = 10006
 
 	// ============ Project Context (2xxxx) ============
-	CodeProjectNotFound        = 20001
-	CodeProjectNameDuplicate   = 20002
-	CodeModuleNotFound         = 20003
-	CodeModuleNameDuplicate    = 20004
-	CodeConfigNotFound         = 20005
-	CodeConfigKeyDuplicate     = 20006
-	CodeProjectPrefixDuplicate = 20007
-	CodeInvalidProjectPrefix   = 20008
-	CodeModuleAbbrevDuplicate  = 20009
-	CodeInvalidModuleAbbrev    = 20010
+	CodeProjectNotFound      = 20001
+	CodeProjectNameDuplicate = 20002
+	CodeModuleNotFound       = 20003
+	CodeModuleNameDuplicate  = 20004
+	CodeConfigNotFound       = 20005
+	CodeConfigKeyDuplicate   = 20006
 
 	// ============ Knowledge Context (3xxxx) ============
 	CodeDocumentNotFound        = 30001
@@ -42,12 +38,10 @@ const (
 	CodeDocumentProcessing      = 30008
 
 	// ============ TestCase Context (4xxxx) ============
-	CodeCaseNotFound        = 40001
-	CodeCaseNumberDuplicate = 40002
-	CodeInvalidCaseNumber   = 40003
-	CodeEmptySteps          = 40004
-	CodeInvalidPriority     = 40005
-	CodeInvalidCaseType     = 40006
+	CodeCaseNotFound    = 40001
+	CodeEmptySteps      = 40004
+	CodeInvalidPriority = 40005
+	CodeInvalidCaseType = 40006
 
 	// ============ TestPlan Context (5xxxx) ============
 	CodePlanNotFound       = 50001

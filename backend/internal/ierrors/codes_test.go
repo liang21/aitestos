@@ -29,10 +29,6 @@ func TestErrorCodeRanges(t *testing.T) {
 		{"ModuleNameDuplicate in Project range", ierrors.CodeModuleNameDuplicate, 20000, 29999},
 		{"ConfigNotFound in Project range", ierrors.CodeConfigNotFound, 20000, 29999},
 		{"ConfigKeyDuplicate in Project range", ierrors.CodeConfigKeyDuplicate, 20000, 29999},
-		{"ProjectPrefixDuplicate in Project range", ierrors.CodeProjectPrefixDuplicate, 20000, 29999},
-		{"InvalidProjectPrefix in Project range", ierrors.CodeInvalidProjectPrefix, 20000, 29999},
-		{"ModuleAbbrevDuplicate in Project range", ierrors.CodeModuleAbbrevDuplicate, 20000, 29999},
-		{"InvalidModuleAbbrev in Project range", ierrors.CodeInvalidModuleAbbrev, 20000, 29999},
 
 		// Knowledge Context (3xxxx)
 		{"DocumentNotFound in Knowledge range", ierrors.CodeDocumentNotFound, 30000, 39999},
@@ -46,8 +42,6 @@ func TestErrorCodeRanges(t *testing.T) {
 
 		// TestCase Context (4xxxx)
 		{"CaseNotFound in TestCase range", ierrors.CodeCaseNotFound, 40000, 49999},
-		{"CaseNumberDuplicate in TestCase range", ierrors.CodeCaseNumberDuplicate, 40000, 49999},
-		{"InvalidCaseNumber in TestCase range", ierrors.CodeInvalidCaseNumber, 40000, 49999},
 		{"EmptySteps in TestCase range", ierrors.CodeEmptySteps, 40000, 49999},
 		{"InvalidPriority in TestCase range", ierrors.CodeInvalidPriority, 40000, 49999},
 		{"InvalidCaseType in TestCase range", ierrors.CodeInvalidCaseType, 40000, 49999},
@@ -107,10 +101,6 @@ func TestErrorCodeUniqueness(t *testing.T) {
 		ierrors.CodeModuleNameDuplicate:    "CodeModuleNameDuplicate",
 		ierrors.CodeConfigNotFound:         "CodeConfigNotFound",
 		ierrors.CodeConfigKeyDuplicate:     "CodeConfigKeyDuplicate",
-		ierrors.CodeProjectPrefixDuplicate: "CodeProjectPrefixDuplicate",
-		ierrors.CodeInvalidProjectPrefix:   "CodeInvalidProjectPrefix",
-		ierrors.CodeModuleAbbrevDuplicate:  "CodeModuleAbbrevDuplicate",
-		ierrors.CodeInvalidModuleAbbrev:    "CodeInvalidModuleAbbrev",
 
 		// Knowledge
 		ierrors.CodeDocumentNotFound:        "CodeDocumentNotFound",
@@ -124,8 +114,6 @@ func TestErrorCodeUniqueness(t *testing.T) {
 
 		// TestCase
 		ierrors.CodeCaseNotFound:        "CodeCaseNotFound",
-		ierrors.CodeCaseNumberDuplicate: "CodeCaseNumberDuplicate",
-		ierrors.CodeInvalidCaseNumber:   "CodeInvalidCaseNumber",
 		ierrors.CodeEmptySteps:          "CodeEmptySteps",
 		ierrors.CodeInvalidPriority:     "CodeInvalidPriority",
 		ierrors.CodeInvalidCaseType:     "CodeInvalidCaseType",
@@ -184,17 +172,13 @@ func TestErrorCodeCount(t *testing.T) {
 			ierrors.CodeInvalidEmail,
 			ierrors.CodePermissionDenied,
 		}},
-		{"Project codes", 10, []int{
+		{"Project codes", 6, []int{
 			ierrors.CodeProjectNotFound,
 			ierrors.CodeProjectNameDuplicate,
 			ierrors.CodeModuleNotFound,
 			ierrors.CodeModuleNameDuplicate,
 			ierrors.CodeConfigNotFound,
 			ierrors.CodeConfigKeyDuplicate,
-			ierrors.CodeProjectPrefixDuplicate,
-			ierrors.CodeInvalidProjectPrefix,
-			ierrors.CodeModuleAbbrevDuplicate,
-			ierrors.CodeInvalidModuleAbbrev,
 		}},
 		{"Knowledge codes", 8, []int{
 			ierrors.CodeDocumentNotFound,
@@ -206,10 +190,8 @@ func TestErrorCodeCount(t *testing.T) {
 			ierrors.CodeKnowledgeBaseEmpty,
 			ierrors.CodeDocumentProcessing,
 		}},
-		{"TestCase codes", 6, []int{
+		{"TestCase codes", 4, []int{
 			ierrors.CodeCaseNotFound,
-			ierrors.CodeCaseNumberDuplicate,
-			ierrors.CodeInvalidCaseNumber,
 			ierrors.CodeEmptySteps,
 			ierrors.CodeInvalidPriority,
 			ierrors.CodeInvalidCaseType,

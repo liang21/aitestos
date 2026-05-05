@@ -127,38 +127,33 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 			password VARCHAR(255) NOT NULL,
 			role user_role_enum NOT NULL DEFAULT 'normal',
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			deleted_at TIMESTAMP WITH TIME ZONE
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		);`,
 
-		// project 表
-		`CREATE TABLE IF NOT EXISTS project (
+		// projects 表
+		`CREATE TABLE IF NOT EXISTS projects (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			name VARCHAR(255) NOT NULL UNIQUE,
-			prefix VARCHAR(4) NOT NULL UNIQUE,
 			description TEXT,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			deleted_at TIMESTAMP WITH TIME ZONE
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		);`,
 
-		// module 表
-		`CREATE TABLE IF NOT EXISTS module (
+		// modules 表
+		`CREATE TABLE IF NOT EXISTS modules (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			project_id UUID NOT NULL REFERENCES project(id) ON DELETE CASCADE,
+			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
 			name VARCHAR(255) NOT NULL,
-			abbreviation VARCHAR(4) NOT NULL,
 			description TEXT,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			UNIQUE(project_id, name),
-			UNIQUE(project_id, abbreviation)
+			UNIQUE(project_id, name)
 		);`,
 
 		// project_config 表
 		`CREATE TABLE IF NOT EXISTS project_config (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			project_id UUID NOT NULL REFERENCES project(id) ON DELETE CASCADE,
+			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
 			key VARCHAR(255) NOT NULL,
 			value JSONB NOT NULL,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -169,9 +164,8 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 		// test_case 表
 		`CREATE TABLE IF NOT EXISTS test_case (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			module_id UUID NOT NULL REFERENCES module(id) ON DELETE CASCADE,
+			module_id UUID NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
 			user_id UUID NOT NULL REFERENCES users(id),
-			number VARCHAR(32) NOT NULL UNIQUE,
 			title VARCHAR(255) NOT NULL,
 			preconditions JSONB DEFAULT '[]'::jsonb,
 			steps JSONB DEFAULT '[]'::jsonb NOT NULL,
@@ -181,8 +175,7 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 			priority priority_enum NOT NULL DEFAULT 'P2',
 			status case_status_enum NOT NULL DEFAULT 'unexecuted',
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			deleted_at TIMESTAMP WITH TIME ZONE
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		);
 		CREATE INDEX IF NOT EXISTS idx_test_case_ai ON test_case USING gin (ai_metadata);
 		CREATE INDEX IF NOT EXISTS idx_test_case_steps ON test_case USING gin (steps);`,
@@ -190,15 +183,14 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 		// test_plan 表
 		`CREATE TABLE IF NOT EXISTS test_plan (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			project_id UUID NOT NULL REFERENCES project(id) ON DELETE CASCADE,
+			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
 			user_id UUID NOT NULL REFERENCES users(id),
 			name VARCHAR(255) NOT NULL,
 			description TEXT DEFAULT '',
 			status plan_status_enum NOT NULL DEFAULT 'draft',
 			extra_config JSONB DEFAULT '{}'::jsonb,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			deleted_at TIMESTAMP WITH TIME ZONE
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		);`,
 
 		// plan_cases 关联表
@@ -223,7 +215,7 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 		// documents 表
 		`CREATE TABLE IF NOT EXISTS documents (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			project_id UUID NOT NULL REFERENCES project(id) ON DELETE CASCADE,
+			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
 			name VARCHAR(255) NOT NULL,
 			type document_type_enum NOT NULL,
 			url TEXT,
@@ -232,8 +224,7 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 			status document_status_enum NOT NULL DEFAULT 'pending',
 			created_by UUID NOT NULL REFERENCES users(id),
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-			deleted_at TIMESTAMP WITH TIME ZONE
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		);`,
 
 		// document_chunks 表
@@ -251,8 +242,8 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 		// generation_tasks 表
 		`CREATE TABLE IF NOT EXISTS generation_tasks (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			project_id UUID NOT NULL REFERENCES project(id) ON DELETE CASCADE,
-			module_id UUID REFERENCES module(id) ON DELETE SET NULL,
+			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+			module_id UUID REFERENCES modules(id) ON DELETE SET NULL,
 			user_id UUID NOT NULL REFERENCES users(id),
 			status VARCHAR(32) NOT NULL DEFAULT 'pending',
 			prompt TEXT,
@@ -266,7 +257,7 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 		`CREATE TABLE IF NOT EXISTS case_drafts (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			task_id UUID NOT NULL REFERENCES generation_tasks(id) ON DELETE CASCADE,
-			module_id UUID REFERENCES module(id) ON DELETE SET NULL,
+			module_id UUID REFERENCES modules(id) ON DELETE SET NULL,
 			title VARCHAR(255) NOT NULL,
 			preconditions JSONB DEFAULT '[]'::jsonb,
 			steps JSONB DEFAULT '[]'::jsonb NOT NULL,
@@ -293,8 +284,8 @@ func RunMigrations(ctx context.Context, db *sqlx.DB) error {
 // TruncateAllTables 清空所有表数据（测试间清理）
 func TruncateAllTables(ctx context.Context, db *sqlx.DB) error {
 	tables := []string{
-		"test_result", "plan_cases", "test_plan", "test_case", "module",
-		"project_config", "project", "users", "document_chunks", "documents",
+		"test_result", "plan_cases", "test_plan", "test_case", "modules",
+		"project_config", "projects", "users", "document_chunks", "documents",
 		"case_drafts", "generation_tasks",
 	}
 

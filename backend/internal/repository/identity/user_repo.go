@@ -47,9 +47,9 @@ func (r *UserRepository) Save(ctx context.Context, user *identity.User) error {
 func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*identity.User, error) {
 	var row identity.UserRow
 	query := `
-		SELECT id, username, email, password, role, created_at, updated_at, deleted_at
+		SELECT id, username, email, password, role, created_at, updated_at
 		FROM users
-		WHERE id = $1 AND deleted_at IS NULL
+		WHERE id = $1
 	`
 	err := r.db.GetContext(ctx, &row, query, id)
 	if err != nil {
@@ -65,9 +65,9 @@ func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*identity.
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*identity.User, error) {
 	var row identity.UserRow
 	query := `
-		SELECT id, username, email, password, role, created_at, updated_at, deleted_at
+		SELECT id, username, email, password, role, created_at, updated_at
 		FROM users
-		WHERE email = $1 AND deleted_at IS NULL
+		WHERE email = $1
 	`
 	err := r.db.GetContext(ctx, &row, query, email)
 	if err != nil {
@@ -83,9 +83,9 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*identi
 func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*identity.User, error) {
 	var row identity.UserRow
 	query := `
-		SELECT id, username, email, password, role, created_at, updated_at, deleted_at
+		SELECT id, username, email, password, role, created_at, updated_at
 		FROM users
-		WHERE username = $1 AND deleted_at IS NULL
+		WHERE username = $1
 	`
 	err := r.db.GetContext(ctx, &row, query, username)
 	if err != nil {
@@ -103,7 +103,7 @@ func (r *UserRepository) Update(ctx context.Context, user *identity.User) error 
 	query := `
 		UPDATE users
 		SET username = $2, email = $3, password = $4, role = $5, updated_at = $6
-		WHERE id = $1 AND deleted_at IS NULL
+		WHERE id = $1
 	`
 	result, err := r.db.ExecContext(ctx, query,
 		row.ID,
@@ -126,13 +126,9 @@ func (r *UserRepository) Update(ctx context.Context, user *identity.User) error 
 	return nil
 }
 
-// Delete removes a user (soft delete)
+// Delete removes a user (hard delete)
 func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	query := `
-		UPDATE users
-		SET deleted_at = NOW()
-		WHERE id = $1 AND deleted_at IS NULL
-	`
+	query := `DELETE FROM users WHERE id = $1`
 	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("delete user: %w", err)
@@ -154,7 +150,7 @@ func (r *UserRepository) List(ctx context.Context, opts identity.QueryOptions) (
 	countQuery := `
 		SELECT COUNT(*)
 		FROM users
-		WHERE deleted_at IS NULL
+		WHERE 1=1
 	`
 	if opts.Keywords != "" {
 		countQuery += " AND (username LIKE '%' || $1 || '%' OR email LIKE '%' || $1 || '%')"
@@ -181,9 +177,9 @@ func (r *UserRepository) List(ctx context.Context, opts identity.QueryOptions) (
 
 	// Query users
 	query := `
-		SELECT id, username, email, password, role, created_at, updated_at, deleted_at
+		SELECT id, username, email, password, role, created_at, updated_at
 		FROM users
-		WHERE deleted_at IS NULL
+		WHERE 1=1
 	`
 	var args []interface{}
 	argIdx := 1
