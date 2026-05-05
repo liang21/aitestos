@@ -131,7 +131,7 @@ func (h *ProjectHandler) CreateModule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	projectID, err := uuid.Parse(chi.URLParam(r, "projectID"))
+	projectID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid project ID")
 		return
@@ -154,7 +154,7 @@ func (h *ProjectHandler) CreateModule(w http.ResponseWriter, r *http.Request) {
 
 // ListModules handles listing modules
 func (h *ProjectHandler) ListModules(w http.ResponseWriter, r *http.Request) {
-	projectID, err := uuid.Parse(chi.URLParam(r, "projectID"))
+	projectID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid project ID")
 		return
@@ -210,7 +210,7 @@ func (h *ProjectHandler) DeleteModule(w http.ResponseWriter, r *http.Request) {
 
 // SetConfig handles setting project configuration
 func (h *ProjectHandler) SetConfig(w http.ResponseWriter, r *http.Request) {
-	projectID, err := uuid.Parse(chi.URLParam(r, "projectID"))
+	projectID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid project ID")
 		return
@@ -238,7 +238,7 @@ func (h *ProjectHandler) SetConfig(w http.ResponseWriter, r *http.Request) {
 
 // ListConfigs handles listing project configurations
 func (h *ProjectHandler) ListConfigs(w http.ResponseWriter, r *http.Request) {
-	projectID, err := uuid.Parse(chi.URLParam(r, "projectID"))
+	projectID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid project ID")
 		return
