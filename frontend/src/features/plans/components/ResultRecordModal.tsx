@@ -50,6 +50,8 @@ export function ResultRecordModal({
   const [existingCase, setExistingCase] = useState<PlanCase | undefined>(
     undefined
   )
+  const [overwriteConfirmVisible, setOverwriteConfirmVisible] = useState(false)
+  const [pendingStatus, setPendingStatus] = useState<ResultStatus | null>(null)
 
   // Fetch existing plan detail to check if case is already executed
   useEffect(() => {
@@ -93,16 +95,24 @@ export function ResultRecordModal({
 
     // Check if result already exists and warn user
     if (existingCase && existingCase.resultStatus) {
-      Modal.confirm({
-        title: '确认覆盖？',
-        content: `该用例已有执行结果：${resultStatusTextMap[existingCase.resultStatus]}，确定要覆盖吗？`,
-        onOk: () => {
-          onSubmit({ status, note: note || undefined })
-        },
-      })
+      setPendingStatus(status)
+      setOverwriteConfirmVisible(true)
     } else {
       onSubmit({ status, note: note || undefined })
     }
+  }
+
+  const handleOverwriteConfirm = () => {
+    if (pendingStatus) {
+      onSubmit({ status: pendingStatus, note: note || undefined })
+      setOverwriteConfirmVisible(false)
+      setPendingStatus(null)
+    }
+  }
+
+  const handleOverwriteCancel = () => {
+    setOverwriteConfirmVisible(false)
+    setPendingStatus(null)
   }
 
   // Render warning if result exists
@@ -162,6 +172,20 @@ export function ResultRecordModal({
           showWordLimit
         />
       </div>
+    </Modal>
+
+    {/* Overwrite Confirmation Modal */}
+    <Modal
+      title="确认覆盖"
+      visible={overwriteConfirmVisible}
+      onCancel={handleOverwriteCancel}
+      onOk={handleOverwriteConfirm}
+      okText="确认覆盖"
+      cancelText="取消"
+      focus={false}
+    >
+      <p>该用例已有执行结果：<strong>{resultStatusTextMap[existingCase?.resultStatus || '']}</strong></p>
+      <p className="mt-2 text-gray-500">确定要覆盖吗？</p>
     </Modal>
   )
 }

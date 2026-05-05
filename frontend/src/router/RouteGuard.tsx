@@ -48,7 +48,7 @@ export function RouteGuard({
   const { user, token, isAuthenticated, logout } = useAuthStore()
 
   // Check if authenticated
-  if (!isAuthenticated || !user || !token) {
+  if (!isAuthenticated) {
     // Store the intended destination for post-login redirect
     return (
       <Navigate
@@ -60,7 +60,7 @@ export function RouteGuard({
   }
 
   // Check token expiration
-  if (isTokenExpired(token)) {
+  if (token && isTokenExpired(token)) {
     logout()
     return (
       <Navigate
@@ -72,7 +72,7 @@ export function RouteGuard({
   }
 
   // Check admin role if required
-  if (requireAdmin && user.role !== 'super_admin' && user.role !== 'admin') {
+  if (requireAdmin && user?.role !== 'super_admin' && user?.role !== 'admin') {
     // User is not admin, redirect to projects
     return <Navigate to="/projects" replace />
   }

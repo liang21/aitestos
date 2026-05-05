@@ -103,9 +103,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return
     }
 
-    // We have valid tokens but user data might be lost
-    // Mark as initialized but don't set user (will need to fetch if needed)
+    // Parse token to get user info (since we don't have user in localStorage)
+    let user: UserJSON | null = null
+    try {
+      const parts = accessToken.split('.')
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]))
+        // Extract user info from token payload
+        user = {
+          id: payload.user_id || payload.sub || '',
+          username: payload.username || payload.preferred_username || '',
+          email: payload.email || '',
+          role: payload.role || 'normal',
+          createdAt: '',
+          updatedAt: '',
+        }
+      }
+    } catch (e) {
+      // Failed to parse token, clear it
+      tokenStorage.removeItem('access_token')
+      tokenStorage.removeItem('refresh_token')
+      set({ isInitialized: true })
+      return
+    }
+
+    // Set complete state including user
     set({
+      user,
       token: accessToken,
       refreshToken: refreshTokenValue,
       isAuthenticated: true,

@@ -1,10 +1,9 @@
 import { useState, useEffect, useId } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useForm, useController } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Input, Modal, Form, Button } from '@arco-design/web-react'
-import { useUpdateProject, useDeleteProject } from '../hooks/useProjects'
+import { Input, Modal, Form } from '@arco-design/web-react'
+import { useUpdateProject } from '../hooks/useProjects'
 import type { Project } from '@/types/api'
 import { messageSuccess, messageError } from '@/lib/notification'
 
@@ -43,9 +42,7 @@ export function EditProjectModal({
   onClose,
   onSuccess,
 }: EditProjectModalProps) {
-  const navigate = useNavigate()
   const updateProject = useUpdateProject()
-  const deleteProject = useDeleteProject()
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   // 生成唯一 ID，避免多实例冲突
@@ -107,18 +104,6 @@ export function EditProjectModal({
     onClose()
   }
 
-  const handleDelete = async () => {
-    try {
-      await deleteProject.mutateAsync(project.id)
-      messageSuccess('项目已删除')
-      onSuccess()
-      // 使用 React Router 导航到项目列表
-      navigate('/projects')
-    } catch {
-      messageError('项目删除失败')
-    }
-  }
-
   return (
     <Modal
       title="编辑项目"
@@ -126,43 +111,8 @@ export function EditProjectModal({
       onCancel={handleCancel}
       onOk={handleOk}
       confirmLoading={updateProject.isPending}
-      footer={
-        <div className="flex items-center justify-between">
-          <Popconfirm
-            focusLock
-            title="确认删除项目"
-            content="删除项目后，所有关联的模块和用例将被级联删除，此操作不可恢复。"
-            onOk={handleDelete}
-            okText="确认删除"
-            cancelText="取消"
-          >
-            <button
-              type="button"
-              className="arco-btn arco-btn-danger arco-btn-secondary"
-              style={{ marginRight: 'auto' }}
-            >
-              删除项目
-            </button>
-          </Popconfirm>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="arco-btn arco-btn-secondary"
-              onClick={handleCancel}
-            >
-              取消
-            </button>
-            <button
-              type="button"
-              className="arco-btn arco-btn-primary"
-              onClick={handleOk}
-              disabled={updateProject.isPending}
-            >
-              保存
-            </button>
-          </div>
-        </div>
-      }
+      okText="保存"
+      cancelText="取消"
     >
       <form onSubmit={(e) => e.preventDefault()}>
         <div className="mb-4">

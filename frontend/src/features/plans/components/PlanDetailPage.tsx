@@ -112,9 +112,11 @@ export function PlanDetailPage({ planId: propPlanId }: { planId?: string }) {
 
   // Handle edit button
   const handleEdit = () => {
-    // TODO: Implement edit route when available
-    messageInfo('编辑功能待实现')
-    // navigate(routes?.plans.detail(planId) + '/edit')
+    const routes = projectId ? buildProjectRoutes(projectId) : null
+    const currentPlanId = propPlanId || urlPlanId
+    if (currentPlanId) {
+      navigate(routes?.plans.edit(currentPlanId) ?? `/plans/${currentPlanId}/edit`)
+    }
   }
 
   // Handle delete button

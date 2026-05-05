@@ -4,7 +4,7 @@ import {
   useQueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query'
-import { message } from '@arco-design/web-react'
+import { Message } from '@arco-design/web-react'
 import { documentsApi } from '../services/documents'
 import type {
   Document,
@@ -71,18 +71,14 @@ export function useUploadDocument() {
   return useMutation({
     mutationFn: (data: UploadDocumentRequest) => documentsApi.create(data),
     onSuccess: () => {
-      if (message && typeof message.success === 'function') {
-        message.success('文档上传成功')
-      }
+      Message.success('文档上传成功')
       // Invalidate document lists
       queryClient.invalidateQueries({ queryKey: documentKeys.lists() })
     },
     onError: (error: unknown) => {
       const errorMessage =
         error instanceof Error ? error.message : '文档上传失败'
-      if (message && typeof message.error === 'function') {
-        message.error(errorMessage)
-      }
+      Message.error(errorMessage)
     },
   })
 }
@@ -96,18 +92,14 @@ export function useDeleteDocument() {
   return useMutation({
     mutationFn: (id: string) => documentsApi.delete(id),
     onSuccess: () => {
-      if (message && typeof message.success === 'function') {
-        message.success('文档删除成功')
-      }
+      Message.success('文档删除成功')
       // Invalidate document lists
       queryClient.invalidateQueries({ queryKey: documentKeys.lists() })
     },
     onError: (error: unknown) => {
       const errorMessage =
         error instanceof Error ? error.message : '文档删除失败'
-      if (message && typeof message.error === 'function') {
-        message.error(errorMessage)
-      }
+      Message.error(errorMessage)
     },
   })
 }

@@ -218,6 +218,22 @@ export const router = createBrowserRouter([
           })),
       },
       {
+        path: '/plans/:planId/edit',
+        lazy: () =>
+          import('../features/plans/components/PlanListPage').then(() => ({
+            Component: () => (
+              <AuthErrorBoundary>
+                <RouteGuard>
+                  <LegacyRouteRedirectWithParams
+                    to={(pid, planId) => `/projects/${pid}/plans/${planId}/edit`}
+                    paramKey="planId"
+                  />
+                </RouteGuard>
+              </AuthErrorBoundary>
+            ),
+          })),
+      },
+      {
         path: '/projects/:projectId/modules',
         element: (
           <AuthErrorBoundary>
@@ -381,10 +397,22 @@ export const router = createBrowserRouter([
                   },
                   {
                     path: ':planId',
-                    lazy: () =>
-                      import('../features/plans/components/PlanDetailPage').then((m) => ({
-                        Component: m.PlanDetailPage,
-                      })),
+                    children: [
+                      {
+                        index: true,
+                        lazy: () =>
+                          import('../features/plans/components/PlanDetailPage').then((m) => ({
+                            Component: m.PlanDetailPage,
+                          })),
+                      },
+                      {
+                        path: 'edit',
+                        lazy: () =>
+                          import('../features/plans/components/EditPlanPage').then((m) => ({
+                            Component: m.EditPlanPage,
+                          })),
+                      },
+                    ],
                   },
                 ],
               },

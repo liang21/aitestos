@@ -8,8 +8,10 @@ import {
   Space,
 } from '@arco-design/web-react'
 import { IconPlus } from '@arco-design/web-react/icon'
+import { useNavigate } from 'react-router-dom'
 import { useProjectList, useDeleteProject } from '../hooks/useProjects'
 import { CreateProjectModal } from './CreateProjectModal'
+import { EditProjectModal } from './EditProjectModal'
 import { SearchTable } from '@/components/business/SearchTable'
 import { useDebounce } from '@/hooks/useDebounce'
 
@@ -20,6 +22,7 @@ const { Title } = Typography
  * Lists all projects with search and pagination
  */
 export function ProjectListPage() {
+  const navigate = useNavigate()
   const [searchInput, setSearchInput] = useState('')
   const debouncedKeywords = useDebounce(searchInput, 300)
 
@@ -29,6 +32,9 @@ export function ProjectListPage() {
     limit: 10,
   })
   const [createModalVisible, setCreateModalVisible] = useState(false)
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false)
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null)
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
 
   // Update search params when debounced keywords change
   useEffect(() => {
@@ -63,7 +69,11 @@ export function ProjectListPage() {
       key: 'actions',
       render: (_: unknown, record: { id: string }) => (
         <Space>
-          <Button type="text" size="small">
+          <Button
+            type="text"
+            size="small"
+            onClick={() => handleEdit(record)}
+          >
             编辑
           </Button>
           <Button
@@ -80,11 +90,30 @@ export function ProjectListPage() {
   ]
 
   const handleDelete = (id: string) => {
-    Modal.confirm({
-      title: '确认删除',
-      content: '确定要删除此项目吗？',
-      onOk: () => deleteProject.mutate(id),
-    })
+    setProjectToDelete(id)
+    setDeleteModalVisible(true)
+  }
+
+  const handleEdit = (project: Project) => {
+    setEditingProject(project)
+  }
+
+  const handleEditSuccess = () => {
+    // Refetch project list after successful update
+    setSearchParams((prev) => ({ ...prev }))
+  }
+
+  const confirmDelete = () => {
+    if (projectToDelete) {
+      deleteProject.mutate(projectToDelete)
+      setDeleteModalVisible(false)
+      setProjectToDelete(null)
+    }
+  }
+
+  const cancelDelete = () => {
+    setDeleteModalVisible(false)
+    setProjectToDelete(null)
   }
 
   const handlePageChange = (page: number) => {
@@ -130,6 +159,10 @@ export function ProjectListPage() {
               offset: (page - 1) * prev.limit,
             }))
           }}
+          onRow={(record: { id: string }) => ({
+            onClick: () => navigate(`/projects/${record.id}/dashboard`),
+            style: { cursor: 'pointer' },
+          })}
           emptyText="暂无项目"
         />
       </Card>
@@ -139,6 +172,29 @@ export function ProjectListPage() {
         onCancel={() => setCreateModalVisible(false)}
         onOk={() => setCreateModalVisible(false)}
       />
+
+      {/* Edit Project Modal */}
+      {editingProject && (
+        <EditProjectModal
+          visible={!!editingProject}
+          project={editingProject}
+          onClose={() => setEditingProject(null)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        title="确认删除"
+        visible={deleteModalVisible}
+        onCancel={cancelDelete}
+        onOk={confirmDelete}
+        okText="确认"
+        cancelText="取消"
+        focus={false}
+      >
+        <p>确定要删除此项目吗？此操作无法撤销。</p>
+      </Modal>
     </div>
   )
 }
