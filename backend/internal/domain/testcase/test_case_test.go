@@ -12,13 +12,11 @@ import (
 func TestNewTestCase(t *testing.T) {
 	moduleID := uuid.New()
 	userID := uuid.New()
-	number := testcase.GenerateCaseNumber("ECO", "USR", 1)
 
 	tests := []struct {
 		name          string
 		moduleID      uuid.UUID
 		userID        uuid.UUID
-		number        testcase.CaseNumber
 		title         string
 		preconditions testcase.Preconditions
 		steps         testcase.Steps
@@ -31,7 +29,6 @@ func TestNewTestCase(t *testing.T) {
 			name:          "valid test case",
 			moduleID:      moduleID,
 			userID:        userID,
-			number:        number,
 			title:         "Test Case Title",
 			preconditions: testcase.Preconditions{"Precondition 1", "Precondition 2"},
 			steps:         testcase.Steps{"Step 1", "Step 2"},
@@ -44,7 +41,6 @@ func TestNewTestCase(t *testing.T) {
 			name:          "empty title",
 			moduleID:      moduleID,
 			userID:        userID,
-			number:        number,
 			title:         "",
 			preconditions: testcase.Preconditions{},
 			steps:         testcase.Steps{"Step"},
@@ -57,7 +53,6 @@ func TestNewTestCase(t *testing.T) {
 			name:          "empty steps",
 			moduleID:      moduleID,
 			userID:        userID,
-			number:        number,
 			title:         "Test Case",
 			preconditions: testcase.Preconditions{},
 			steps:         testcase.Steps{},
@@ -70,7 +65,6 @@ func TestNewTestCase(t *testing.T) {
 			name:          "nil module ID",
 			moduleID:      uuid.Nil,
 			userID:        userID,
-			number:        number,
 			title:         "Test Case",
 			preconditions: testcase.Preconditions{},
 			steps:         testcase.Steps{"Step"},
@@ -83,7 +77,6 @@ func TestNewTestCase(t *testing.T) {
 			name:          "nil user ID",
 			moduleID:      moduleID,
 			userID:        uuid.Nil,
-			number:        number,
 			title:         "Test Case",
 			preconditions: testcase.Preconditions{},
 			steps:         testcase.Steps{"Step"},
@@ -99,7 +92,6 @@ func TestNewTestCase(t *testing.T) {
 			got, err := testcase.NewTestCase(
 				tt.moduleID,
 				tt.userID,
-				tt.number,
 				tt.title,
 				tt.preconditions,
 				tt.steps,
@@ -130,12 +122,10 @@ func TestNewTestCase(t *testing.T) {
 func TestTestCase_Accessors(t *testing.T) {
 	moduleID := uuid.New()
 	userID := uuid.New()
-	number := testcase.GenerateCaseNumber("ECO", "USR", 1)
 
 	tc, err := testcase.NewTestCase(
 		moduleID,
 		userID,
-		number,
 		"Test Case Title",
 		testcase.Preconditions{"Precondition 1"},
 		testcase.Steps{"Step 1", "Step 2"},
@@ -160,11 +150,6 @@ func TestTestCase_Accessors(t *testing.T) {
 	// Test UserID accessor
 	if tc.UserID() != userID {
 		t.Errorf("TestCase.UserID() = %v, want %v", tc.UserID(), userID)
-	}
-
-	// Test Number accessor
-	if tc.Number().String() == "" {
-		t.Error("TestCase.Number() should not be empty")
 	}
 
 	// Test Title accessor
@@ -282,12 +267,10 @@ func createValidTestCase(t *testing.T) *testcase.TestCase {
 	t.Helper()
 	moduleID := uuid.New()
 	userID := uuid.New()
-	number := testcase.GenerateCaseNumber("ECO", "USR", 1)
 
 	tc, err := testcase.NewTestCase(
 		moduleID,
 		userID,
-		number,
 		"Test Case Title",
 		testcase.Preconditions{"Precondition 1"},
 		testcase.Steps{"Step 1", "Step 2"},

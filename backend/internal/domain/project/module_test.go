@@ -15,73 +15,58 @@ func TestNewModule(t *testing.T) {
 	userID := uuid.New()
 
 	tests := []struct {
-		name         string
-		projectID    uuid.UUID
-		moduleName   string
-		abbreviation string
-		description  string
-		userID       uuid.UUID
-		wantErr      bool
+		name       string
+		projectID  uuid.UUID
+		moduleName string
+		description string
+		userID     uuid.UUID
+		wantErr    bool
 	}{
 		{
-			name:         "valid module",
-			projectID:    projectID,
-			moduleName:   "User Management",
-			abbreviation: "USR",
-			description:  "User management module",
-			userID:       userID,
-			wantErr:      false,
+			name:       "valid module",
+			projectID:  projectID,
+			moduleName: "User Management",
+			description: "User management module",
+			userID:     userID,
+			wantErr:    false,
 		},
 		{
-			name:         "empty name",
-			projectID:    projectID,
-			moduleName:   "",
-			abbreviation: "USR",
-			description:  "Description",
-			userID:       userID,
-			wantErr:      true,
+			name:       "empty name",
+			projectID:  projectID,
+			moduleName: "",
+			description: "Description",
+			userID:     userID,
+			wantErr:    true,
 		},
 		{
-			name:         "invalid abbreviation",
-			projectID:    projectID,
-			moduleName:   "Test Module",
-			abbreviation: "abc",
-			description:  "Description",
-			userID:       userID,
-			wantErr:      true,
+			name:       "nil project ID",
+			projectID:  uuid.Nil,
+			moduleName: "Test Module",
+			description: "Description",
+			userID:     userID,
+			wantErr:    true,
 		},
 		{
-			name:         "nil project ID",
-			projectID:    uuid.Nil,
-			moduleName:   "Test Module",
-			abbreviation: "TST",
-			description:  "Description",
-			userID:       userID,
-			wantErr:      true,
+			name:       "nil user ID",
+			projectID:  projectID,
+			moduleName: "Test Module",
+			description: "Description",
+			userID:     uuid.Nil,
+			wantErr:    true,
 		},
 		{
-			name:         "nil user ID",
-			projectID:    projectID,
-			moduleName:   "Test Module",
-			abbreviation: "TST",
-			description:  "Description",
-			userID:       uuid.Nil,
-			wantErr:      true,
-		},
-		{
-			name:         "empty description is allowed",
-			projectID:    projectID,
-			moduleName:   "Test Module",
-			abbreviation: "TST",
-			description:  "",
-			userID:       userID,
-			wantErr:      false,
+			name:       "empty description is allowed",
+			projectID:  projectID,
+			moduleName: "Test Module",
+			description: "",
+			userID:     userID,
+			wantErr:    false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := project.NewModule(tt.projectID, tt.moduleName, tt.abbreviation, tt.description, tt.userID)
+			got, err := project.NewModule(tt.projectID, tt.moduleName, tt.description, tt.userID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewModule() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -93,9 +78,6 @@ func TestNewModule(t *testing.T) {
 				}
 				if got.Name() != tt.moduleName {
 					t.Errorf("Module.Name() = %v, want %v", got.Name(), tt.moduleName)
-				}
-				if got.Abbreviation().String() != tt.abbreviation {
-					t.Errorf("Module.Abbreviation() = %v, want %v", got.Abbreviation(), tt.abbreviation)
 				}
 				if got.ProjectID() != tt.projectID {
 					t.Errorf("Module.ProjectID() = %v, want %v", got.ProjectID(), tt.projectID)
@@ -109,7 +91,7 @@ func TestModule_Accessors(t *testing.T) {
 	projectID := uuid.New()
 	userID := uuid.New()
 
-	m, err := project.NewModule(projectID, "User Module", "USR", "User management", userID)
+	m, err := project.NewModule(projectID, "User Module", "User management", userID)
 	if err != nil {
 		t.Fatalf("Failed to create module: %v", err)
 	}
@@ -127,11 +109,6 @@ func TestModule_Accessors(t *testing.T) {
 	// Test Name accessor
 	if m.Name() != "User Module" {
 		t.Errorf("Module.Name() = %v, want User Module", m.Name())
-	}
-
-	// Test Abbreviation accessor
-	if m.Abbreviation().String() != "USR" {
-		t.Errorf("Module.Abbreviation() = %v, want USR", m.Abbreviation())
 	}
 
 	// Test Description accessor
@@ -159,7 +136,7 @@ func TestModule_UpdateDescription(t *testing.T) {
 	projectID := uuid.New()
 	userID := uuid.New()
 
-	m, err := project.NewModule(projectID, "Test Module", "TST", "Original", userID)
+	m, err := project.NewModule(projectID, "Test Module", "Original", userID)
 	if err != nil {
 		t.Fatalf("Failed to create module: %v", err)
 	}

@@ -3,7 +3,6 @@ package testcase
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -15,9 +14,6 @@ type TestCaseRepository interface {
 
 	// FindByID retrieves a test case by ID
 	FindByID(ctx context.Context, id uuid.UUID) (*TestCase, error)
-
-	// FindByNumber retrieves a test case by case number
-	FindByNumber(ctx context.Context, number CaseNumber) (*TestCase, error)
 
 	// FindByModuleID retrieves all test cases for a module with pagination
 	FindByModuleID(ctx context.Context, moduleID uuid.UUID, opts QueryOptions) ([]*TestCase, error)
@@ -36,9 +32,6 @@ type TestCaseRepository interface {
 
 	// Delete removes a test case
 	Delete(ctx context.Context, id uuid.UUID) error
-
-	// CountByDate counts test cases created on a specific date for a module
-	CountByDate(ctx context.Context, moduleID uuid.UUID, date time.Time) (int64, error)
 }
 
 // QueryOptions holds pagination and filtering options

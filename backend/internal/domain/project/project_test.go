@@ -15,35 +15,24 @@ func TestNewProject(t *testing.T) {
 	tests := []struct {
 		name        string
 		projectName string
-		prefix      string
 		description string
 		wantErr     bool
 	}{
 		{
 			name:        "valid project",
 			projectName: "E-Commerce Platform",
-			prefix:      "ECO",
 			description: "E-commerce testing platform",
 			wantErr:     false,
 		},
 		{
 			name:        "empty name",
 			projectName: "",
-			prefix:      "ECO",
-			description: "Description",
-			wantErr:     true,
-		},
-		{
-			name:        "invalid prefix",
-			projectName: "Test Project",
-			prefix:      "abc",
 			description: "Description",
 			wantErr:     true,
 		},
 		{
 			name:        "empty description is allowed",
 			projectName: "Test Project",
-			prefix:      "TST",
 			description: "",
 			wantErr:     false,
 		},
@@ -51,7 +40,7 @@ func TestNewProject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := project.NewProject(tt.projectName, tt.prefix, tt.description)
+			got, err := project.NewProject(tt.projectName, tt.description)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewProject() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -63,9 +52,6 @@ func TestNewProject(t *testing.T) {
 				}
 				if got.Name() != tt.projectName {
 					t.Errorf("Project.Name() = %v, want %v", got.Name(), tt.projectName)
-				}
-				if got.Prefix().String() != tt.prefix {
-					t.Errorf("Project.Prefix() = %v, want %v", got.Prefix(), tt.prefix)
 				}
 				if got.Description() != tt.description {
 					t.Errorf("Project.Description() = %v, want %v", got.Description(), tt.description)
@@ -79,7 +65,7 @@ func TestNewProject(t *testing.T) {
 }
 
 func TestProject_Accessors(t *testing.T) {
-	p, err := project.NewProject("Test Project", "TST", "Test Description")
+	p, err := project.NewProject("Test Project", "Test Description")
 	if err != nil {
 		t.Fatalf("Failed to create project: %v", err)
 	}
@@ -92,11 +78,6 @@ func TestProject_Accessors(t *testing.T) {
 	// Test Name accessor
 	if p.Name() != "Test Project" {
 		t.Errorf("Project.Name() = %v, want Test Project", p.Name())
-	}
-
-	// Test Prefix accessor
-	if p.Prefix().String() != "TST" {
-		t.Errorf("Project.Prefix() = %v, want TST", p.Prefix())
 	}
 
 	// Test Description accessor
@@ -116,7 +97,7 @@ func TestProject_Accessors(t *testing.T) {
 }
 
 func TestProject_UpdateDescription(t *testing.T) {
-	p, err := project.NewProject("Test Project", "TST", "Original Description")
+	p, err := project.NewProject("Test Project", "Original Description")
 	if err != nil {
 		t.Fatalf("Failed to create project: %v", err)
 	}
@@ -136,7 +117,7 @@ func TestProject_UpdateDescription(t *testing.T) {
 }
 
 func TestProject_UpdateName(t *testing.T) {
-	p, err := project.NewProject("Original Name", "TST", "Description")
+	p, err := project.NewProject("Original Name", "Description")
 	if err != nil {
 		t.Fatalf("Failed to create project: %v", err)
 	}
@@ -163,9 +144,8 @@ func TestProject_UpdateName(t *testing.T) {
 	}
 }
 
-
 func TestProject_MarshalJSON(t *testing.T) {
-	p, err := project.NewProject("Test Project", "TST", "A test project")
+	p, err := project.NewProject("Test Project", "A test project")
 	if err != nil {
 		t.Fatalf("failed to create project: %v", err)
 	}
@@ -189,10 +169,11 @@ func TestProject_MarshalJSON(t *testing.T) {
 	if result["name"] == nil || result["name"] != "Test Project" {
 		t.Errorf("name field is missing or wrong: got %v", result["name"])
 	}
-	if result["prefix"] == nil || result["prefix"] != "TST" {
-		t.Errorf("prefix field is missing or wrong: got %v", result["prefix"])
-	}
 	if result["description"] == nil || result["description"] != "A test project" {
 		t.Errorf("description field is missing or wrong: got %v", result["description"])
+	}
+	// Verify prefix field is NOT present
+	if result["prefix"] != nil {
+		t.Error("prefix field should not be present")
 	}
 }
