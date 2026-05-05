@@ -17,7 +17,7 @@ import (
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
 // accessTokenExpiry is the duration before access tokens expire
-const accessTokenExpiry = 15 * time.Minute
+const accessTokenExpiry = 7 * 24 * time.Hour // 7 days
 
 // refreshTokenExpiry is the duration before refresh tokens expire
 const refreshTokenExpiry = 7 * 24 * time.Hour
