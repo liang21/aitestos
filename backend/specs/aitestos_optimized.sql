@@ -25,26 +25,23 @@ CREATE TYPE document_type_enum AS ENUM ('prd', 'figma', 'api_spec');
 -- ============================================================
 
 -- -----------------------------------------------------------
--- project 项目表
+-- projects 项目表
 -- -----------------------------------------------------------
-CREATE TABLE project (
+CREATE TABLE projects (
     id          uuid                        DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
     name        varchar(255)                                            NOT NULL UNIQUE,
-    prefix      varchar(4)                                             NOT NULL UNIQUE,
     description text,
     config      jsonb                       DEFAULT '{}'::jsonb,
     created_at  timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at  timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
-COMMENT ON COLUMN project.prefix IS '项目前缀，用于用例编号生成，2-4位大写字母';
-
 -- -----------------------------------------------------------
 -- project_config 项目配置表 (新增)
 -- -----------------------------------------------------------
 CREATE TABLE project_config (
     id          uuid                        DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
-    project_id  uuid                        NOT NULL REFERENCES project ON DELETE CASCADE,
+    project_id  uuid                        NOT NULL REFERENCES projects ON DELETE CASCADE,
     key         varchar(255)                NOT NULL,
     value       jsonb                       DEFAULT '{}'::jsonb,
     description text,
@@ -54,19 +51,15 @@ CREATE TABLE project_config (
 );
 
 -- -----------------------------------------------------------
--- module 模块表
+-- modules 模块表
 -- -----------------------------------------------------------
-CREATE TABLE module (
+CREATE TABLE modules (
     id            uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
-    project_id    uuid                            NOT NULL REFERENCES project ON DELETE CASCADE,
+    project_id    uuid                            NOT NULL REFERENCES projects ON DELETE CASCADE,
     name          varchar(255)                    NOT NULL,
-    abbreviation  varchar(4)                      NOT NULL,
     description   text,
-    UNIQUE(project_id, name),
-    UNIQUE(project_id, abbreviation)
+    UNIQUE(project_id, name)
 );
-
-COMMENT ON COLUMN module.abbreviation IS '模块缩写，用于用例编号生成，2-4位大写字母，项目内唯一';
 
 -- -----------------------------------------------------------
 -- users 用户表
@@ -78,8 +71,7 @@ CREATE TABLE users (
     password   varchar(255)                                                 NOT NULL,
     role       user_role_enum              DEFAULT 'normal'::user_role_enum NOT NULL,
     created_at timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP,
-    deleted_at timestamp(3) with time zone
+    updated_at timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 -- -----------------------------------------------------------
@@ -87,9 +79,8 @@ CREATE TABLE users (
 -- -----------------------------------------------------------
 CREATE TABLE test_case (
     id            uuid                        DEFAULT gen_random_uuid()              NOT NULL PRIMARY KEY,
-    module_id     uuid                                                                NOT NULL REFERENCES module ON DELETE CASCADE,
+    module_id     uuid                                                                NOT NULL REFERENCES modules ON DELETE CASCADE,
     user_id       uuid                                                                NOT NULL REFERENCES users ON DELETE NO ACTION,
-    number        varchar(32)                                                         NOT NULL UNIQUE,
     title         varchar(255)                                                        NOT NULL,
     preconditions jsonb                       DEFAULT '[]'::jsonb,
     steps         jsonb                       DEFAULT '[]'::jsonb                     NOT NULL,
@@ -107,7 +98,7 @@ CREATE TABLE test_case (
 -- -----------------------------------------------------------
 CREATE TABLE test_plan (
     id           uuid                        DEFAULT gen_random_uuid()        NOT NULL PRIMARY KEY,
-    project_id   uuid                                                          NOT NULL REFERENCES project ON DELETE CASCADE,
+    project_id   uuid                                                          NOT NULL REFERENCES projects ON DELETE CASCADE,
     user_id      uuid                                                          NOT NULL REFERENCES users ON DELETE NO ACTION,
     name         varchar(255)                                                  NOT NULL,
     status       plan_status_enum            DEFAULT 'draft'::plan_status_enum NOT NULL,
@@ -138,7 +129,7 @@ CREATE TABLE test_result (
 -- -----------------------------------------------------------
 CREATE TABLE document (
     id           uuid                        DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
-    project_id   uuid                                                   NOT NULL REFERENCES project ON DELETE CASCADE,
+    project_id   uuid                                                   NOT NULL REFERENCES projects ON DELETE CASCADE,
     name         varchar(255)                                           NOT NULL,
     type         document_type_enum                                     NOT NULL,
     status       task_status_enum            DEFAULT 'pending'::task_status_enum NOT NULL,
@@ -168,7 +159,7 @@ CREATE TABLE document_chunk (
 -- -----------------------------------------------------------
 CREATE TABLE generation_task (
     id             uuid                        DEFAULT gen_random_uuid()           NOT NULL PRIMARY KEY,
-    project_id     uuid                                                             NOT NULL REFERENCES project ON DELETE CASCADE,
+    project_id     uuid                                                             NOT NULL REFERENCES projects ON DELETE CASCADE,
     user_id        uuid                                                             NOT NULL REFERENCES users ON DELETE NO ACTION,
     status         task_status_enum            DEFAULT 'pending'::task_status_enum  NOT NULL,
     prompt         text,
@@ -184,7 +175,7 @@ CREATE TABLE generation_task (
 CREATE TABLE generated_case_draft (
     id            uuid                        DEFAULT gen_random_uuid()           NOT NULL PRIMARY KEY,
     task_id       uuid                                                             NOT NULL REFERENCES generation_task ON DELETE CASCADE,
-    module_id     uuid                                                             REFERENCES module ON DELETE SET NULL,
+    module_id     uuid                                                             REFERENCES modules ON DELETE SET NULL,
     title         varchar(255)                                                     NOT NULL,
     preconditions jsonb                       DEFAULT '[]'::jsonb,
     steps         jsonb                       DEFAULT '[]'::jsonb                  NOT NULL,
@@ -209,7 +200,6 @@ CREATE INDEX idx_project_config_key ON project_config(key);
 -- users 索引
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_deleted_at ON users(deleted_at) WHERE deleted_at IS NOT NULL;
 
 -- module 索引
 CREATE INDEX idx_module_project_id ON module(project_id);
@@ -217,7 +207,6 @@ CREATE INDEX idx_module_project_id ON module(project_id);
 -- test_case 索引
 CREATE INDEX idx_test_case_module_id ON test_case(module_id);
 CREATE INDEX idx_test_case_user_id ON test_case(user_id);
-CREATE INDEX idx_test_case_number ON test_case(number);
 CREATE INDEX idx_test_case_status ON test_case(status);
 CREATE INDEX idx_test_case_ai ON test_case USING gin (ai_metadata);
 CREATE INDEX idx_test_case_steps ON test_case USING gin (steps);
@@ -269,12 +258,16 @@ END;
 $$;
 
 -- 为各表添加触发器
-CREATE TRIGGER update_project_updated_at
-    BEFORE UPDATE ON project FOR EACH ROW
+CREATE TRIGGER update_projects_updated_at
+    BEFORE UPDATE ON projects FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_project_config_updated_at
     BEFORE UPDATE ON project_config FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_modules_updated_at
+    BEFORE UPDATE ON modules FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_users_updated_at
@@ -305,9 +298,9 @@ CREATE TRIGGER update_generated_case_draft_updated_at
 -- 6. 注释 (可选，提升可读性)
 -- ============================================================
 
-COMMENT ON TABLE project IS '项目表';
+COMMENT ON TABLE projects IS '项目表';
 COMMENT ON TABLE project_config IS '项目配置表，支持键值对扩展';
-COMMENT ON TABLE module IS '模块表，项目下的功能模块';
+COMMENT ON TABLE modules IS '模块表，项目下的功能模块';
 COMMENT ON TABLE users IS '用户表';
 COMMENT ON TABLE test_case IS '测试用例表';
 COMMENT ON TABLE test_plan IS '测试计划表';
@@ -317,8 +310,6 @@ COMMENT ON TABLE document_chunk IS '文档分块表，用于向量检索';
 COMMENT ON TABLE generation_task IS 'AI 用例生成任务表';
 COMMENT ON TABLE generated_case_draft IS '生成的用例草稿表';
 
-COMMENT ON COLUMN project.prefix IS '项目前缀，用于用例编号生成，2-4位大写字母';
-COMMENT ON COLUMN module.abbreviation IS '模块缩写，用于用例编号生成，2-4位大写字母，项目内唯一';
 COMMENT ON COLUMN document.status IS '文档处理状态：pending/processing/completed/failed';
 COMMENT ON COLUMN test_case.ai_metadata IS 'AI 元数据，包含生成任务ID、置信度、引用文档块等信息';
 COMMENT ON COLUMN generated_case_draft.ai_metadata IS 'AI 元数据，包含置信度、引用文档块等信息';
