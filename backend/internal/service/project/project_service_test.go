@@ -14,18 +14,16 @@ import (
 
 // MockProjectRepository implements project.ProjectRepository for testing
 type MockProjectRepository struct {
-	projects    map[uuid.UUID]*project.Project
-	nameIndex   map[string]*project.Project
-	prefixIndex map[string]*project.Project
-	saveErr     error
-	findErr     error
+	projects  map[uuid.UUID]*project.Project
+	nameIndex map[string]*project.Project
+	saveErr   error
+	findErr   error
 }
 
 func NewMockProjectRepository() *MockProjectRepository {
 	return &MockProjectRepository{
-		projects:    make(map[uuid.UUID]*project.Project),
-		nameIndex:   make(map[string]*project.Project),
-		prefixIndex: make(map[string]*project.Project),
+		projects:  make(map[uuid.UUID]*project.Project),
+		nameIndex: make(map[string]*project.Project),
 	}
 }
 
@@ -35,7 +33,6 @@ func (m *MockProjectRepository) Save(ctx context.Context, p *project.Project) er
 	}
 	m.projects[p.ID()] = p
 	m.nameIndex[p.Name()] = p
-	m.prefixIndex[string(p.Prefix())] = p
 	return nil
 }
 
@@ -55,17 +52,6 @@ func (m *MockProjectRepository) FindByName(ctx context.Context, name string) (*p
 		return nil, m.findErr
 	}
 	p, ok := m.nameIndex[name]
-	if !ok {
-		return nil, project.ErrProjectNotFound
-	}
-	return p, nil
-}
-
-func (m *MockProjectRepository) FindByPrefix(ctx context.Context, prefix project.ProjectPrefix) (*project.Project, error) {
-	if m.findErr != nil {
-		return nil, m.findErr
-	}
-	p, ok := m.prefixIndex[string(prefix)]
 	if !ok {
 		return nil, project.ErrProjectNotFound
 	}
@@ -373,7 +359,6 @@ func TestProjectService_CreateProject(t *testing.T) {
 			name: "successful creation",
 			req: &CreateProjectRequest{
 				Name:        "Test Project",
-				Prefix:      "TEST",
 				Description: "A test project",
 			},
 			setup:   func() {},
@@ -383,62 +368,25 @@ func TestProjectService_CreateProject(t *testing.T) {
 			name: "project name already exists",
 			req: &CreateProjectRequest{
 				Name:        "Existing Project",
-				Prefix:      "NEWP",
 				Description: "New project",
 			},
 			setup: func() {
-				existing, _ := project.NewProject("Existing Project", "EXST", "Existing")
+				existing, _ := project.NewProject("Existing Project", "Existing")
 				projectRepo.projects[existing.ID()] = existing
 				projectRepo.nameIndex["Existing Project"] = existing
-				projectRepo.prefixIndex["EXST"] = existing
 			},
 			wantErr: project.ErrProjectNameDuplicate,
-		},
-		{
-			name: "project prefix already exists",
-			req: &CreateProjectRequest{
-				Name:        "Another Project",
-				Prefix:      "EXST",
-				Description: "Another project",
-			},
-			setup: func() {
-				// The EXST prefix was already added in the previous test case
-				// No additional setup needed
-			},
-			wantErr: project.ErrProjectPrefixDuplicate,
-		},
-		{
-			name: "invalid prefix format - too short",
-			req: &CreateProjectRequest{
-				Name:        "Invalid Prefix Project",
-				Prefix:      "A",
-				Description: "Invalid prefix",
-			},
-			setup:   func() {},
-			wantErr: project.ErrInvalidProjectPrefix,
-		},
-		{
-			name: "invalid prefix format - lowercase",
-			req: &CreateProjectRequest{
-				Name:        "Lowercase Prefix Project",
-				Prefix:      "test",
-				Description: "Lowercase prefix",
-			},
-			setup:   func() {},
-			wantErr: project.ErrInvalidProjectPrefix,
 		},
 		{
 			name: "empty name",
 			req: &CreateProjectRequest{
 				Name:        "",
-				Prefix:      "EMPN",
 				Description: "Empty name",
 			},
 			setup: func() {
 				// Use a fresh repo to avoid state pollution
 				projectRepo.projects = make(map[uuid.UUID]*project.Project)
 				projectRepo.nameIndex = make(map[string]*project.Project)
-				projectRepo.prefixIndex = make(map[string]*project.Project)
 			},
 			wantErr: errors.New("create project: project name cannot be empty"),
 		},
@@ -490,7 +438,7 @@ func TestProjectService_GetProject(t *testing.T) {
 	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create test project
-	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
+	testProject, _ := project.NewProject("Test Project", "Description")
 	projectRepo.projects[testProject.ID()] = testProject
 
 	tests := []struct {
@@ -553,7 +501,7 @@ func TestProjectService_ListProjects(t *testing.T) {
 	// Create test projects
 	for i := 0; i < 5; i++ {
 		prefixes := []string{"TEST", "PROJ", "CORE", "APIE", "AUTH"}
-		proj, _ := project.NewProject("Project "+string(rune('A'+i)), prefixes[i], "Description")
+		proj, _ := project.NewProject("Test Project", "Description")
 		projectRepo.projects[proj.ID()] = proj
 	}
 
@@ -633,7 +581,7 @@ func TestProjectService_UpdateProject(t *testing.T) {
 	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create test project
-	testProject, _ := project.NewProject("Original Name", "ORIG", "Original Description")
+	testProject, _ := project.NewProject("Test Project", "Description")
 	projectRepo.projects[testProject.ID()] = testProject
 
 	newName := "Updated Name"
@@ -712,7 +660,7 @@ func TestProjectService_DeleteProject(t *testing.T) {
 	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create test project
-	testProject, _ := project.NewProject("To Delete", "DEL", "Will be deleted")
+	testProject, _ := project.NewProject("Test Project", "Description")
 	projectRepo.projects[testProject.ID()] = testProject
 
 	tests := []struct {
@@ -764,7 +712,7 @@ func TestProjectService_CreateModule(t *testing.T) {
 	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create test project
-	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
+	testProject, _ := project.NewProject("Test Project", "Description")
 	projectRepo.projects[testProject.ID()] = testProject
 
 	userID := uuid.New()
@@ -868,7 +816,7 @@ func TestProjectService_SetConfig(t *testing.T) {
 	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create test project
-	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
+	testProject, _ := project.NewProject("Test Project", "Description")
 	projectRepo.projects[testProject.ID()] = testProject
 
 	tests := []struct {
@@ -938,7 +886,7 @@ func TestProjectService_GetProjectStatistics(t *testing.T) {
 	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create a test project
-	proj, err := project.NewProject("Test Project", "TEST", "A test project")
+	proj, err := project.NewProject("Test Project", "Description")
 	require.NoError(t, err)
 	projectRepo.projects[proj.ID()] = proj
 	projectRepo.nameIndex["Test Project"] = proj
@@ -1008,7 +956,7 @@ func TestProjectService_ImportConfigs(t *testing.T) {
 	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create a test project
-	proj, err := project.NewProject("Test Project", "TEST", "A test project")
+	proj, err := project.NewProject("Test Project", "Description")
 	require.NoError(t, err)
 	projectRepo.projects[proj.ID()] = proj
 	projectRepo.nameIndex["Test Project"] = proj
@@ -1120,7 +1068,7 @@ func TestProjectService_ExportConfigs(t *testing.T) {
 	service := NewProjectService(projectRepo, moduleRepo, configRepo, nil)
 
 	// Create a test project
-	proj, err := project.NewProject("Test Project", "TEST", "A test project")
+	proj, err := project.NewProject("Test Project", "Description")
 	require.NoError(t, err)
 	projectRepo.projects[proj.ID()] = proj
 	projectRepo.nameIndex["Test Project"] = proj

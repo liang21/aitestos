@@ -226,12 +226,14 @@ func (s *ProjectServiceImpl) CreateModule(ctx context.Context, projectID uuid.UU
 	}
 
 	// Check if name already exists in project
-	existing, err := s.moduleRepo.FindByName(ctx, projectID, req.Name)
-	if err == nil && existing != nil {
-		return nil, project.ErrModuleNameDuplicate
-	}
+	modules, err := s.moduleRepo.FindByProjectID(ctx, projectID)
 	if err != nil && !errors.Is(err, project.ErrModuleNotFound) {
 		return nil, fmt.Errorf("check module name: %w", err)
+	}
+	for _, m := range modules {
+		if m.Name() == req.Name {
+			return nil, project.ErrModuleNameDuplicate
+		}
 	}
 
 	// Create new module

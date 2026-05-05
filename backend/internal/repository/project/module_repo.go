@@ -202,10 +202,6 @@ func (r *ModuleRepository) Update(ctx context.Context, module *domainproject.Mod
 }
 
 // parseTime parses a time string from the database
-func parseTime(s string) time.Time {
-	t, _ := time.Parse(time.RFC3339Nano, s)
-	return t
-}
 
 // parseUUID parses a UUID string from the database
 func parseUUID(s string) uuid.UUID {

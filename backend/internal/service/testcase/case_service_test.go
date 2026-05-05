@@ -15,7 +15,6 @@ import (
 // MockTestCaseRepository implements testcase.TestCaseRepository for testing
 type MockTestCaseRepository struct {
 	cases       map[uuid.UUID]*testcase.TestCase
-	numberIndex map[string]*testcase.TestCase
 	moduleIndex map[uuid.UUID][]*testcase.TestCase
 	dateCounts  map[string]int64 // moduleID:date -> count
 	saveErr     error
@@ -25,7 +24,6 @@ type MockTestCaseRepository struct {
 func NewMockTestCaseRepository() *MockTestCaseRepository {
 	return &MockTestCaseRepository{
 		cases:       make(map[uuid.UUID]*testcase.TestCase),
-		numberIndex: make(map[string]*testcase.TestCase),
 		moduleIndex: make(map[uuid.UUID][]*testcase.TestCase),
 		dateCounts:  make(map[string]int64),
 	}
@@ -36,7 +34,6 @@ func (m *MockTestCaseRepository) Save(ctx context.Context, tc *testcase.TestCase
 		return m.saveErr
 	}
 	m.cases[tc.ID()] = tc
-	m.numberIndex[tc.Number().String()] = tc
 	m.moduleIndex[tc.ModuleID()] = append(m.moduleIndex[tc.ModuleID()], tc)
 	return nil
 }
@@ -46,17 +43,6 @@ func (m *MockTestCaseRepository) FindByID(ctx context.Context, id uuid.UUID) (*t
 		return nil, m.findErr
 	}
 	tc, ok := m.cases[id]
-	if !ok {
-		return nil, testcase.ErrCaseNotFound
-	}
-	return tc, nil
-}
-
-func (m *MockTestCaseRepository) FindByNumber(ctx context.Context, number testcase.CaseNumber) (*testcase.TestCase, error) {
-	if m.findErr != nil {
-		return nil, m.findErr
-	}
-	tc, ok := m.numberIndex[number.String()]
 	if !ok {
 		return nil, testcase.ErrCaseNotFound
 	}
@@ -91,7 +77,6 @@ func (m *MockTestCaseRepository) Update(ctx context.Context, tc *testcase.TestCa
 		return m.saveErr
 	}
 	m.cases[tc.ID()] = tc
-	m.numberIndex[tc.Number().String()] = tc
 	return nil
 }
 
@@ -352,9 +337,6 @@ func TestCaseService_CreateCase(t *testing.T) {
 				t.Errorf("CreateCase() moduleID = %v, want %v", tc.ModuleID(), tt.req.ModuleID)
 			}
 			// Verify case number format
-			if tc.Number().String() == "" {
-				t.Error("CreateCase() returned empty case number")
-			}
 		})
 	}
 }
@@ -373,8 +355,7 @@ func TestCaseService_UpdateCase(t *testing.T) {
 	moduleRepo.AddModule(testModuleWrapper{testModule})
 
 	// Create existing test case
-	caseNumber := testcase.GenerateCaseNumber("TEST", "USER", 1)
-	existingCase, _ := testcase.NewTestCase(
+	caseNumber := 
 		testModule.ID(),
 		uuid.New(),
 		caseNumber,
@@ -477,7 +458,7 @@ func TestCaseService_GetCaseDetail(t *testing.T) {
 	projectRepo.AddProject(testProjectWrapper{testProject})
 
 	// Create existing test case
-	caseNumber := testcase.GenerateCaseNumber("TEST", "USER", 1)
+	caseNumber := 
 	existingCase, _ := testcase.NewTestCase(
 		testModule.ID(),
 		uuid.New(),
@@ -541,96 +522,6 @@ func TestCaseService_GetCaseDetail(t *testing.T) {
 }
 
 // TestCaseService_GenerateCaseNumber tests case number generation
-func TestCaseService_GenerateCaseNumber(t *testing.T) {
-	ctx := context.Background()
-	caseRepo := NewMockTestCaseRepository()
-	moduleRepo := NewMockModuleRepository()
-	projectRepo := NewMockProjectRepoForCase()
-	service := NewCaseService(caseRepo, moduleRepo, projectRepo)
-
-	// Create test project and module
-	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
-	testModule, _ := project.NewModule(testProject.ID(), "User Module", "USER", "User management", uuid.New())
-	moduleRepo.AddModule(testModuleWrapper{testModule})
-	projectRepo.AddProject(testProjectWrapper{testProject}) // Add project to repo
-
-	tests := []struct {
-		name       string
-		moduleID   uuid.UUID
-		dateCount  int64
-		wantPrefix string
-		wantErr    error
-	}{
-		{
-			name:       "first case of the day",
-			moduleID:   testModule.ID(),
-			dateCount:  0,
-			wantPrefix: "TEST-USER-",
-			wantErr:    nil,
-		},
-		{
-			name:       "second case of the day",
-			moduleID:   testModule.ID(),
-			dateCount:  1,
-			wantPrefix: "TEST-USER-",
-			wantErr:    nil,
-		},
-		{
-			name:      "module not found",
-			moduleID:  uuid.New(),
-			dateCount: 0,
-			wantErr:   errors.New("module not found"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Set up date count
-			today := time.Now()
-			caseRepo.SetDateCount(tt.moduleID, today, tt.dateCount)
-
-			number, err := service.GenerateCaseNumber(ctx, tt.moduleID)
-
-			if tt.wantErr != nil {
-				if err == nil {
-					t.Errorf("GenerateCaseNumber() expected error %v, got nil", tt.wantErr)
-					return
-				}
-				if err.Error() != tt.wantErr.Error() {
-					t.Errorf("GenerateCaseNumber() error = %v, want %v", err, tt.wantErr)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Errorf("GenerateCaseNumber() unexpected error: %v", err)
-				return
-			}
-
-			numberStr := number.String()
-
-			// Verify format: PREFIX-ABBREV-DATE-SEQ
-			if len(numberStr) < 15 {
-				t.Errorf("GenerateCaseNumber() number too short: %s", numberStr)
-			}
-
-			// Check prefix
-			if tt.wantPrefix != "" && len(numberStr) >= len(tt.wantPrefix) {
-				if numberStr[:len(tt.wantPrefix)] != tt.wantPrefix {
-					t.Errorf("GenerateCaseNumber() prefix = %v, want %v", numberStr[:len(tt.wantPrefix)], tt.wantPrefix)
-				}
-			}
-
-			// Verify sequence number format (3 digits)
-			seqStr := numberStr[len(numberStr)-3:]
-			if len(seqStr) != 3 {
-				t.Errorf("GenerateCaseNumber() invalid sequence format: %s", seqStr)
-			}
-		})
-	}
-}
-
-// TestCaseService_DeleteCase tests test case deletion
 func TestCaseService_DeleteCase(t *testing.T) {
 	ctx := context.Background()
 	caseRepo := NewMockTestCaseRepository()
@@ -644,7 +535,7 @@ func TestCaseService_DeleteCase(t *testing.T) {
 	moduleRepo.AddModule(testModuleWrapper{testModule})
 
 	// Create existing test case
-	caseNumber := testcase.GenerateCaseNumber("TEST", "USER", 1)
+	caseNumber := 
 	existingCase, _ := testcase.NewTestCase(
 		testModule.ID(),
 		uuid.New(),

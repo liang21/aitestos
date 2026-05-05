@@ -346,17 +346,10 @@ func (s *GenerationServiceImpl) ConfirmDraft(ctx context.Context, req *ConfirmDr
 		return nil, fmt.Errorf("confirm draft: %w", err)
 	}
 
-	// Generate case number
-	caseNumber, err := s.generateCaseNumber(ctx, module)
-	if err != nil {
-		return nil, fmt.Errorf("generate case number: %w", err)
-	}
-
 	// Create test case from draft
 	tc, err := testcase.NewTestCase(
 		req.ModuleID,
 		userID,
-		caseNumber,
 		draft.Title(),
 		draft.Preconditions(),
 		draft.Steps(),
@@ -564,26 +557,6 @@ func (s *GenerationServiceImpl) ProcessTask(ctx context.Context, taskID uuid.UUI
 }
 
 // generateCaseNumber generates a new case number for a module
-func (s *GenerationServiceImpl) generateCaseNumber(ctx context.Context, module *project.Module) (testcase.CaseNumber, error) {
-	// Get project for prefix
-	if s.projectRepo == nil {
-		return "", errors.New("project repository not available")
-	}
-
-	projectEntity, err := s.projectRepo.FindByID(ctx, module.ProjectID())
-	if err != nil {
-		return "", fmt.Errorf("find project: %w", err)
-	}
-
-	// Generate case number
-	caseNumber := testcase.GenerateCaseNumber(
-		projectEntity.Prefix().String(),
-		module.Abbreviation().String(),
-		1, // TODO: Get actual count from repository
-	)
-
-	return caseNumber, nil
-}
 
 // buildContextFromChunks builds context string from retrieved chunks
 func (s *GenerationServiceImpl) buildContextFromChunks(chunks []*RetrievedChunk) string {

@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	domainproject "github.com/liang21/aitestos/internal/domain/project"
-	"github.com/lib/pq"
 )
 
 // ProjectRepository implements domainproject.ProjectRepository interface
@@ -264,11 +263,8 @@ func calculateCoverageRate(caseCount, moduleCount int64) float64 {
 		return 0
 	}
 	// Average cases per module as a simple coverage metric
-	return float64(caseCount) / float64(moduleCount)
-}
-
-// parseTime parses a time string from the database
-func parseTime(s string) time.Time {
-	t, _ := time.Parse(time.RFC3339Nano, s)
-	return t
+	if moduleCount > 0 {
+		return float64(caseCount) / float64(moduleCount)
+	}
+	return 0
 }

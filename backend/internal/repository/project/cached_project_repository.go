@@ -76,12 +76,6 @@ func (c *CachedProjectRepository) FindByName(ctx context.Context, name string) (
 	return c.repo.FindByName(ctx, name)
 }
 
-// FindByPrefix retrieves a project by prefix (bypasses cache for uniqueness check)
-func (c *CachedProjectRepository) FindByPrefix(ctx context.Context, prefix domainproject.ProjectPrefix) (*domainproject.Project, error) {
-	// Uniqueness checks should always go to database
-	return c.repo.FindByPrefix(ctx, prefix)
-}
-
 // FindAll retrieves all projects with caching
 func (c *CachedProjectRepository) FindAll(ctx context.Context, opts domainproject.QueryOptions) ([]*domainproject.Project, error) {
 	// For simplicity, cache only simple list queries without filters
