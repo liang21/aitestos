@@ -258,10 +258,10 @@
 
 | 功能 | API | 说明 |
 |------|-----|------|
-| 创建项目 | `POST /projects` | name, prefix, description |
+| 创建项目 | `POST /projects` | name, description |
 | 获取项目列表 | `GET /projects` | 分页、搜索 |
 | 获取项目详情 | `GET /projects/{id}` | 包含统计信息 |
-| 更新项目 | `PUT /projects/{id}` | name, prefix, description |
+| 更新项目 | `PUT /projects/{id}` | name, description |
 | 删除项目 | `DELETE /projects/{id}` | 软删除，级联删除关联数据 |
 | 获取项目统计 | `GET /projects/{id}/stats` | 仪表盘数据 |
 
@@ -269,9 +269,9 @@
 
 | 功能 | API | 说明 |
 |------|-----|------|
-| 创建模块 | `POST /projects/{id}/modules` | name, abbreviation, description |
+| 创建模块 | `POST /projects/{id}/modules` | name, description |
 | 获取模块列表 | `GET /projects/{id}/modules` | 返回树形结构（可选） |
-| 更新模块 | `PUT /modules/{id}` | name, abbreviation, description |
+| 更新模块 | `PUT /modules/{id}` | name, description |
 | 删除模块 | `DELETE /modules/{id}` | 级联删除关联用例 |
 
 #### 2.1.3 项目配置

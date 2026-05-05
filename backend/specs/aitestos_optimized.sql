@@ -201,8 +201,8 @@ CREATE INDEX idx_project_config_key ON project_config(key);
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_email ON users(email);
 
--- module 索引
-CREATE INDEX idx_module_project_id ON module(project_id);
+-- modules 索引
+CREATE INDEX idx_modules_project_id ON modules(project_id);
 
 -- test_case 索引
 CREATE INDEX idx_test_case_module_id ON test_case(module_id);
