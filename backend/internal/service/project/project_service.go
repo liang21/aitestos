@@ -16,7 +16,6 @@ import (
 // CreateProjectRequest contains project creation data
 type CreateProjectRequest struct {
 	Name        string `json:"name" validate:"required,min=2,max=255"`
-	Prefix      string `json:"prefix" validate:"required"`
 	Description string `json:"description"`
 }
 
@@ -28,16 +27,14 @@ type UpdateProjectRequest struct {
 
 // CreateModuleRequest contains module creation data
 type CreateModuleRequest struct {
-	Name         string `json:"name" validate:"required,min=2,max=255"`
-	Abbreviation string `json:"abbreviation" validate:"required"`
-	Description  string `json:"description"`
+	Name        string `json:"name" validate:"required,min=2,max=255"`
+	Description string `json:"description"`
 }
 
 // UpdateModuleRequest contains module update data
 type UpdateModuleRequest struct {
-	Name         *string `json:"name,omitempty" validate:"omitempty,min=2,max=255"`
-	Abbreviation *string `json:"abbreviation,omitempty" validate:"omitempty,min=2,max=4"`
-	Description  *string `json:"description,omitempty"`
+	Name        *string `json:"name,omitempty" validate:"omitempty,min=2,max=255"`
+	Description *string `json:"description,omitempty"`
 }
 
 // ProjectDetail contains project info with statistics
@@ -116,17 +113,8 @@ func (s *ProjectServiceImpl) CreateProject(ctx context.Context, req *CreateProje
 		return nil, fmt.Errorf("check project name: %w", err)
 	}
 
-	// Check if prefix already exists
-	existingPrefix, err := s.projectRepo.FindByPrefix(ctx, project.ProjectPrefix(req.Prefix))
-	if err == nil && existingPrefix != nil {
-		return nil, project.ErrProjectPrefixDuplicate
-	}
-	if err != nil && !errors.Is(err, project.ErrProjectNotFound) {
-		return nil, fmt.Errorf("check project prefix: %w", err)
-	}
-
 	// Create new project
-	proj, err := project.NewProject(req.Name, req.Prefix, req.Description)
+	proj, err := project.NewProject(req.Name, req.Description)
 	if err != nil {
 		return nil, fmt.Errorf("create project: %w", err)
 	}
@@ -237,17 +225,17 @@ func (s *ProjectServiceImpl) CreateModule(ctx context.Context, projectID uuid.UU
 		return nil, fmt.Errorf("find project: %w", err)
 	}
 
-	// Check if abbreviation already exists in project
-	existing, err := s.moduleRepo.FindByAbbreviation(ctx, projectID, project.ModuleAbbreviation(req.Abbreviation))
+	// Check if name already exists in project
+	existing, err := s.moduleRepo.FindByName(ctx, projectID, req.Name)
 	if err == nil && existing != nil {
-		return nil, project.ErrModuleAbbrevDuplicate
+		return nil, project.ErrModuleNameDuplicate
 	}
 	if err != nil && !errors.Is(err, project.ErrModuleNotFound) {
-		return nil, fmt.Errorf("check module abbreviation: %w", err)
+		return nil, fmt.Errorf("check module name: %w", err)
 	}
 
 	// Create new module
-	module, err := project.NewModule(projectID, req.Name, req.Abbreviation, req.Description, userID)
+	module, err := project.NewModule(projectID, req.Name, req.Description, userID)
 	if err != nil {
 		return nil, fmt.Errorf("create module: %w", err)
 	}
@@ -293,16 +281,6 @@ func (s *ProjectServiceImpl) UpdateModule(ctx context.Context, id uuid.UUID, req
 		module.UpdateName(*req.Name)
 	}
 
-	// Validate and update abbreviation
-	if req.Abbreviation != nil {
-		if err := s.validateModuleAbbrevUnique(ctx, module.ProjectID(), *req.Abbreviation, id); err != nil {
-			return nil, err
-		}
-		if err := module.UpdateAbbreviation(*req.Abbreviation); err != nil {
-			return nil, fmt.Errorf("update abbreviation: %w", err)
-		}
-	}
-
 	// Update description
 	if req.Description != nil {
 		module.UpdateDescription(*req.Description)
@@ -325,21 +303,6 @@ func (s *ProjectServiceImpl) validateModuleNameUnique(ctx context.Context, proje
 	for _, m := range modules {
 		if m.Name() == name && m.ID() != excludeID {
 			return project.ErrModuleNameDuplicate
-		}
-	}
-	return nil
-}
-
-// validateModuleAbbrevUnique checks if module abbreviation is unique within the project
-func (s *ProjectServiceImpl) validateModuleAbbrevUnique(ctx context.Context, projectID uuid.UUID, abbrev string, excludeID uuid.UUID) error {
-	modules, err := s.moduleRepo.FindByProjectID(ctx, projectID)
-	if err != nil {
-		return fmt.Errorf("check abbreviation uniqueness: %w", err)
-	}
-
-	for _, m := range modules {
-		if m.Abbreviation().String() == abbrev && m.ID() != excludeID {
-			return project.ErrModuleAbbrevDuplicate
 		}
 	}
 	return nil
