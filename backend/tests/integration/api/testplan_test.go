@@ -485,9 +485,9 @@ func TestPlanAPI_UpdateStatus(t *testing.T) {
 			},
 		},
 		{
-			name:       "update plan with invalid status value",
-			method:     http.MethodPatch,
-			path:       "/api/v1/plans/" + planID.String() + "/status",
+			name:   "update plan with invalid status value",
+			method: http.MethodPatch,
+			path:   "/api/v1/plans/" + planID.String() + "/status",
 			body: map[string]string{
 				"status": "invalid_status",
 			},
@@ -501,18 +501,18 @@ func TestPlanAPI_UpdateStatus(t *testing.T) {
 			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name:       "update non-existent plan status",
-			method:     http.MethodPatch,
-			path:       "/api/v1/plans/" + uuid.New().String() + "/status",
+			name:   "update non-existent plan status",
+			method: http.MethodPatch,
+			path:   "/api/v1/plans/" + uuid.New().String() + "/status",
 			body: map[string]string{
 				"status": "active",
 			},
 			wantStatus: http.StatusNotFound,
 		},
 		{
-			name:       "update plan with invalid plan ID format",
-			method:     http.MethodPatch,
-			path:       "/api/v1/plans/invalid-uuid/status",
+			name:   "update plan with invalid plan ID format",
+			method: http.MethodPatch,
+			path:   "/api/v1/plans/invalid-uuid/status",
 			body: map[string]string{
 				"status": "active",
 			},

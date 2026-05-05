@@ -265,15 +265,6 @@ func (m *MockTestCaseRepository) Save(ctx context.Context, tc *testcase.TestCase
 	return nil
 }
 
-func (m *MockTestCaseRepository) FindByNumber(ctx context.Context, number testcase.CaseNumber) (*testcase.TestCase, error) {
-	for _, tc := range m.cases {
-		if tc.Number() == number {
-			return tc, nil
-		}
-	}
-	return nil, testcase.ErrCaseNotFound
-}
-
 func (m *MockTestCaseRepository) FindByModuleID(ctx context.Context, moduleID uuid.UUID, opts testcase.QueryOptions) ([]*testcase.TestCase, error) {
 	result := make([]*testcase.TestCase, 0)
 	for _, tc := range m.cases {
@@ -846,11 +837,9 @@ func TestPlanService_DeletePlan(t *testing.T) {
 
 // Helper function to create test cases
 func createTestCase(t *testing.T, moduleID, userID uuid.UUID, title string) *testcase.TestCase {
-	caseNumber := testcase.GenerateCaseNumber("TEST", "USER", 1)
 	tc, err := testcase.NewTestCase(
 		moduleID,
 		userID,
-		caseNumber,
 		title,
 		[]string{"Precondition"},
 		[]string{"Step 1", "Step 2"},

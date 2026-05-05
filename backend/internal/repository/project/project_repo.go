@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 	domainproject "github.com/liang21/aitestos/internal/domain/project"
+	"github.com/lib/pq"
 )
 
 // ProjectRepository implements domainproject.ProjectRepository interface

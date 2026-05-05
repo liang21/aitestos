@@ -18,9 +18,6 @@ type ProjectRepository interface {
 	// FindByName retrieves a project by name
 	FindByName(ctx context.Context, name string) (*Project, error)
 
-	// FindByPrefix retrieves a project by prefix
-	FindByPrefix(ctx context.Context, prefix ProjectPrefix) (*Project, error)
-
 	// FindAll retrieves all projects with pagination
 	FindAll(ctx context.Context, opts QueryOptions) ([]*Project, error)
 
@@ -47,9 +44,6 @@ type ModuleRepository interface {
 
 	// FindByProjectID retrieves all modules for a project
 	FindByProjectID(ctx context.Context, projectID uuid.UUID) ([]*Module, error)
-
-	// FindByAbbreviation retrieves a module by abbreviation within a project
-	FindByAbbreviation(ctx context.Context, projectID uuid.UUID, abbrev ModuleAbbreviation) (*Module, error)
 
 	// Update updates an existing module
 	Update(ctx context.Context, module *Module) error

@@ -41,18 +41,10 @@ func MapError(err error) int {
 		return CodeProjectNotFound
 	case errors.Is(err, project.ErrProjectNameDuplicate):
 		return CodeProjectNameDuplicate
-	case errors.Is(err, project.ErrProjectPrefixDuplicate):
-		return CodeProjectPrefixDuplicate
-	case errors.Is(err, project.ErrInvalidProjectPrefix):
-		return CodeInvalidProjectPrefix
 	case errors.Is(err, project.ErrModuleNotFound):
 		return CodeModuleNotFound
 	case errors.Is(err, project.ErrModuleNameDuplicate):
 		return CodeModuleNameDuplicate
-	case errors.Is(err, project.ErrModuleAbbrevDuplicate):
-		return CodeModuleAbbrevDuplicate
-	case errors.Is(err, project.ErrInvalidModuleAbbrev):
-		return CodeInvalidModuleAbbrev
 	case errors.Is(err, project.ErrConfigNotFound):
 		return CodeConfigNotFound
 	case errors.Is(err, project.ErrConfigKeyDuplicate):
@@ -83,10 +75,6 @@ func MapError(err error) int {
 	switch {
 	case errors.Is(err, testcase.ErrCaseNotFound):
 		return CodeCaseNotFound
-	case errors.Is(err, testcase.ErrCaseNumberDuplicate):
-		return CodeCaseNumberDuplicate
-	case errors.Is(err, testcase.ErrInvalidCaseNumber):
-		return CodeInvalidCaseNumber
 	case errors.Is(err, testcase.ErrEmptySteps):
 		return CodeEmptySteps
 	case errors.Is(err, testcase.ErrInvalidPriority):

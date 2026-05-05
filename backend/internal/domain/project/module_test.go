@@ -15,52 +15,52 @@ func TestNewModule(t *testing.T) {
 	userID := uuid.New()
 
 	tests := []struct {
-		name       string
-		projectID  uuid.UUID
-		moduleName string
+		name        string
+		projectID   uuid.UUID
+		moduleName  string
 		description string
-		userID     uuid.UUID
-		wantErr    bool
+		userID      uuid.UUID
+		wantErr     bool
 	}{
 		{
-			name:       "valid module",
-			projectID:  projectID,
-			moduleName: "User Management",
+			name:        "valid module",
+			projectID:   projectID,
+			moduleName:  "User Management",
 			description: "User management module",
-			userID:     userID,
-			wantErr:    false,
+			userID:      userID,
+			wantErr:     false,
 		},
 		{
-			name:       "empty name",
-			projectID:  projectID,
-			moduleName: "",
+			name:        "empty name",
+			projectID:   projectID,
+			moduleName:  "",
 			description: "Description",
-			userID:     userID,
-			wantErr:    true,
+			userID:      userID,
+			wantErr:     true,
 		},
 		{
-			name:       "nil project ID",
-			projectID:  uuid.Nil,
-			moduleName: "Test Module",
+			name:        "nil project ID",
+			projectID:   uuid.Nil,
+			moduleName:  "Test Module",
 			description: "Description",
-			userID:     userID,
-			wantErr:    true,
+			userID:      userID,
+			wantErr:     true,
 		},
 		{
-			name:       "nil user ID",
-			projectID:  projectID,
-			moduleName: "Test Module",
+			name:        "nil user ID",
+			projectID:   projectID,
+			moduleName:  "Test Module",
 			description: "Description",
-			userID:     uuid.Nil,
-			wantErr:    true,
+			userID:      uuid.Nil,
+			wantErr:     true,
 		},
 		{
-			name:       "empty description is allowed",
-			projectID:  projectID,
-			moduleName: "Test Module",
+			name:        "empty description is allowed",
+			projectID:   projectID,
+			moduleName:  "Test Module",
 			description: "",
-			userID:     userID,
-			wantErr:    false,
+			userID:      userID,
+			wantErr:     false,
 		},
 	}
 

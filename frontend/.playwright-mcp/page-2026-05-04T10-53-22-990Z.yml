@@ -1,0 +1,28 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img "Aitestos Platform" [ref=e8]
+      - generic [ref=e9]: 因为热爱 快乐成长
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - img "Aitestos" [ref=e13]
+        - generic [ref=e14]: AI 测试管理平台
+      - generic [ref=e15]:
+        - generic [ref=e16]: 账号登录
+        - generic [ref=e17]:
+          - generic [ref=e25]:
+            - img [ref=e27]
+            - textbox "请输入邮箱" [ref=e30]
+          - generic [ref=e38]:
+            - img [ref=e40]
+            - textbox "请输入密码" [ref=e43]
+            - img [ref=e45] [cursor=pointer]
+          - button "登录" [ref=e49] [cursor=pointer]
+          - generic [ref=e50]:
+            - generic [ref=e51]: 还没有账号？
+            - link "立即注册" [ref=e52] [cursor=pointer]:
+              - /url: /register
+  - generic [ref=e53]:
+    - img [ref=e55]
+    - button "Open Tanstack query devtools" [ref=e103] [cursor=pointer]:
+      - img [ref=e104]

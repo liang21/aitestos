@@ -259,7 +259,6 @@ func TestMockProjectRepository_NotFound(t *testing.T) {
 	}
 }
 
-
 // TestProjectRepository_Save_DuplicateConstraints tests database unique constraint error handling
 func TestProjectRepository_Save_DuplicateConstraints(t *testing.T) {
 	t.Run("duplicate name constraint", func(t *testing.T) {
@@ -267,7 +266,7 @@ func TestProjectRepository_Save_DuplicateConstraints(t *testing.T) {
 		// For now, we verify the error mapping logic through integration tests
 		t.Skip("requires sqlmock setup")
 	})
-	
+
 	t.Run("duplicate prefix constraint", func(t *testing.T) {
 		t.Skip("requires sqlmock setup")
 	})
