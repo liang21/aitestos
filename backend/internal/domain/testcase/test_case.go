@@ -52,7 +52,6 @@ type TestCase struct {
 	id            uuid.UUID
 	moduleID      uuid.UUID
 	userID        uuid.UUID
-	number        CaseNumber
 	title         string
 	preconditions Preconditions
 	steps         Steps
@@ -68,7 +67,6 @@ type TestCase struct {
 // NewTestCase creates a new test case
 func NewTestCase(
 	moduleID, userID uuid.UUID,
-	number CaseNumber,
 	title string,
 	preconditions Preconditions,
 	steps Steps,
@@ -94,7 +92,6 @@ func NewTestCase(
 		id:            uuid.New(),
 		moduleID:      moduleID,
 		userID:        userID,
-		number:        number,
 		title:         title,
 		preconditions: preconditions,
 		steps:         steps,
@@ -120,11 +117,6 @@ func (tc *TestCase) ModuleID() uuid.UUID {
 // UserID returns the creator's user ID
 func (tc *TestCase) UserID() uuid.UUID {
 	return tc.userID
-}
-
-// Number returns the test case number
-func (tc *TestCase) Number() CaseNumber {
-	return tc.number
 }
 
 // Title returns the test case title
@@ -215,7 +207,6 @@ func ReconstructTestCase(
 	id uuid.UUID,
 	moduleID uuid.UUID,
 	userID uuid.UUID,
-	number CaseNumber,
 	title string,
 	preconditions Preconditions,
 	steps Steps,
@@ -231,7 +222,6 @@ func ReconstructTestCase(
 		id:            id,
 		moduleID:      moduleID,
 		userID:        userID,
-		number:        number,
 		title:         title,
 		preconditions: preconditions,
 		steps:         steps,
