@@ -13,28 +13,21 @@ import (
 type Project struct {
 	id          uuid.UUID
 	name        string
-	prefix      ProjectPrefix
 	description string
 	createdAt   time.Time
 	updatedAt   time.Time
 }
 
 // NewProject creates a new project
-func NewProject(name, prefixStr, description string) (*Project, error) {
+func NewProject(name, description string) (*Project, error) {
 	if name == "" {
 		return nil, errors.New("project name cannot be empty")
-	}
-
-	prefix, err := ParseProjectPrefix(prefixStr)
-	if err != nil {
-		return nil, err
 	}
 
 	now := time.Now()
 	return &Project{
 		id:          uuid.New(),
 		name:        name,
-		prefix:      prefix,
 		description: description,
 		createdAt:   now,
 		updatedAt:   now,
@@ -49,11 +42,6 @@ func (p *Project) ID() uuid.UUID {
 // Name returns the project's name
 func (p *Project) Name() string {
 	return p.name
-}
-
-// Prefix returns the project's prefix
-func (p *Project) Prefix() ProjectPrefix {
-	return p.prefix
 }
 
 // Description returns the project's description
@@ -76,14 +64,12 @@ func (p *Project) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		ID          uuid.UUID `json:"id"`
 		Name        string    `json:"name"`
-		Prefix      string    `json:"prefix"`
 		Description string    `json:"description"`
 		CreatedAt   time.Time `json:"created_at"`
 		UpdatedAt   time.Time `json:"updated_at"`
 	}{
 		ID:          p.id,
 		Name:        p.name,
-		Prefix:      string(p.prefix),
 		Description: p.description,
 		CreatedAt:   p.createdAt,
 		UpdatedAt:   p.updatedAt,
@@ -110,7 +96,6 @@ func (p *Project) UpdateName(name string) error {
 func Reconstruct(
 	id uuid.UUID,
 	name string,
-	prefix ProjectPrefix,
 	description string,
 	createdAt time.Time,
 	updatedAt time.Time,
@@ -118,7 +103,6 @@ func Reconstruct(
 	return &Project{
 		id:          id,
 		name:        name,
-		prefix:      prefix,
 		description: description,
 		createdAt:   createdAt,
 		updatedAt:   updatedAt,
