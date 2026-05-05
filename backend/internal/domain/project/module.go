@@ -10,18 +10,17 @@ import (
 
 // Module represents a module within a project
 type Module struct {
-	id           uuid.UUID
-	projectID    uuid.UUID
-	name         string
-	abbreviation ModuleAbbreviation
-	description  string
-	createdBy    uuid.UUID
-	createdAt    time.Time
-	updatedAt    time.Time
+	id          uuid.UUID
+	projectID   uuid.UUID
+	name        string
+	description string
+	createdBy   uuid.UUID
+	createdAt   time.Time
+	updatedAt   time.Time
 }
 
 // NewModule creates a new module
-func NewModule(projectID uuid.UUID, name, abbrevStr, description string, userID uuid.UUID) (*Module, error) {
+func NewModule(projectID uuid.UUID, name, description string, userID uuid.UUID) (*Module, error) {
 	if projectID == uuid.Nil {
 		return nil, errors.New("project ID cannot be nil")
 	}
@@ -32,21 +31,15 @@ func NewModule(projectID uuid.UUID, name, abbrevStr, description string, userID 
 		return nil, errors.New("user ID cannot be nil")
 	}
 
-	abbrev, err := ParseModuleAbbreviation(abbrevStr)
-	if err != nil {
-		return nil, err
-	}
-
 	now := time.Now()
 	return &Module{
-		id:           uuid.New(),
-		projectID:    projectID,
-		name:         name,
-		abbreviation: abbrev,
-		description:  description,
-		createdBy:    userID,
-		createdAt:    now,
-		updatedAt:    now,
+		id:          uuid.New(),
+		projectID:   projectID,
+		name:        name,
+		description: description,
+		createdBy:   userID,
+		createdAt:   now,
+		updatedAt:   now,
 	}, nil
 }
 
@@ -63,11 +56,6 @@ func (m *Module) ProjectID() uuid.UUID {
 // Name returns the module's name
 func (m *Module) Name() string {
 	return m.name
-}
-
-// Abbreviation returns the module's abbreviation
-func (m *Module) Abbreviation() ModuleAbbreviation {
-	return m.abbreviation
 }
 
 // Description returns the module's description
@@ -102,34 +90,23 @@ func (m *Module) UpdateName(name string) {
 	m.updatedAt = time.Now()
 }
 
-// UpdateAbbreviation updates the module's abbreviation
-func (m *Module) UpdateAbbreviation(abbrevStr string) error {
-	abbrev, err := ParseModuleAbbreviation(abbrevStr)
-	if err != nil {
-		return err
-	}
-	m.abbreviation = abbrev
-	m.updatedAt = time.Now()
-	return nil
-}
-
 // ReconstructModule reconstructs a Module from stored data
 func ReconstructModule(
 	id uuid.UUID,
 	projectID uuid.UUID,
 	name string,
-	abbreviation ModuleAbbreviation,
 	description string,
+	createdBy uuid.UUID,
 	createdAt time.Time,
 	updatedAt time.Time,
 ) *Module {
 	return &Module{
-		id:           id,
-		projectID:    projectID,
-		name:         name,
-		abbreviation: abbreviation,
-		description:  description,
-		createdAt:    createdAt,
-		updatedAt:    updatedAt,
+		id:          id,
+		projectID:   projectID,
+		name:        name,
+		description: description,
+		createdBy:   createdBy,
+		createdAt:   createdAt,
+		updatedAt:   updatedAt,
 	}
 }
