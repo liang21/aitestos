@@ -178,16 +178,14 @@ func (m *MockProjectRepository) SetStatistics(ctx context.Context, id uuid.UUID,
 
 // MockModuleRepository implements project.ModuleRepository for testing
 type MockModuleRepository struct {
-	modules    map[uuid.UUID]*project.Module
-	abbrevKeys map[string]*project.Module // projectID:abbrev -> module
-	saveErr    error
-	findErr    error
+	modules map[uuid.UUID]*project.Module
+	saveErr error
+	findErr error
 }
 
 func NewMockModuleRepository() *MockModuleRepository {
 	return &MockModuleRepository{
-		modules:    make(map[uuid.UUID]*project.Module),
-		abbrevKeys: make(map[string]*project.Module),
+		modules: make(map[uuid.UUID]*project.Module),
 	}
 }
 
@@ -196,8 +194,6 @@ func (m *MockModuleRepository) Save(ctx context.Context, mod *project.Module) er
 		return m.saveErr
 	}
 	m.modules[mod.ID()] = mod
-	key := mod.ProjectID().String() + ":" + string(mod.Abbreviation())
-	m.abbrevKeys[key] = mod
 	return nil
 }
 
@@ -225,16 +221,12 @@ func (m *MockModuleRepository) FindByProjectID(ctx context.Context, projectID uu
 	return modules, nil
 }
 
-func (m *MockModuleRepository) FindByAbbreviation(ctx context.Context, projectID uuid.UUID, abbrev project.ModuleAbbreviation) (*project.Module, error) {
-	if m.findErr != nil {
-		return nil, m.findErr
+func (m *MockModuleRepository) Update(ctx context.Context, mod *project.Module) error {
+	if m.saveErr != nil {
+		return m.saveErr
 	}
-	key := projectID.String() + ":" + string(abbrev)
-	mod, ok := m.abbrevKeys[key]
-	if !ok {
-		return nil, project.ErrModuleNotFound
-	}
-	return mod, nil
+	m.modules[mod.ID()] = mod
+	return nil
 }
 
 func (m *MockModuleRepository) Delete(ctx context.Context, id uuid.UUID) error {
@@ -422,9 +414,6 @@ func TestProjectService_CreateProject(t *testing.T) {
 			if proj.Name() != tt.req.Name {
 				t.Errorf("CreateProject() name = %v, want %v", proj.Name(), tt.req.Name)
 			}
-			if string(proj.Prefix()) != tt.req.Prefix {
-				t.Errorf("CreateProject() prefix = %v, want %v", proj.Prefix(), tt.req.Prefix)
-			}
 		})
 	}
 }
@@ -500,7 +489,6 @@ func TestProjectService_ListProjects(t *testing.T) {
 
 	// Create test projects
 	for i := 0; i < 5; i++ {
-		prefixes := []string{"TEST", "PROJ", "CORE", "APIE", "AUTH"}
 		proj, _ := project.NewProject("Test Project", "Description")
 		projectRepo.projects[proj.ID()] = proj
 	}
@@ -534,9 +522,9 @@ func TestProjectService_ListProjects(t *testing.T) {
 			opts: ListOptions{
 				Offset:   0,
 				Limit:    10,
-				Keywords: "Project A",
+				Keywords: "Test",
 			},
-			wantCount: 1,
+			wantCount: 5,
 			wantErr:   nil,
 		},
 	}
@@ -728,45 +716,21 @@ func TestProjectService_CreateModule(t *testing.T) {
 			name:      "successful creation",
 			projectID: testProject.ID(),
 			req: &CreateModuleRequest{
-				Name:         "User Module",
-				Abbreviation: "USER",
-				Description:  "User management module",
+				Name:        "User Module",
+				Description: "User management module",
 			},
 			setup:   func() {},
 			wantErr: nil,
 		},
 		{
-			name:      "abbreviation already exists",
-			projectID: testProject.ID(),
-			req: &CreateModuleRequest{
-				Name:         "Another User Module",
-				Abbreviation: "USER",
-				Description:  "Duplicate abbreviation",
-			},
-			setup:   func() {},
-			wantErr: project.ErrModuleAbbrevDuplicate,
-		},
-		{
 			name:      "project not found",
 			projectID: uuid.New(),
 			req: &CreateModuleRequest{
-				Name:         "Orphan Module",
-				Abbreviation: "ORPH",
-				Description:  "No parent project",
+				Name:        "Orphan Module",
+				Description: "No parent project",
 			},
 			setup:   func() {},
 			wantErr: project.ErrProjectNotFound,
-		},
-		{
-			name:      "invalid abbreviation format",
-			projectID: testProject.ID(),
-			req: &CreateModuleRequest{
-				Name:         "Invalid Module",
-				Abbreviation: "toolong",
-				Description:  "Invalid abbreviation",
-			},
-			setup:   func() {},
-			wantErr: project.ErrInvalidModuleAbbrev,
 		},
 	}
 
@@ -799,9 +763,6 @@ func TestProjectService_CreateModule(t *testing.T) {
 
 			if mod.Name() != tt.req.Name {
 				t.Errorf("CreateModule() name = %v, want %v", mod.Name(), tt.req.Name)
-			}
-			if string(mod.Abbreviation()) != tt.req.Abbreviation {
-				t.Errorf("CreateModule() abbreviation = %v, want %v", mod.Abbreviation(), tt.req.Abbreviation)
 			}
 		})
 	}
@@ -890,7 +851,6 @@ func TestProjectService_GetProjectStatistics(t *testing.T) {
 	require.NoError(t, err)
 	projectRepo.projects[proj.ID()] = proj
 	projectRepo.nameIndex["Test Project"] = proj
-	projectRepo.prefixIndex["TEST"] = proj
 
 	tests := []struct {
 		name      string
@@ -960,7 +920,6 @@ func TestProjectService_ImportConfigs(t *testing.T) {
 	require.NoError(t, err)
 	projectRepo.projects[proj.ID()] = proj
 	projectRepo.nameIndex["Test Project"] = proj
-	projectRepo.prefixIndex["TEST"] = proj
 
 	tests := []struct {
 		name      string
@@ -1072,7 +1031,6 @@ func TestProjectService_ExportConfigs(t *testing.T) {
 	require.NoError(t, err)
 	projectRepo.projects[proj.ID()] = proj
 	projectRepo.nameIndex["Test Project"] = proj
-	projectRepo.prefixIndex["TEST"] = proj
 
 	// Add some test configs
 	cfg1, err := project.NewProjectConfig(proj.ID(), "llm_config", map[string]any{"model": "deepseek-chat"}, "LLM config")

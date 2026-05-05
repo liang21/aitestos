@@ -36,16 +36,6 @@ func TestProjectRepository_Integration(t *testing.T) {
 				builder: testsetup.NewProjectBuilder(),
 				wantErr: nil,
 			},
-			{
-				name:    "save project with 2-char prefix",
-				builder: testsetup.NewProjectBuilder().WithPrefix("AB"),
-				wantErr: nil,
-			},
-			{
-				name:    "save project with 4-char prefix",
-				builder: testsetup.NewProjectBuilder().WithPrefix("ABCD"),
-				wantErr: nil,
-			},
 		}
 
 		for _, tt := range tests {
@@ -80,21 +70,6 @@ func TestProjectRepository_Integration(t *testing.T) {
 		require.Error(t, err, "save duplicate name should fail")
 	})
 
-	t.Run("Save duplicate prefix", func(t *testing.T) {
-		tc.CleanupTest()
-
-		prefix := "DUP"
-
-		project1, err := testsetup.NewProjectBuilder().WithPrefix(prefix).Build()
-		require.NoError(t, err, "build project1 should succeed")
-		require.NoError(t, projectRepo.Save(ctx, project1), "save project1 should succeed")
-
-		project2, err := testsetup.NewProjectBuilder().WithPrefix(prefix).Build()
-		require.NoError(t, err, "build project2 should succeed")
-		err = projectRepo.Save(ctx, project2)
-		require.Error(t, err, "save duplicate prefix should fail")
-	})
-
 	t.Run("FindByID", func(t *testing.T) {
 		tc.CleanupTest()
 
@@ -126,23 +101,6 @@ func TestProjectRepository_Integration(t *testing.T) {
 		// 测试不存在的名称
 		_, err = projectRepo.FindByName(ctx, "notfound")
 		require.Error(t, err, "find non-existent name should fail")
-		assert.ErrorIs(t, err, domainproject.ErrProjectNotFound, "error should be ErrProjectNotFound")
-	})
-
-	t.Run("FindByPrefix", func(t *testing.T) {
-		tc.CleanupTest()
-
-		project, err := testsetup.NewProjectBuilder().Build()
-		require.NoError(t, err, "build project should succeed")
-		require.NoError(t, projectRepo.Save(ctx, project), "save project should succeed")
-
-		found, err := projectRepo.FindByPrefix(ctx, project.Prefix())
-		require.NoError(t, err, "find project by prefix should succeed")
-		testsetup.AssertProjectEqual(t, project, found)
-
-		// 测试不存在的 prefix
-		_, err = projectRepo.FindByPrefix(ctx, "NF")
-		require.Error(t, err, "find non-existent prefix should fail")
 		assert.ErrorIs(t, err, domainproject.ErrProjectNotFound, "error should be ErrProjectNotFound")
 	})
 

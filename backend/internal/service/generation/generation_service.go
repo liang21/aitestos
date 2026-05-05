@@ -336,7 +336,7 @@ func (s *GenerationServiceImpl) ConfirmDraft(ctx context.Context, req *ConfirmDr
 	}
 
 	// Get module
-	module, err := s.moduleRepo.FindByID(ctx, req.ModuleID)
+	_, err = s.moduleRepo.FindByID(ctx, req.ModuleID)
 	if err != nil {
 		return nil, errors.New("module not found")
 	}

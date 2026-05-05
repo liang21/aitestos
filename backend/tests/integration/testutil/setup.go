@@ -229,7 +229,6 @@ type moduleWrapper struct {
 func (w *moduleWrapper) ID() uuid.UUID        { return w.Module.ID() }
 func (w *moduleWrapper) ProjectID() uuid.UUID { return w.Module.ProjectID() }
 func (w *moduleWrapper) Name() string         { return w.Module.Name() }
-func (w *moduleWrapper) Abbreviation() string { return w.Module.Abbreviation().String() }
 
 type projectRepoAdapter struct {
 	repo *projectRepo.ProjectRepository
@@ -247,9 +246,8 @@ type projectWrapper struct {
 	*domainProject.Project
 }
 
-func (w *projectWrapper) ID() uuid.UUID  { return w.Project.ID() }
-func (w *projectWrapper) Name() string   { return w.Project.Name() }
-func (w *projectWrapper) Prefix() string { return w.Project.Prefix().String() }
+func (w *projectWrapper) ID() uuid.UUID { return w.Project.ID() }
+func (w *projectWrapper) Name() string  { return w.Project.Name() }
 
 // Test Data Builders
 
@@ -293,22 +291,20 @@ func CreateTestProject(t *testing.T, db *sqlx.DB) *domainProject.Project {
 	t.Helper()
 
 	ctx := context.Background()
-	prefix := "TP" + uuid.New().String()[:2]
 	name := "Test Project " + uuid.New().String()[:8]
 
-	project, err := domainProject.NewProject(name, prefix, "Test project description")
+	project, err := domainProject.NewProject(name, "Test project description")
 	if err != nil {
 		t.Fatalf("create test project: %v", err)
 	}
 
 	query := `
-		INSERT INTO project (id, name, prefix, description, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO projects (id, name, description, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5)
 	`
 	_, err = db.ExecContext(ctx, query,
 		project.ID(),
 		project.Name(),
-		project.Prefix().String(),
 		project.Description(),
 		project.CreatedAt(),
 		project.UpdatedAt(),
@@ -325,23 +321,21 @@ func CreateTestModule(t *testing.T, db *sqlx.DB, projectID uuid.UUID, userID uui
 	t.Helper()
 
 	ctx := context.Background()
-	abbrev := "TM" + uuid.New().String()[:2]
 	name := "Test Module " + uuid.New().String()[:8]
 
-	module, err := domainProject.NewModule(projectID, name, abbrev, "Test module description", userID)
+	module, err := domainProject.NewModule(projectID, name, "Test module description", userID)
 	if err != nil {
 		t.Fatalf("create test module: %v", err)
 	}
 
 	query := `
-		INSERT INTO module (id, project_id, name, abbreviation, description, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO modules (id, project_id, name, description, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 	_, err = db.ExecContext(ctx, query,
 		module.ID(),
 		module.ProjectID(),
 		module.Name(),
-		module.Abbreviation().String(),
 		module.Description(),
 		module.CreatedAt(),
 		module.UpdatedAt(),
@@ -358,13 +352,11 @@ func CreateTestCase(t *testing.T, db *sqlx.DB, moduleID uuid.UUID, userID uuid.U
 	t.Helper()
 
 	ctx := context.Background()
-	number := domainTestcase.GenerateCaseNumber("TP", "TM", 1)
 	title := "Test Case " + uuid.New().String()[:8]
 
 	tc, err := domainTestcase.NewTestCase(
 		moduleID,
 		userID,
-		number,
 		title,
 		domainTestcase.Preconditions{"Precondition 1"},
 		domainTestcase.Steps{"Step 1", "Step 2"},
@@ -377,14 +369,13 @@ func CreateTestCase(t *testing.T, db *sqlx.DB, moduleID uuid.UUID, userID uuid.U
 	}
 
 	query := `
-		INSERT INTO test_case (id, module_id, user_id, number, title, preconditions, steps, expected, case_type, priority, status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		INSERT INTO test_case (id, module_id, user_id, title, preconditions, steps, expected, case_type, priority, status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 	_, err = db.ExecContext(ctx, query,
 		tc.ID(),
 		tc.ModuleID(),
 		tc.UserID(),
-		tc.Number().String(),
 		tc.Title(),
 		tc.Preconditions(),
 		tc.Steps(),

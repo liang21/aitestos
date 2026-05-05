@@ -3,7 +3,6 @@ package testcase_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/liang21/aitestos/internal/domain/identity"
@@ -98,47 +97,6 @@ func TestCaseRepository_Integration(t *testing.T) {
 		}
 	})
 
-	t.Run("Save duplicate number", func(t *testing.T) {
-		tc.CleanupTest()
-
-		user := createUser(t)
-		_, module := createProjectAndModule(t)
-		number := testcase.CaseNumber("TP-TM-20260403-001")
-
-		case1, err := testsetup.NewTestCaseBuilder(module.ID(), user.ID()).
-			WithNumber(number).Build()
-		require.NoError(t, err, "build case1 should succeed")
-		require.NoError(t, caseRepo.Save(ctx, case1), "save case1 should succeed")
-
-		case2, err := testsetup.NewTestCaseBuilder(module.ID(), user.ID()).
-			WithNumber(number).Build()
-		require.NoError(t, err, "build case2 should succeed")
-		err = caseRepo.Save(ctx, case2)
-		require.Error(t, err, "save duplicate number should fail")
-	})
-
-	t.Run("FindByNumber", func(t *testing.T) {
-		tc.CleanupTest()
-
-		user := createUser(t)
-		_, module := createProjectAndModule(t)
-		number := testcase.CaseNumber("TP-TM-20260403-002")
-
-		tc, err := testsetup.NewTestCaseBuilder(module.ID(), user.ID()).
-			WithNumber(number).Build()
-		require.NoError(t, err, "build test case should succeed")
-		require.NoError(t, caseRepo.Save(ctx, tc), "save test case should succeed")
-
-		found, err := caseRepo.FindByNumber(ctx, number)
-		require.NoError(t, err, "find test case by number should succeed")
-		testsetup.AssertTestCaseEqual(t, tc, found)
-
-		// 测试不存在的编号
-		_, err = caseRepo.FindByNumber(ctx, "NF-NF-20260403-999")
-		require.Error(t, err, "find non-existent number should fail")
-		assert.ErrorIs(t, err, testcase.ErrCaseNotFound, "error should be ErrCaseNotFound")
-	})
-
 	t.Run("FindByModuleID", func(t *testing.T) {
 		tc.CleanupTest()
 
@@ -179,30 +137,6 @@ func TestCaseRepository_Integration(t *testing.T) {
 		})
 		require.NoError(t, err, "find cases by project ID should succeed")
 		assert.Equal(t, 3, len(cases), "should return 3 cases")
-	})
-
-	t.Run("CountByDate", func(t *testing.T) {
-		tc.CleanupTest()
-
-		user := createUser(t)
-		_, module := createProjectAndModule(t)
-		today := time.Now()
-
-		// 创建 3 个今天的用例
-		for i := 0; i < 3; i++ {
-			tc, err := testsetup.NewTestCaseBuilder(module.ID(), user.ID()).Build()
-			require.NoError(t, err, "build test case should succeed")
-			require.NoError(t, caseRepo.Save(ctx, tc), "save test case should succeed")
-		}
-
-		count, err := caseRepo.CountByDate(ctx, module.ID(), today)
-		require.NoError(t, err, "count cases by date should succeed")
-		assert.Equal(t, int64(3), count, "should count 3 cases for today")
-
-		// 测试昨天的计数（应该是 0）
-		count, err = caseRepo.CountByDate(ctx, module.ID(), today.AddDate(0, 0, -1))
-		require.NoError(t, err, "count cases for yesterday should succeed")
-		assert.Equal(t, int64(0), count, "should count 0 cases for yesterday")
 	})
 
 	t.Run("Update", func(t *testing.T) {

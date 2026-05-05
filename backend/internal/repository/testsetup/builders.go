@@ -63,7 +63,6 @@ func (b *UserBuilder) Build() (*identity.User, error) {
 // ProjectBuilder 项目构建器
 type ProjectBuilder struct {
 	name        string
-	prefix      string
 	description string
 }
 
@@ -72,7 +71,6 @@ func NewProjectBuilder() *ProjectBuilder {
 	uid := uuid.New().String()[:6]
 	return &ProjectBuilder{
 		name:        "Test Project " + uid,
-		prefix:      "TP" + uid[:2],
 		description: "Test description",
 	}
 }
@@ -80,12 +78,6 @@ func NewProjectBuilder() *ProjectBuilder {
 // WithName 设置项目名称
 func (b *ProjectBuilder) WithName(name string) *ProjectBuilder {
 	b.name = name
-	return b
-}
-
-// WithPrefix 设置项目前缀
-func (b *ProjectBuilder) WithPrefix(prefix string) *ProjectBuilder {
-	b.prefix = prefix
 	return b
 }
 
@@ -97,37 +89,29 @@ func (b *ProjectBuilder) WithDescription(desc string) *ProjectBuilder {
 
 // Build 构建项目
 func (b *ProjectBuilder) Build() (*domainproject.Project, error) {
-	return domainproject.NewProject(b.name, b.prefix, b.description)
+	return domainproject.NewProject(b.name, b.description)
 }
 
 // ModuleBuilder 模块构建器
 type ModuleBuilder struct {
-	projectID    uuid.UUID
-	name         string
-	abbreviation string
-	description  string
+	projectID   uuid.UUID
+	name        string
+	description string
 }
 
 // NewModuleBuilder 创建模块构建器
 func NewModuleBuilder(projectID uuid.UUID) *ModuleBuilder {
 	uid := uuid.New().String()[:4]
 	return &ModuleBuilder{
-		projectID:    projectID,
-		name:         "Test Module " + uid,
-		abbreviation: "TM" + uid[:2],
-		description:  "Test module description",
+		projectID:   projectID,
+		name:        "Test Module " + uid,
+		description: "Test module description",
 	}
 }
 
 // WithName 设置模块名称
 func (b *ModuleBuilder) WithName(name string) *ModuleBuilder {
 	b.name = name
-	return b
-}
-
-// WithAbbreviation 设置模块缩写
-func (b *ModuleBuilder) WithAbbreviation(abbr string) *ModuleBuilder {
-	b.abbreviation = abbr
 	return b
 }
 
@@ -140,7 +124,7 @@ func (b *ModuleBuilder) WithDescription(desc string) *ModuleBuilder {
 // Build 构建模块
 func (b *ModuleBuilder) Build() (*domainproject.Module, error) {
 	userID := uuid.New() // 测试时使用随机用户ID
-	return domainproject.NewModule(b.projectID, b.name, b.abbreviation, b.description, userID)
+	return domainproject.NewModule(b.projectID, b.name, b.description, userID)
 }
 
 // ProjectConfigBuilder 项目配置构建器
@@ -182,7 +166,6 @@ func (b *ProjectConfigBuilder) Build() (*domainproject.ProjectConfig, error) {
 type TestCaseBuilder struct {
 	moduleID      uuid.UUID
 	userID        uuid.UUID
-	number        testcase.CaseNumber
 	title         string
 	preconditions testcase.Preconditions
 	steps         testcase.Steps
@@ -221,12 +204,6 @@ func NewTestCaseBuilder(moduleID, userID uuid.UUID) *TestCaseBuilder {
 // WithTitle 设置标题
 func (b *TestCaseBuilder) WithTitle(title string) *TestCaseBuilder {
 	b.title = title
-	return b
-}
-
-// WithNumber 设置编号
-func (b *TestCaseBuilder) WithNumber(number testcase.CaseNumber) *TestCaseBuilder {
-	b.number = number
 	return b
 }
 
@@ -271,7 +248,6 @@ func (b *TestCaseBuilder) Build() (*testcase.TestCase, error) {
 	return testcase.NewTestCase(
 		b.moduleID,
 		b.userID,
-		b.number,
 		b.title,
 		b.preconditions,
 		b.steps,

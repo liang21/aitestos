@@ -363,7 +363,6 @@ type moduleWrapper struct {
 func (w *moduleWrapper) ID() uuid.UUID        { return w.Module.ID() }
 func (w *moduleWrapper) ProjectID() uuid.UUID { return w.Module.ProjectID() }
 func (w *moduleWrapper) Name() string         { return w.Module.Name() }
-func (w *moduleWrapper) Abbreviation() string { return w.Module.Abbreviation().String() }
 
 type projectRepoAdapterImpl struct {
 	repo *projectRepo.ProjectRepository
@@ -381,9 +380,8 @@ type projectWrapper struct {
 	*domainProject.Project
 }
 
-func (w *projectWrapper) ID() uuid.UUID  { return w.Project.ID() }
-func (w *projectWrapper) Name() string   { return w.Project.Name() }
-func (w *projectWrapper) Prefix() string { return w.Project.Prefix().String() }
+func (w *projectWrapper) ID() uuid.UUID { return w.Project.ID() }
+func (w *projectWrapper) Name() string  { return w.Project.Name() }
 
 // Repository adapters for generation service
 

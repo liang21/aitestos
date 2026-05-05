@@ -46,12 +46,8 @@ func TestMapError_ProjectContext(t *testing.T) {
 	}{
 		{"ErrProjectNotFound", project.ErrProjectNotFound, ierrors.CodeProjectNotFound},
 		{"ErrProjectNameDuplicate", project.ErrProjectNameDuplicate, ierrors.CodeProjectNameDuplicate},
-		{"ErrProjectPrefixDuplicate", project.ErrProjectPrefixDuplicate, ierrors.CodeProjectPrefixDuplicate},
-		{"ErrInvalidProjectPrefix", project.ErrInvalidProjectPrefix, ierrors.CodeInvalidProjectPrefix},
 		{"ErrModuleNotFound", project.ErrModuleNotFound, ierrors.CodeModuleNotFound},
 		{"ErrModuleNameDuplicate", project.ErrModuleNameDuplicate, ierrors.CodeModuleNameDuplicate},
-		{"ErrModuleAbbrevDuplicate", project.ErrModuleAbbrevDuplicate, ierrors.CodeModuleAbbrevDuplicate},
-		{"ErrInvalidModuleAbbrev", project.ErrInvalidModuleAbbrev, ierrors.CodeInvalidModuleAbbrev},
 		{"ErrConfigNotFound", project.ErrConfigNotFound, ierrors.CodeConfigNotFound},
 		{"ErrConfigKeyDuplicate", project.ErrConfigKeyDuplicate, ierrors.CodeConfigKeyDuplicate},
 	}
@@ -99,8 +95,6 @@ func TestMapError_TestCaseContext(t *testing.T) {
 		expectedCode int
 	}{
 		{"ErrCaseNotFound", testcase.ErrCaseNotFound, ierrors.CodeCaseNotFound},
-		{"ErrCaseNumberDuplicate", testcase.ErrCaseNumberDuplicate, ierrors.CodeCaseNumberDuplicate},
-		{"ErrInvalidCaseNumber", testcase.ErrInvalidCaseNumber, ierrors.CodeInvalidCaseNumber},
 		{"ErrEmptySteps", testcase.ErrEmptySteps, ierrors.CodeEmptySteps},
 		{"ErrInvalidPriority", testcase.ErrInvalidPriority, ierrors.CodeInvalidPriority},
 	}

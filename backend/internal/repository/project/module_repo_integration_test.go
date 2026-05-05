@@ -47,11 +47,6 @@ func TestModuleRepository_Integration(t *testing.T) {
 				builder: testsetup.NewModuleBuilder(project.ID()),
 				wantErr: nil,
 			},
-			{
-				name:    "save module with 2-char abbreviation",
-				builder: testsetup.NewModuleBuilder(project.ID()).WithAbbreviation("AB"),
-				wantErr: nil,
-			},
 		}
 
 		for _, tt := range tests {
@@ -85,22 +80,6 @@ func TestModuleRepository_Integration(t *testing.T) {
 		require.NoError(t, err, "build module2 should succeed")
 		err = moduleRepo.Save(ctx, module2)
 		require.Error(t, err, "save duplicate name should fail")
-	})
-
-	t.Run("Save duplicate abbreviation in same project", func(t *testing.T) {
-		tc.CleanupTest()
-
-		project := createProject(t)
-		abbr := "DUP"
-
-		module1, err := testsetup.NewModuleBuilder(project.ID()).WithAbbreviation(abbr).Build()
-		require.NoError(t, err, "build module1 should succeed")
-		require.NoError(t, moduleRepo.Save(ctx, module1), "save module1 should succeed")
-
-		module2, err := testsetup.NewModuleBuilder(project.ID()).WithAbbreviation(abbr).Build()
-		require.NoError(t, err, "build module2 should succeed")
-		err = moduleRepo.Save(ctx, module2)
-		require.Error(t, err, "save duplicate abbreviation should fail")
 	})
 
 	t.Run("Save same name in different projects", func(t *testing.T) {
@@ -153,30 +132,6 @@ func TestModuleRepository_Integration(t *testing.T) {
 		modules, err := moduleRepo.FindByProjectID(ctx, project.ID())
 		require.NoError(t, err, "find modules by project ID should succeed")
 		assert.Equal(t, 3, len(modules), "should return 3 modules")
-	})
-
-	t.Run("FindByAbbreviation", func(t *testing.T) {
-		tc.CleanupTest()
-
-		project := createProject(t)
-		abbrStr := "FIND"
-
-		module, err := testsetup.NewModuleBuilder(project.ID()).WithAbbreviation(abbrStr).Build()
-		require.NoError(t, err, "build module should succeed")
-		require.NoError(t, moduleRepo.Save(ctx, module), "save module should succeed")
-
-		abbr, err := domainproject.ParseModuleAbbreviation(abbrStr)
-		require.NoError(t, err, "parse abbreviation should succeed")
-
-		found, err := moduleRepo.FindByAbbreviation(ctx, project.ID(), abbr)
-		require.NoError(t, err, "find module by abbreviation should succeed")
-		testsetup.AssertModuleEqual(t, module, found)
-
-		// 测试不存在的缩写 - 使用无效缩写字符串
-		/* 测试不存在的缩写 - 使用有效的缩写格式但不存在的值	*/
-		invalidAbbr, _ := domainproject.ParseModuleAbbreviation("NF")
-		_, err = moduleRepo.FindByAbbreviation(ctx, project.ID(), invalidAbbr)
-		require.Error(t, err, "find non-existent abbreviation should fail")
 	})
 
 	t.Run("Update", func(t *testing.T) {

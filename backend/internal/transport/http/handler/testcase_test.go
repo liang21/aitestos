@@ -49,14 +49,6 @@ func (m *MockCaseService) GetCaseDetail(ctx context.Context, id uuid.UUID) (*cas
 	return args.Get(0).(*caseservice.CaseDetail), args.Error(1)
 }
 
-func (m *MockCaseService) GetCaseByNumber(ctx context.Context, number testcase.CaseNumber) (*caseservice.CaseDetail, error) {
-	args := m.Called(ctx, number)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*caseservice.CaseDetail), args.Error(1)
-}
-
 func (m *MockCaseService) ListByModule(ctx context.Context, moduleID uuid.UUID, opts caseservice.CaseListOptions) ([]*testcase.TestCase, int64, error) {
 	args := m.Called(ctx, moduleID, opts)
 	return args.Get(0).([]*testcase.TestCase), args.Get(1).(int64), args.Error(2)
@@ -70,11 +62,6 @@ func (m *MockCaseService) ListByProject(ctx context.Context, projectID uuid.UUID
 func (m *MockCaseService) DeleteCase(ctx context.Context, id uuid.UUID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
-}
-
-func (m *MockCaseService) GenerateCaseNumber(ctx context.Context, moduleID uuid.UUID) (testcase.CaseNumber, error) {
-	args := m.Called(ctx, moduleID)
-	return args.Get(0).(testcase.CaseNumber), args.Error(1)
 }
 
 func TestCreateCaseHandler(t *testing.T) {

@@ -161,15 +161,6 @@ func (m *MockModuleRepository) FindByProjectID(ctx context.Context, projectID uu
 	return mods, nil
 }
 
-func (m *MockModuleRepository) FindByAbbreviation(ctx context.Context, projectID uuid.UUID, abbrev string) (Module, error) {
-	for _, mod := range m.modules {
-		if mod.ProjectID() == projectID && mod.Abbreviation() == abbrev {
-			return mod, nil
-		}
-	}
-	return nil, errors.New("module not found")
-}
-
 func (m *MockModuleRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	delete(m.modules, id)
 	return nil
@@ -211,16 +202,14 @@ type testModuleWrapper struct {
 func (w testModuleWrapper) ID() uuid.UUID        { return w.Module.ID() }
 func (w testModuleWrapper) ProjectID() uuid.UUID { return w.Module.ProjectID() }
 func (w testModuleWrapper) Name() string         { return w.Module.Name() }
-func (w testModuleWrapper) Abbreviation() string { return string(w.Module.Abbreviation()) }
 
 // testProjectWrapper adapts *project.Project to Project interface for testing
 type testProjectWrapper struct {
 	*project.Project
 }
 
-func (w testProjectWrapper) ID() uuid.UUID  { return w.Project.ID() }
-func (w testProjectWrapper) Name() string   { return w.Project.Name() }
-func (w testProjectWrapper) Prefix() string { return string(w.Project.Prefix()) }
+func (w testProjectWrapper) ID() uuid.UUID { return w.Project.ID() }
+func (w testProjectWrapper) Name() string  { return w.Project.Name() }
 
 // TestCaseService_CreateCase tests test case creation
 func TestCaseService_CreateCase(t *testing.T) {
@@ -231,8 +220,8 @@ func TestCaseService_CreateCase(t *testing.T) {
 	service := NewCaseService(caseRepo, moduleRepo, projectRepo)
 
 	// Create test project and module
-	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
-	testModule, _ := project.NewModule(testProject.ID(), "User Module", "USER", "User management", uuid.New())
+	testProject, _ := project.NewProject("Test Project", "Description")
+	testModule, _ := project.NewModule(testProject.ID(), "User Module", "User management", uuid.New())
 	moduleRepo.AddModule(testModuleWrapper{testModule})
 	projectRepo.AddProject(testProjectWrapper{testProject})
 
@@ -350,15 +339,14 @@ func TestCaseService_UpdateCase(t *testing.T) {
 	service := NewCaseService(caseRepo, moduleRepo, projectRepo)
 
 	// Create test project and module
-	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
-	testModule, _ := project.NewModule(testProject.ID(), "User Module", "USER", "User management", uuid.New())
+	testProject, _ := project.NewProject("Test Project", "Description")
+	testModule, _ := project.NewModule(testProject.ID(), "User Module", "User management", uuid.New())
 	moduleRepo.AddModule(testModuleWrapper{testModule})
 
 	// Create existing test case
-	caseNumber := 
+	existingCase, _ := testcase.NewTestCase(
 		testModule.ID(),
 		uuid.New(),
-		caseNumber,
 		"Original Title",
 		[]string{"Original precondition"},
 		[]string{"Original step 1", "Original step 2"},
@@ -452,17 +440,15 @@ func TestCaseService_GetCaseDetail(t *testing.T) {
 	service := NewCaseService(caseRepo, moduleRepo, projectRepo)
 
 	// Create test project and module
-	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
-	testModule, _ := project.NewModule(testProject.ID(), "User Module", "USER", "User management", uuid.New())
+	testProject, _ := project.NewProject("Test Project", "Description")
+	testModule, _ := project.NewModule(testProject.ID(), "User Module", "User management", uuid.New())
 	moduleRepo.AddModule(testModuleWrapper{testModule})
 	projectRepo.AddProject(testProjectWrapper{testProject})
 
 	// Create existing test case
-	caseNumber := 
 	existingCase, _ := testcase.NewTestCase(
 		testModule.ID(),
 		uuid.New(),
-		caseNumber,
 		"Test Case Title",
 		[]string{"Precondition 1"},
 		[]string{"Step 1", "Step 2"},
@@ -530,16 +516,14 @@ func TestCaseService_DeleteCase(t *testing.T) {
 	service := NewCaseService(caseRepo, moduleRepo, projectRepo)
 
 	// Create test project and module
-	testProject, _ := project.NewProject("Test Project", "TEST", "Description")
-	testModule, _ := project.NewModule(testProject.ID(), "User Module", "USER", "User management", uuid.New())
+	testProject, _ := project.NewProject("Test Project", "Description")
+	testModule, _ := project.NewModule(testProject.ID(), "User Module", "User management", uuid.New())
 	moduleRepo.AddModule(testModuleWrapper{testModule})
 
 	// Create existing test case
-	caseNumber := 
 	existingCase, _ := testcase.NewTestCase(
 		testModule.ID(),
 		uuid.New(),
-		caseNumber,
 		"Case to Delete",
 		[]string{"Precondition"},
 		[]string{"Step 1"},

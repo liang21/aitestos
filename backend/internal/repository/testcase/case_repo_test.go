@@ -13,14 +13,9 @@ import (
 // Test fixtures
 func createTestCase(t *testing.T, moduleID uuid.UUID, number string) *domaintestcase.TestCase {
 	t.Helper()
-	caseNumber, err := domaintestcase.ParseCaseNumber(number)
-	if err != nil {
-		t.Fatalf("Failed to parse case number: %v", err)
-	}
 	tc, err := domaintestcase.NewTestCase(
 		moduleID,
 		uuid.New(),
-		caseNumber,
 		"Test Case Title",
 		domaintestcase.Preconditions{"User is logged in"},
 		domaintestcase.Steps{"Step 1", "Step 2"},
@@ -54,16 +49,6 @@ func TestTestCaseRepository_FindByID(t *testing.T) {
 	})
 
 	t.Run("find non-existent test case", func(t *testing.T) {
-		// Placeholder for integration test
-	})
-}
-
-func TestTestCaseRepository_FindByNumber(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
-
-	t.Run("find by case number", func(t *testing.T) {
 		// Placeholder for integration test
 	})
 }
@@ -121,35 +106,24 @@ func TestTestCaseRepository_CountByDate(t *testing.T) {
 // MockTestCaseRepository for testing without database
 type MockTestCaseRepository struct {
 	cases         map[uuid.UUID]*domaintestcase.TestCase
-	casesByNumber map[string]*domaintestcase.TestCase
 	casesByModule map[uuid.UUID][]*domaintestcase.TestCase
 }
 
 func NewMockTestCaseRepository() *MockTestCaseRepository {
 	return &MockTestCaseRepository{
 		cases:         make(map[uuid.UUID]*domaintestcase.TestCase),
-		casesByNumber: make(map[string]*domaintestcase.TestCase),
 		casesByModule: make(map[uuid.UUID][]*domaintestcase.TestCase),
 	}
 }
 
 func (m *MockTestCaseRepository) Save(ctx context.Context, tc *domaintestcase.TestCase) error {
 	m.cases[tc.ID()] = tc
-	m.casesByNumber[tc.Number().String()] = tc
 	m.casesByModule[tc.ModuleID()] = append(m.casesByModule[tc.ModuleID()], tc)
 	return nil
 }
 
 func (m *MockTestCaseRepository) FindByID(ctx context.Context, id uuid.UUID) (*domaintestcase.TestCase, error) {
 	tc, ok := m.cases[id]
-	if !ok {
-		return nil, domaintestcase.ErrCaseNotFound
-	}
-	return tc, nil
-}
-
-func (m *MockTestCaseRepository) FindByNumber(ctx context.Context, number domaintestcase.CaseNumber) (*domaintestcase.TestCase, error) {
-	tc, ok := m.casesByNumber[number.String()]
 	if !ok {
 		return nil, domaintestcase.ErrCaseNotFound
 	}
@@ -178,12 +152,11 @@ func (m *MockTestCaseRepository) Update(ctx context.Context, tc *domaintestcase.
 }
 
 func (m *MockTestCaseRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	tc, ok := m.cases[id]
+	_, ok := m.cases[id]
 	if !ok {
 		return domaintestcase.ErrCaseNotFound
 	}
 	delete(m.cases, id)
-	delete(m.casesByNumber, tc.Number().String())
 	return nil
 }
 
@@ -217,15 +190,6 @@ func TestMockTestCaseRepository_CRUD(t *testing.T) {
 	}
 	if found.ID() != tc.ID() {
 		t.Errorf("FindByID().ID() = %v, want %v", found.ID(), tc.ID())
-	}
-
-	// Read by Number
-	found, err = repo.FindByNumber(ctx, tc.Number())
-	if err != nil {
-		t.Fatalf("FindByNumber() error = %v", err)
-	}
-	if found.Number() != tc.Number() {
-		t.Errorf("FindByNumber().Number() = %v, want %v", found.Number(), tc.Number())
 	}
 
 	// Read by ModuleID
@@ -277,10 +241,7 @@ func TestMockTestCaseRepository_NotFound(t *testing.T) {
 		t.Errorf("FindByID() error = %v, want %v", err, domaintestcase.ErrCaseNotFound)
 	}
 
-	number, _ := domaintestcase.ParseCaseNumber("ECO-USR-20260403-001")
-	_, err = repo.FindByNumber(ctx, number)
 	if err != domaintestcase.ErrCaseNotFound {
-		t.Errorf("FindByNumber() error = %v, want %v", err, domaintestcase.ErrCaseNotFound)
 	}
 
 	tc := createTestCase(t, uuid.New(), "ECO-USR-20260403-002")

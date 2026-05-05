@@ -12,7 +12,7 @@ import (
 // Test fixtures
 func createTestProject(t *testing.T, name, prefix string) *domainproject.Project {
 	t.Helper()
-	project, err := domainproject.NewProject(name, prefix, "test description")
+	project, err := domainproject.NewProject(name, "test description")
 	if err != nil {
 		t.Fatalf("Failed to create test project: %v", err)
 	}
@@ -54,16 +54,6 @@ func TestProjectRepository_FindByName(t *testing.T) {
 	})
 }
 
-func TestProjectRepository_FindByPrefix(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
-
-	t.Run("find by prefix", func(t *testing.T) {
-		// Placeholder for integration test
-	})
-}
-
 func TestProjectRepository_FindAll(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
@@ -96,23 +86,20 @@ func TestProjectRepository_Delete(t *testing.T) {
 
 // MockProjectRepository for testing without database
 type MockProjectRepository struct {
-	projects         map[uuid.UUID]*domainproject.Project
-	projectsByName   map[string]*domainproject.Project
-	projectsByPrefix map[string]*domainproject.Project
+	projects       map[uuid.UUID]*domainproject.Project
+	projectsByName map[string]*domainproject.Project
 }
 
 func NewMockProjectRepository() *MockProjectRepository {
 	return &MockProjectRepository{
-		projects:         make(map[uuid.UUID]*domainproject.Project),
-		projectsByName:   make(map[string]*domainproject.Project),
-		projectsByPrefix: make(map[string]*domainproject.Project),
+		projects:       make(map[uuid.UUID]*domainproject.Project),
+		projectsByName: make(map[string]*domainproject.Project),
 	}
 }
 
 func (m *MockProjectRepository) Save(ctx context.Context, project *domainproject.Project) error {
 	m.projects[project.ID()] = project
 	m.projectsByName[project.Name()] = project
-	m.projectsByPrefix[project.Prefix().String()] = project
 	return nil
 }
 
@@ -126,14 +113,6 @@ func (m *MockProjectRepository) FindByID(ctx context.Context, id uuid.UUID) (*do
 
 func (m *MockProjectRepository) FindByName(ctx context.Context, name string) (*domainproject.Project, error) {
 	project, ok := m.projectsByName[name]
-	if !ok {
-		return nil, domainproject.ErrProjectNotFound
-	}
-	return project, nil
-}
-
-func (m *MockProjectRepository) FindByPrefix(ctx context.Context, prefix domainproject.ProjectPrefix) (*domainproject.Project, error) {
-	project, ok := m.projectsByPrefix[prefix.String()]
 	if !ok {
 		return nil, domainproject.ErrProjectNotFound
 	}
@@ -164,7 +143,6 @@ func (m *MockProjectRepository) Delete(ctx context.Context, id uuid.UUID) error 
 	}
 	delete(m.projects, id)
 	delete(m.projectsByName, project.Name())
-	delete(m.projectsByPrefix, project.Prefix().String())
 	return nil
 }
 
@@ -195,15 +173,6 @@ func TestMockProjectRepository_CRUD(t *testing.T) {
 	}
 	if found.Name() != project.Name() {
 		t.Errorf("FindByName().Name() = %v, want %v", found.Name(), project.Name())
-	}
-
-	// Read by Prefix
-	found, err = repo.FindByPrefix(ctx, project.Prefix())
-	if err != nil {
-		t.Fatalf("FindByPrefix() error = %v", err)
-	}
-	if found.Prefix() != project.Prefix() {
-		t.Errorf("FindByPrefix().Prefix() = %v, want %v", found.Prefix(), project.Prefix())
 	}
 
 	// Update
@@ -242,10 +211,7 @@ func TestMockProjectRepository_NotFound(t *testing.T) {
 		t.Errorf("FindByName() error = %v, want %v", err, domainproject.ErrProjectNotFound)
 	}
 
-	prefix, _ := domainproject.ParseProjectPrefix("NF")
-	_, err = repo.FindByPrefix(ctx, prefix)
 	if err != domainproject.ErrProjectNotFound {
-		t.Errorf("FindByPrefix() error = %v, want %v", err, domainproject.ErrProjectNotFound)
 	}
 
 	err = repo.Update(ctx, createTestProject(t, "test", "TS"))
