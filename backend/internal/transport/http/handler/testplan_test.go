@@ -109,7 +109,7 @@ func TestCreatePlanHandler(t *testing.T) {
 		require.NotNil(t, handler)
 
 		body := map[string]interface{}{
-			"project_id": uuid.New().String(),
+			"projectId": uuid.New().String(),
 			"name":       "Test Plan",
 			"case_ids":   []string{uuid.New().String()},
 		}
@@ -133,7 +133,7 @@ func TestCreatePlanHandler(t *testing.T) {
 		handler := NewTestPlanHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"project_id": uuid.New().String(),
+			"projectId": uuid.New().String(),
 			"name":       "Test Plan",
 		}
 		jsonBody, _ := json.Marshal(body)
@@ -240,7 +240,7 @@ func TestRecordResultHandler(t *testing.T) {
 		handler := NewTestPlanHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"case_id": caseID.String(),
+			"caseId": caseID.String(),
 			"status":  "pass",
 			"note":    "Test passed",
 		}
@@ -272,7 +272,7 @@ func TestRecordResultHandler(t *testing.T) {
 		handler := NewTestPlanHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"case_id": uuid.New().String(),
+			"caseId": uuid.New().String(),
 			"status":  "invalid_status",
 		}
 		jsonBody, _ := json.Marshal(body)

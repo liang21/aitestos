@@ -63,7 +63,7 @@ func (h *TestPlanHandler) GetPlan(w http.ResponseWriter, r *http.Request) {
 
 // ListPlans handles listing test plans
 func (h *TestPlanHandler) ListPlans(w http.ResponseWriter, r *http.Request) {
-	projectIDStr := r.URL.Query().Get("project_id")
+	projectIDStr := r.URL.Query().Get("projectId")
 	projectID, err := uuid.Parse(projectIDStr)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid project ID")

@@ -77,7 +77,7 @@ func TestCreateCaseHandler(t *testing.T) {
 		require.NotNil(t, handler)
 
 		body := map[string]interface{}{
-			"module_id":     uuid.New().String(),
+			"moduleId":     uuid.New().String(),
 			"title":         "Test Case Title",
 			"preconditions": []string{"Precondition 1"},
 			"steps":         []string{"Step 1", "Step 2"},
@@ -105,7 +105,7 @@ func TestCreateCaseHandler(t *testing.T) {
 		handler := NewTestCaseHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"module_id": uuid.New().String(),
+			"moduleId": uuid.New().String(),
 			"title":     "Test Case",
 			"steps":     []string{"Step 1"},
 			"expected":  map[string]interface{}{},
@@ -147,7 +147,7 @@ func TestCreateCaseHandler(t *testing.T) {
 		handler := NewTestCaseHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"module_id": uuid.New().String(),
+			"moduleId": uuid.New().String(),
 			"title":     "Test Case",
 			"steps":     []string{},
 			"expected":  map[string]interface{}{},
@@ -224,7 +224,7 @@ func TestListCasesHandler(t *testing.T) {
 
 		handler := NewTestCaseHandler(mockSvc)
 
-		req := httptest.NewRequest("GET", "/api/v1/testcases?project_id="+projectID.String(), nil)
+		req := httptest.NewRequest("GET", "/api/v1/testcases?projectId="+projectID.String(), nil)
 		w := httptest.NewRecorder()
 
 		handler.ListCases(w, req)
@@ -241,7 +241,7 @@ func TestListCasesHandler(t *testing.T) {
 
 		handler := NewTestCaseHandler(mockSvc)
 
-		req := httptest.NewRequest("GET", "/api/v1/testcases?module_id="+moduleID.String(), nil)
+		req := httptest.NewRequest("GET", "/api/v1/testcases?moduleId="+moduleID.String(), nil)
 		w := httptest.NewRecorder()
 
 		handler.ListCases(w, req)

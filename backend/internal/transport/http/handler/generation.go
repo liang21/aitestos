@@ -64,7 +64,7 @@ func (h *GenerationHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 
 // ListTasks handles listing generation tasks
 func (h *GenerationHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
-	projectIDStr := r.URL.Query().Get("project_id")
+	projectIDStr := r.URL.Query().Get("projectId")
 	if projectIDStr == "" {
 		respondWithError(w, http.StatusBadRequest, "project_id is required")
 		return
@@ -84,7 +84,7 @@ func (h *GenerationHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Support module_id filter
-	if moduleIDStr := r.URL.Query().Get("module_id"); moduleIDStr != "" {
+	if moduleIDStr := r.URL.Query().Get("moduleId"); moduleIDStr != "" {
 		moduleID, err := uuid.Parse(moduleIDStr)
 		if err != nil {
 			respondWithError(w, http.StatusBadRequest, "invalid module ID format")
@@ -231,7 +231,7 @@ func (h *GenerationHandler) ListAllDrafts(w http.ResponseWriter, r *http.Request
 	}
 
 	// Parse project_id if provided
-	if projectIDStr := r.URL.Query().Get("project_id"); projectIDStr != "" {
+	if projectIDStr := r.URL.Query().Get("projectId"); projectIDStr != "" {
 		projectID, err := uuid.Parse(projectIDStr)
 		if err != nil {
 			respondWithError(w, http.StatusBadRequest, "invalid project ID format")
@@ -241,7 +241,7 @@ func (h *GenerationHandler) ListAllDrafts(w http.ResponseWriter, r *http.Request
 	}
 
 	// Parse task_id if provided
-	if taskIDStr := r.URL.Query().Get("task_id"); taskIDStr != "" {
+	if taskIDStr := r.URL.Query().Get("taskId"); taskIDStr != "" {
 		taskID, err := uuid.Parse(taskIDStr)
 		if err != nil {
 			respondWithError(w, http.StatusBadRequest, "invalid task ID format")

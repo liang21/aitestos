@@ -598,19 +598,19 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: project_id
+        - name: projectId
           in: query
           required: true
           schema:
             type: string
             format: uuid
-          description: 项目 ID（与 module_id 至少填一个）
-        - name: module_id
+          description: 项目 ID（与 moduleId 至少填一个）
+        - name: moduleId
           in: query
           schema:
             type: string
             format: uuid
-          description: 模块 ID（与 project_id 至少填一个）
+          description: 模块 ID（与 projectId 至少填一个）
         - name: status
           in: query
           schema:
@@ -750,7 +750,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: project_id
+        - name: projectId
           in: query
           required: true
           schema:
@@ -1035,14 +1035,14 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: project_id
+        - name: projectId
           in: query
           required: true
           schema:
             type: string
             format: uuid
           description: 项目 ID
-        - name: module_id
+        - name: moduleId
           in: query
           schema:
             type: string
@@ -1167,13 +1167,13 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: project_id
+        - name: projectId
           in: query
           schema:
             type: string
             format: uuid
           description: 项目 ID
-        - name: task_id
+        - name: taskId
           in: query
           schema:
             type: string
@@ -1341,7 +1341,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: project_id
+        - name: projectId
           in: query
           required: true
           schema:

@@ -83,7 +83,7 @@ func (h *KnowledgeHandler) GetDocument(w http.ResponseWriter, r *http.Request) {
 
 // ListDocuments handles listing documents
 func (h *KnowledgeHandler) ListDocuments(w http.ResponseWriter, r *http.Request) {
-	projectID, err := uuid.Parse(r.URL.Query().Get("project_id"))
+	projectID, err := uuid.Parse(r.URL.Query().Get("projectId"))
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid project ID")
 		return

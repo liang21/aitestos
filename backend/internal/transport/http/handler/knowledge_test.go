@@ -81,7 +81,7 @@ func TestUploadDocumentHandler(t *testing.T) {
 		require.NotNil(t, handler)
 
 		body := map[string]interface{}{
-			"project_id": projectID.String(),
+			"projectId": projectID.String(),
 			"name":       "Test Document",
 			"type":       "prd",
 		}
@@ -105,7 +105,7 @@ func TestUploadDocumentHandler(t *testing.T) {
 		handler := NewKnowledgeHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"project_id": uuid.New().String(),
+			"projectId": uuid.New().String(),
 			"name":       "Test Document",
 			"type":       "prd",
 		}
@@ -127,7 +127,7 @@ func TestUploadDocumentHandler(t *testing.T) {
 		handler := NewKnowledgeHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"project_id": uuid.New().String(),
+			"projectId": uuid.New().String(),
 			"name":       "Test Document",
 			"type":       "invalid_type",
 		}
@@ -208,7 +208,7 @@ func TestListDocumentsHandler(t *testing.T) {
 
 		handler := NewKnowledgeHandler(mockSvc)
 
-		req := httptest.NewRequest("GET", "/api/v1/knowledge/documents?project_id="+projectID.String(), nil)
+		req := httptest.NewRequest("GET", "/api/v1/knowledge/documents?projectId="+projectID.String(), nil)
 		w := httptest.NewRecorder()
 
 		handler.ListDocuments(w, req)

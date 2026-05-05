@@ -117,8 +117,8 @@ func TestCreateTaskHandler(t *testing.T) {
 		require.NotNil(t, handler)
 
 		body := map[string]interface{}{
-			"project_id":  uuid.New().String(),
-			"module_id":   uuid.New().String(),
+			"projectId":  uuid.New().String(),
+			"moduleId":   uuid.New().String(),
 			"prompt":      "Generate test cases for user login functionality",
 			"case_count":  5,
 			"scene_types": []string{"positive", "negative"},
@@ -143,8 +143,8 @@ func TestCreateTaskHandler(t *testing.T) {
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"project_id": uuid.New().String(),
-			"module_id":  uuid.New().String(),
+			"projectId": uuid.New().String(),
+			"moduleId":  uuid.New().String(),
 			"prompt":     "Generate test cases",
 		}
 		jsonBody, _ := json.Marshal(body)
@@ -168,8 +168,8 @@ func TestCreateTaskHandler(t *testing.T) {
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"project_id": uuid.New().String(),
-			"module_id":  uuid.New().String(),
+			"projectId": uuid.New().String(),
+			"moduleId":  uuid.New().String(),
 			"prompt":     "short",
 		}
 		jsonBody, _ := json.Marshal(body)
@@ -290,7 +290,7 @@ func TestConfirmDraftHandler(t *testing.T) {
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"module_id": moduleID.String(),
+			"moduleId": moduleID.String(),
 		}
 		jsonBody, _ := json.Marshal(body)
 
@@ -312,7 +312,7 @@ func TestConfirmDraftHandler(t *testing.T) {
 		handler := NewGenerationHandler(mockSvc)
 
 		body := map[string]interface{}{
-			"module_id": uuid.New().String(),
+			"moduleId": uuid.New().String(),
 		}
 		jsonBody, _ := json.Marshal(body)
 
@@ -393,7 +393,7 @@ func TestBatchConfirmHandler(t *testing.T) {
 
 		body := map[string]interface{}{
 			"draft_ids": draftIDs,
-			"module_id": moduleID.String(),
+			"moduleId": moduleID.String(),
 		}
 		jsonBody, _ := json.Marshal(body)
 
@@ -416,7 +416,7 @@ func TestBatchConfirmHandler(t *testing.T) {
 
 		body := map[string]interface{}{
 			"draft_ids": []string{uuid.New().String()},
-			"module_id": uuid.New().String(),
+			"moduleId": uuid.New().String(),
 		}
 		jsonBody, _ := json.Marshal(body)
 

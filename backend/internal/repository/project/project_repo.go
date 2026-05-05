@@ -216,7 +216,7 @@ func (r *ProjectRepository) GetStatistics(ctx context.Context, id uuid.UUID) (*d
 			(SELECT COUNT(*) FROM test_case tc
 				JOIN modules m ON tc.module_id = m.id
 				WHERE m.project_id = $1) AS case_count,
-			(SELECT COUNT(*) FROM document WHERE project_id = $1) AS document_count,
+			(SELECT COUNT(*) FROM documents WHERE project_id = $1) AS document_count,
 			COALESCE(
 				(SELECT COUNT(*) * 100.0 / NULLIF(
 					(SELECT COUNT(*) FROM test_case tc

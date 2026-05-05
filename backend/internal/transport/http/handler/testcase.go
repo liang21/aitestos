@@ -72,13 +72,13 @@ func (h *TestCaseHandler) ListCases(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse optional filters
-	if projectID := r.URL.Query().Get("project_id"); projectID != "" {
+	if projectID := r.URL.Query().Get("projectId"); projectID != "" {
 		if id, err := uuid.Parse(projectID); err == nil {
 			opts.ProjectID = id
 		}
 	}
 
-	if moduleID := r.URL.Query().Get("module_id"); moduleID != "" {
+	if moduleID := r.URL.Query().Get("moduleId"); moduleID != "" {
 		if id, err := uuid.Parse(moduleID); err == nil {
 			opts.ModuleID = id
 		}
